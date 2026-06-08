@@ -1,0 +1,39 @@
+services:
+  api:
+    build: .
+    environment:
+      API_KEY: local-demo-key
+      PROVIDER_MODE: mock
+      VECTOR_STORE_MODE: qdrant
+      QDRANT_URL: http://qdrant:6333
+      STORAGE_DIR: /app/storage
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./storage:/app/storage
+      - ./sample_data:/app/sample_data:ro
+    depends_on:
+      - qdrant
+
+  dashboard:
+    build: .
+    command: python -m streamlit run dashboard/app.py --server.address 0.0.0.0 --server.port 8501
+    environment:
+      RFP_API_URL: http://api:8000
+      RFP_API_KEY: local-demo-key
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./dashboard:/app/dashboard:ro
+    depends_on:
+      - api
+
+  qdrant:
+    image: qdrant/qdrant:v1.10.1
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+volumes:
+  qdrant_data:
