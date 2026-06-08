@@ -1,0 +1,30 @@
+{
+  "questions": [
+    {
+      "question": "How does the system prevent unsupported RFP answers?",
+      "expected_evidence_documents": ["prior_proposal.md", "product_overview.md"],
+      "expected_answer_themes": ["missing evidence warning", "citations", "approved documents"]
+    },
+    {
+      "question": "What SSO and encryption controls are supported?",
+      "expected_evidence_documents": ["security_policy.md", "acme_enterprise_rfp.md"],
+      "expected_answer_themes": ["SAML", "OIDC", "TLS", "AES-256"]
+    },
+    {
+      "question": "Which metrics are measured during evaluation?",
+      "expected_evidence_documents": ["acme_enterprise_rfp.md", "product_overview.md"],
+      "expected_answer_themes": ["retrieval quality", "citation coverage", "latency", "token usage", "cost"]
+    },
+    {
+      "question": "What pricing assumptions should be separated?",
+      "expected_evidence_documents": ["pricing_notes.md", "acme_enterprise_rfp.md"],
+      "expected_answer_themes": ["implementation fees", "subscription tiers", "usage-based AI cost"]
+    },
+    {
+      "question": "Does the product include quantum-resistant satellite telemetry controls?",
+      "expected_evidence_documents": [],
+      "expected_answer_themes": [],
+      "expect_missing_evidence": true
+    }
+  ]
+}
