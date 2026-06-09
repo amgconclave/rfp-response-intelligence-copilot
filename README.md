@@ -93,6 +93,13 @@ curl -X GET "http://127.0.0.1:8000/rag/corpus-coverage" -H "X-API-Key: local-dem
 curl -X POST "http://127.0.0.1:8000/rag/eval-coverage-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 ```
 
+The Privacy Retention tab and Guardrail Pack map provider prompts, audit/logging, vector metadata, generated artifacts, eval datasets, and document uploads to local privacy/DPA evidence, retention posture, redaction rules, prompt/logging guidance, and owner actions:
+
+```bash
+curl -X GET "http://127.0.0.1:8000/privacy/retention-guardrails" -H "X-API-Key: local-demo-key"
+curl -X POST "http://127.0.0.1:8000/privacy/retention-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
+```
+
 The Procurement Q&A tab and Approval Workflow Pack show question risk, reviewer approval status, evidence support, unsupported-claim flags, citations/snippets, blocked drafts, escalation owners, proof commands, and limitations for procurement/security/legal/commercial review:
 
 ```bash
@@ -226,6 +233,7 @@ flowchart LR
 - Runtime Demo Server Pack via `GET /runtime/demo-readiness`, `POST /runtime/demo-pack`, `python scripts\runtime_check.py`, and `scripts\start_demo.ps1`, writing Markdown/JSON under ignored `storage/runtime_packs/` with exact FastAPI/Streamlit commands, expected ports, dependency/env checks, read-only process/port checks, health URLs, screenshot placeholders, troubleshooting, and limitations.
 - RAG Corpus Coverage + Eval Coverage Pack via `GET /rag/corpus-coverage` and `POST /rag/eval-coverage-pack`, writing Markdown/JSON under ignored `storage/rag_coverage/` with corpus coverage, eval coverage, citation/source coverage, red-team coverage, missing-evidence coverage, gaps, warnings, and local commands.
 - Compliance Evidence Matrix + Control Mapping Pack via `GET /compliance/evidence-matrix` and `POST /compliance/control-pack`, writing Markdown/JSON under ignored `storage/compliance_packs/` with control coverage, requirement links, source snippets, confidence, owners, missing-evidence warnings, unsupported-claim flags, owner actions, reviewer notes, proof commands, and limitations.
+- Privacy Retention Guardrails via `GET /privacy/retention-guardrails` and `POST /privacy/retention-pack`, writing Markdown/JSON under ignored `storage/privacy_packs/` with prompt/log/vector/artifact/upload/eval surfaces, policy evidence snippets, missing controls, redaction rules, retention actions, prompt logging guidance, proof commands, and limitations.
 - CI Doctor + Audit Pack via `GET /ops/ci-doctor` and `POST /ops/audit-pack`, writing Markdown/JSON under ignored `storage/audit_packs/` with CI/docs/tests/env/Docker/dependency checks, dependency inventory, local verification commands, publish-safety checklist, remediation notes, recruiter/interviewer explanation, and a redacted secret scan summary.
 - Artifact Inventory + README Badge/Checklist Pack via `GET /artifacts/inventory` and `POST /artifacts/readme-checklist`, writing Markdown/JSON under ignored `storage/artifact_indexes/` with latest files, producer endpoints/commands, ignored status, reviewer purpose, freshness notes, local commands, README badge suggestions, and reviewer proof checklist.
 - Dashboard Smoke + UI Verification Pack via `GET /ui/dashboard-smoke`, `POST /ui/verification-pack`, and `python scripts\dashboard_smoke.py`, writing Markdown/JSON under ignored `storage/ui_verification/` with source-level dashboard tab checks, endpoint references, generated-artifact tabs, Streamlit run command, reviewer checklist, screenshot placeholders, troubleshooting, and limitations.
@@ -337,6 +345,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /learning/win-loss-pack`: writes a Markdown/JSON Win/Loss Learning Strategy Pack under `storage/win_loss_packs/`.
 - `GET /evidence/conflicts`: returns cited source-precedence, scope, and ambiguity conflicts with reviewer owner, status, endpoint impact, and resolution guidance.
 - `POST /evidence/conflict-pack`: writes a Markdown/JSON Evidence Conflict Resolver Pack under `storage/conflict_packs/`.
+- `GET /privacy/retention-guardrails`: returns privacy/retention surface risk, local policy evidence, missing controls, redaction rules, prompt/logging guidance, and owner actions.
+- `POST /privacy/retention-pack`: writes a Markdown/JSON Privacy Retention Guardrail Pack under `storage/privacy_packs/`.
 - `POST /rfp/contract-risk`: returns contract risk score/status, risky clauses, category counts, redlines, fallback positions, cited proof points, owner actions, assumptions, and missing-evidence warnings.
 - `POST /rfp/negotiation-brief`: writes a Markdown/JSON contract negotiation brief under `storage/negotiation_briefs/`.
 - `POST /rfp/evidence-gaps`: returns prioritized evidence gaps with impacted sections, missing source type, owner/team, severity, due recommendation, SME/source request, related citations, and closure criteria.
@@ -415,6 +425,7 @@ Run the API and dashboard, then capture:
 - Reviewer Collaboration tab showing reviewer assignments, decision comments, approval status, redline summary, proof commands, and generated `storage/review_boards/` artifact path.
 - Win/Loss Learning tab showing outcome count, win rate, winning evidence patterns, losing risk patterns, retrieval/eval recommendations, response guidance updates, proof commands, limitations, and generated `storage/win_loss_packs/` artifact path.
 - Evidence Conflicts tab showing conflict counts, blocked/needs-review status, reviewer queue, cited claims, endpoint impact, and generated `storage/conflict_packs/` artifact path.
+- Privacy Retention tab showing prompt/log/vector/artifact/upload/eval surface risks, missing controls, redaction rules, prompt/logging guidance, owner actions, and generated `storage/privacy_packs/` artifact path.
 - Contract Risk / Negotiation Brief tab showing contract risk score, risky clauses, owner actions, and negotiation brief export path.
 - Evidence Gaps / Source Requests tab showing prioritized gaps, owner matrix, and source request pack export path.
 - Timeline / Submission Calendar tab showing milestones, blocked items, readiness gates, escalations, and submission calendar export path.

@@ -77,6 +77,9 @@ from app.models.api import (
     PortfolioInterviewPackResponse,
     PricingRiskMemoRequest,
     PricingRiskMemoResponse,
+    PrivacyRetentionGuardrailResponse,
+    PrivacyRetentionPackRequest,
+    PrivacyRetentionPackResponse,
     ProcurementApprovalPackRequest,
     ProcurementApprovalPackResponse,
     ProcurementQuestionRiskResponse,
@@ -2442,6 +2445,65 @@ async def compliance_control_pack(
             "json_artifact_path": pack.json_artifact_path,
             "coverage_ratio": pack.matrix.coverage_summary["coverage_ratio"],
             "unsupported_claims": pack.matrix.coverage_summary["unsupported_claim_count"],
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/privacy/retention-guardrails",
+    response_model=PrivacyRetentionGuardrailResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def privacy_retention_guardrails(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> PrivacyRetentionGuardrailResponse:
+    trace_id = get_trace_id(request)
+    await _freshness_inputs(container)
+    result = container.privacy_retention.guardrails(trace_id)
+    container.audit.record(
+        trace_id,
+        "privacy.retention_guardrails_viewed",
+        "privacy_retention_guardrails",
+        metadata={
+            "surfaces": result.summary["surface_count"],
+            "high_risk": result.summary["high_risk_surface_count"],
+            "missing_controls": result.summary["missing_control_count"],
+        },
+    )
+    return result
+
+
+@router.post(
+    "/privacy/retention-pack",
+    response_model=PrivacyRetentionPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def privacy_retention_pack(
+    request: Request,
+    payload: PrivacyRetentionPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> PrivacyRetentionPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or PrivacyRetentionPackRequest()
+    await _freshness_inputs(container)
+    guardrails = container.privacy_retention.guardrails(f"{trace_id}-guardrails")
+    pack = container.privacy_retention.retention_pack(
+        trace_id,
+        guardrails,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "privacy.retention_pack_generated",
+        "privacy_retention_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "surfaces": pack.guardrails.summary["surface_count"],
+            "retention_actions": pack.guardrails.summary["retention_action_count"],
         },
     )
     return pack

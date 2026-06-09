@@ -447,6 +447,12 @@ class UIVerificationService:
                 "artifact_root": "compliance_packs",
             },
             {
+                "label": "Privacy Retention",
+                "endpoint_paths": ["/privacy/retention-guardrails", "/privacy/retention-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "privacy_packs",
+            },
+            {
                 "label": "Procurement Q&A",
                 "endpoint_paths": ["/procurement/question-risk", "/procurement/approval-pack"],
                 "generated_artifact_tab": True,
@@ -571,6 +577,17 @@ class UIVerificationService:
                 "path": "/compliance/control-pack",
                 "purpose": "Compliance Evidence generated control mapping pack.",
                 "expected_artifacts": ["storage/compliance_packs/*.md", "storage/compliance_packs/*.json"],
+            },
+            {
+                "method": "GET",
+                "path": "/privacy/retention-guardrails",
+                "purpose": "Privacy Retention tab guardrail matrix.",
+            },
+            {
+                "method": "POST",
+                "path": "/privacy/retention-pack",
+                "purpose": "Privacy Retention generated guardrail pack.",
+                "expected_artifacts": ["storage/privacy_packs/*.md", "storage/privacy_packs/*.json"],
             },
             {
                 "method": "GET",

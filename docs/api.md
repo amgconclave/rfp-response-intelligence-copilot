@@ -182,6 +182,29 @@ Writes Markdown and JSON Control Mapping Pack artifacts under ignored `storage/c
 
 The pack includes control coverage, source snippets, unsupported claims, gaps, owner actions, reviewer notes, exact local proof commands, limitations, embedded evidence matrix JSON, Markdown, JSON, and trace ID.
 
+### `GET /privacy/retention-guardrails`
+
+Returns the Privacy + Retention Guardrail Matrix. It maps provider prompts, audit/logging, vector metadata, generated artifacts, eval datasets, and document uploads to local privacy evidence, data categories, retention posture, missing controls, redaction rules, reviewer owners, endpoint references, prompt/logging guidance, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/privacy/retention-guardrails" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The default path is local/mock. It does not call external providers or delete local storage; it creates reviewer-ready recommendations from the ingested sample privacy, compliance, implementation, and AI governance evidence.
+
+### `POST /privacy/retention-pack`
+
+Writes Markdown and JSON Privacy Retention Guardrail Pack artifacts under ignored `storage/privacy_packs/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes the surface matrix, policy evidence snippets, retention actions, prompt/logging guidance, exact local proof commands, limitations, embedded guardrail JSON, Markdown, JSON, and trace ID.
+
 ### `GET /procurement/question-risk`
 
 Returns the Procurement Q&A question risk catalog. It simulates security architecture, privacy/DPA, SLA/support, disaster recovery, AI governance/model claims, pricing/commercial, implementation timeline, and out-of-scope/adversarial unsupported-claim buyer questions. Each item includes category, risk level, required reviewer role, approval status, evidence support, unsupported-claim flag, citations, snippets, approved response memory matches, reviewer checklist, escalation owner, evidence gaps, review findings, and coverage summary.

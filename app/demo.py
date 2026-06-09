@@ -336,6 +336,12 @@ async def main() -> None:
         compliance_matrix,
         write_artifact=True,
     )
+    privacy_retention = container.privacy_retention.guardrails("demo-privacy-retention")
+    privacy_retention_pack = container.privacy_retention.retention_pack(
+        "demo-privacy-retention-pack",
+        privacy_retention,
+        write_artifact=True,
+    )
     procurement_question_risk = await container.procurement.question_risk(
         "demo-procurement-question-risk",
         analysis=analysis,
@@ -557,6 +563,15 @@ async def main() -> None:
     print(f"Compliance Control Mapping Pack JSON: {compliance_control_pack.json_artifact_path}")
     print("Compliance packs directory: storage/compliance_packs")
     print(
+        "Privacy retention guardrails: "
+        f"surfaces={privacy_retention.summary['surface_count']} "
+        f"high_risk={privacy_retention.summary['high_risk_surface_count']} "
+        f"missing_controls={privacy_retention.summary['missing_control_count']}"
+    )
+    print(f"Privacy Retention Guardrail Pack: {privacy_retention_pack.artifact_path}")
+    print(f"Privacy Retention Guardrail Pack JSON: {privacy_retention_pack.json_artifact_path}")
+    print("Privacy packs directory: storage/privacy_packs")
+    print(
         "Procurement question risk: "
         f"questions={procurement_question_risk.coverage_summary['question_count']} "
         f"coverage={procurement_question_risk.coverage_summary['coverage_ratio']} "
@@ -660,6 +675,9 @@ async def main() -> None:
         f"conflict_packs={evidence_conflict_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "
         f"compliance_packs={compliance_control_pack.artifact_path} "
+        f"privacy_retention={privacy_retention.summary['high_risk_surface_count']}/"
+        f"{privacy_retention.summary['surface_count']} "
+        f"privacy_packs={privacy_retention_pack.artifact_path} "
         f"procurement question risk={procurement_question_risk.coverage_summary['coverage_ratio']} "
         f"procurement_packs={procurement_approval_pack.artifact_path} "
         f"reviewer_collaboration={reviewer_collaboration.board_status}/"

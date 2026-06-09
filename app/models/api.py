@@ -853,6 +853,46 @@ class ControlPackResponse(BaseModel):
     trace_id: str
 
 
+class PrivacyGuardrailSurface(BaseModel):
+    surface_id: str
+    surface_name: str
+    data_categories: list[str] = Field(default_factory=list)
+    policy_evidence: list[ComplianceEvidenceSource] = Field(default_factory=list)
+    risk_level: str
+    risk_score: int
+    retention_posture: str
+    reviewer_owner: str
+    required_controls: list[str] = Field(default_factory=list)
+    missing_controls: list[str] = Field(default_factory=list)
+    redaction_rules: list[str] = Field(default_factory=list)
+    endpoint_references: list[str] = Field(default_factory=list)
+
+
+class PrivacyRetentionGuardrailResponse(BaseModel):
+    title: str
+    generated_at: str
+    surfaces: list[PrivacyGuardrailSurface]
+    summary: dict[str, Any]
+    retention_actions: list[dict[str, Any]] = Field(default_factory=list)
+    prompt_logging_guidance: list[str] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class PrivacyRetentionPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class PrivacyRetentionPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    guardrails: PrivacyRetentionGuardrailResponse
+    trace_id: str
+
+
 class EvidenceFreshnessSource(BaseModel):
     document_id: str
     filename: str

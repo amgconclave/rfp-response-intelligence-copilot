@@ -40,6 +40,8 @@ class LaunchChecklistService:
                 "POST /rag/eval-coverage-pack",
                 "GET /compliance/evidence-matrix",
                 "POST /compliance/control-pack",
+                "GET /privacy/retention-guardrails",
+                "POST /privacy/retention-pack",
                 "GET /procurement/question-risk",
                 "POST /procurement/approval-pack",
                 "POST /rfp/reviewer-collaboration",
@@ -99,6 +101,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\compliance_packs -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "privacy/retention-guardrails|privacy/retention-pack|Privacy Retention|'
+                    'privacy_packs|prompt logging" app dashboard docs README.md tests scripts sample_data Makefile'
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\privacy_packs -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -750,6 +760,27 @@ class LaunchChecklistService:
                 200,
                 "Writes compliance control coverage, gaps, owner actions, reviewer notes, and local proof commands.",
                 ["storage/compliance_packs/*.md", "storage/compliance_packs/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Privacy retention guardrails",
+                "GET",
+                "/privacy/retention-guardrails",
+                "privacy",
+                200,
+                (
+                    "Returns prompt/log/vector/artifact/upload/eval privacy surfaces, retention posture, "
+                    "policy evidence, missing controls, redaction rules, and owner actions."
+                ),
+            ),
+            self._row(
+                "Privacy Retention Pack",
+                "POST",
+                "/privacy/retention-pack",
+                "artifact",
+                200,
+                "Writes privacy retention guardrails, prompt logging guidance, owner actions, and proof commands.",
+                ["storage/privacy_packs/*.md", "storage/privacy_packs/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

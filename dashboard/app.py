@@ -98,6 +98,7 @@ tabs = st.tabs(
         "Reviewer Collaboration",
         "Evidence Freshness",
         "Evidence Conflicts",
+        "Privacy Retention",
     ]
 )
 
@@ -2387,4 +2388,78 @@ with tabs[37]:
             "Download Evidence Conflict Markdown",
             pack["markdown"],
             file_name="evidence_conflict_pack.md",
+        )
+
+
+with tabs[38]:
+    st.subheader("Privacy Retention Guardrails")
+    st.caption(
+        "Map prompt, log, vector metadata, artifact, upload, and eval-data surfaces to local privacy evidence, "
+        "retention posture, redaction rules, and owner actions."
+    )
+    cols = st.columns(2)
+    if cols[0].button("Load Privacy Guardrails"):
+        st.session_state.privacy_retention_guardrails = get_json("/privacy/retention-guardrails")
+    if cols[1].button("Generate Privacy Retention Pack"):
+        pack = post_json("/privacy/retention-pack", {"write_artifact": True})
+        st.session_state.privacy_retention_pack = pack
+        st.session_state.privacy_retention_guardrails = pack["guardrails"]
+        st.success(f"Privacy Retention Pack generated under privacy_packs: {pack['artifact_path']}")
+
+    guardrails = st.session_state.get("privacy_retention_guardrails")
+    if guardrails:
+        summary = guardrails["summary"]
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Surfaces", summary["surface_count"])
+        metric_cols[1].metric("High risk", summary["high_risk_surface_count"])
+        metric_cols[2].metric("Missing controls", summary["missing_control_count"])
+        metric_cols[3].metric("Actions", summary["retention_action_count"])
+        st.write("Surface matrix")
+        st.dataframe(
+            [
+                {
+                    "surface": item["surface_name"],
+                    "risk": item["risk_level"],
+                    "score": item["risk_score"],
+                    "owner": item["reviewer_owner"],
+                    "retention": item["retention_posture"],
+                    "missing": "; ".join(item["missing_controls"]),
+                    "endpoints": ", ".join(item["endpoint_references"]),
+                }
+                for item in guardrails["surfaces"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Mapped policy evidence")
+        st.dataframe(
+            [
+                {
+                    "surface": item["surface_name"],
+                    "source": source["filename"],
+                    "score": source["score"],
+                    "terms": ", ".join(source["matched_terms"]),
+                    "snippet": source["snippet"],
+                }
+                for item in guardrails["surfaces"]
+                for source in item["policy_evidence"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Retention actions")
+        st.dataframe(guardrails["retention_actions"], use_container_width=True)
+        st.write("Prompt and logging guidance")
+        st.write(guardrails["prompt_logging_guidance"])
+        st.write("Local proof commands")
+        st.code("\n".join(guardrails["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(guardrails["limitations"])
+
+    pack = st.session_state.get("privacy_retention_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Privacy Retention Markdown",
+            pack["markdown"],
+            file_name="privacy_retention_pack.md",
         )

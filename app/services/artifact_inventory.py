@@ -248,6 +248,14 @@ class ArtifactInventoryService:
                 "Select-Object FullName,Length,LastWriteTime"
             ),
             (
+                'rg "privacy/retention-guardrails|privacy/retention-pack|Privacy Retention|'
+                'privacy_packs|prompt logging" app dashboard docs README.md tests sample_data Makefile'
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\privacy_packs -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
                 'rg "procurement/question-risk|procurement/approval-pack|Procurement Q&A|'
                 'Approval Workflow|procurement_packs|question risk" '
                 "app dashboard docs README.md tests scripts sample_data Makefile"
@@ -475,6 +483,12 @@ class ArtifactInventoryService:
                 "compliance_packs",
                 "POST /compliance/control-pack",
                 "Compliance evidence matrix and control mapping Markdown and JSON.",
+            ),
+            self._spec(
+                "privacy_packs",
+                "privacy_packs",
+                "POST /privacy/retention-pack",
+                "Privacy retention guardrail matrix, prompt logging guidance, and owner actions.",
             ),
             self._spec(
                 "procurement_packs",
