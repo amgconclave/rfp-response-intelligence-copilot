@@ -313,6 +313,12 @@ async def main() -> None:
     runtime_pack = container.runtime_demo.demo_pack("demo-runtime-pack", write_artifact=True)
     rag_coverage = container.corpus_coverage.corpus_coverage("demo-rag-corpus-coverage")
     rag_coverage_pack = container.corpus_coverage.eval_coverage_pack("demo-rag-coverage-pack", write_artifact=True)
+    evidence_freshness = container.evidence_freshness.freshness_report("demo-evidence-freshness")
+    evidence_freshness_pack = container.evidence_freshness.freshness_pack(
+        "demo-evidence-freshness-pack",
+        evidence_freshness,
+        write_artifact=True,
+    )
     compliance_matrix = container.compliance.evidence_matrix(
         "demo-compliance-evidence-matrix",
         analysis=analysis,
@@ -517,6 +523,16 @@ async def main() -> None:
     print(f"RAG Eval Coverage Pack: {rag_coverage_pack.artifact_path}")
     print(f"RAG Eval Coverage Pack JSON: {rag_coverage_pack.json_artifact_path}")
     print(
+        "Evidence freshness: "
+        f"avg={evidence_freshness.summary['average_freshness_score']} "
+        f"sources={evidence_freshness.summary['source_count']} "
+        f"expired={evidence_freshness.summary['expired_count']} "
+        f"flags={evidence_freshness.summary['unsupported_claim_count']}"
+    )
+    print(f"Evidence Freshness Pack: {evidence_freshness_pack.artifact_path}")
+    print(f"Evidence Freshness Pack JSON: {evidence_freshness_pack.json_artifact_path}")
+    print("Freshness packs directory: storage/freshness_packs")
+    print(
         "Compliance control coverage: "
         f"{compliance_matrix.coverage_summary['coverage_ratio']} "
         f"families={compliance_matrix.coverage_summary['control_family_count']} "
@@ -623,6 +639,8 @@ async def main() -> None:
         f"runtime_pack={runtime_pack.artifact_path} "
         f"rag_coverage={rag_coverage.status}/{rag_coverage.score} "
         f"rag_coverage_pack={rag_coverage_pack.artifact_path} "
+        f"freshness={evidence_freshness.summary['average_freshness_score']} "
+        f"freshness_packs={evidence_freshness_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "
         f"compliance_packs={compliance_control_pack.artifact_path} "
         f"procurement question risk={procurement_question_risk.coverage_summary['coverage_ratio']} "

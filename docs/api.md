@@ -113,6 +113,29 @@ Runs deterministic local corpus coverage checks and writes Markdown/JSON artifac
 
 The pack covers the expanded implementation, DPA/privacy, SLA/support, AI governance/security, disaster recovery, and customer success/onboarding documents, plus eval coverage, red-team coverage, citation/source coverage, and missing-evidence coverage.
 
+### `GET /evidence/freshness`
+
+Returns the Evidence Freshness + Expiry Risk report. It scores non-RFP source documents by effective date, renewal date, policy owner, endpoint references, citation use, unsupported or absolute claim language, expiry status, risk drivers, and local proof commands.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/evidence/freshness" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The local report uses deterministic sample metadata and falls back to document metadata or content labels for uploaded documents. It does not require a live GRC, policy management, legal, or CRM system.
+
+### `POST /evidence/freshness-pack`
+
+Writes Markdown and JSON Evidence Freshness + Expiry Risk Pack artifacts under ignored `storage/freshness_packs/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes the source freshness matrix, renewal calendar, owner follow-ups, unsupported-claim flags, endpoint references, exact local proof commands, limitations, embedded freshness JSON, Markdown, JSON, and trace ID.
+
 ### `GET /compliance/evidence-matrix`
 
 Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.

@@ -96,6 +96,7 @@ tabs = st.tabs(
         "Objection Handling Pack",
         "Win/Loss Learning",
         "Reviewer Collaboration",
+        "Evidence Freshness",
     ]
 )
 
@@ -2250,4 +2251,69 @@ with tabs[35]:
             "Download Reviewer Collaboration Markdown",
             pack["markdown"],
             file_name="reviewer_collaboration_pack.md",
+        )
+
+
+with tabs[36]:
+    st.subheader("Evidence Freshness and Expiry Risk")
+    st.caption(
+        "Score source documents by age, renewal date, owner coverage, unsupported-claim language, and endpoint use."
+    )
+    cols = st.columns(2)
+    if cols[0].button("Load Freshness Report"):
+        st.session_state.evidence_freshness = get_json("/evidence/freshness")
+    if cols[1].button("Generate Freshness Pack"):
+        pack = post_json("/evidence/freshness-pack", {"write_artifact": True})
+        st.session_state.evidence_freshness_pack = pack
+        st.session_state.evidence_freshness = pack["freshness"]
+        st.success(f"Evidence Freshness Pack generated under freshness_packs: {pack['artifact_path']}")
+
+    freshness = st.session_state.get("evidence_freshness")
+    if freshness:
+        summary = freshness["summary"]
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Avg score", summary["average_freshness_score"])
+        metric_cols[1].metric("Sources", summary["source_count"])
+        metric_cols[2].metric("Expired", summary["expired_count"])
+        metric_cols[3].metric("Flags", summary["unsupported_claim_count"])
+        st.write("Source freshness matrix")
+        st.dataframe(
+            [
+                {
+                    "source": item["filename"],
+                    "type": item["document_type"],
+                    "owner": item["policy_owner"],
+                    "renewal": item["renewal_date"],
+                    "status": item["expiry_status"],
+                    "score": item["freshness_score"],
+                    "risk": item["risk_level"],
+                    "drivers": "; ".join(item["risk_drivers"]),
+                    "endpoints": ", ".join(item["endpoint_references"]),
+                }
+                for item in freshness["sources"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Renewal calendar")
+        st.dataframe(freshness["renewal_calendar"], use_container_width=True)
+        if freshness["unsupported_claims"]:
+            st.warning("Unsupported or absolute claims require owner review before reuse.")
+            st.dataframe(freshness["unsupported_claims"], use_container_width=True)
+        st.write("Owner follow-ups")
+        st.dataframe(freshness["owner_followups"], use_container_width=True)
+        st.write("Endpoint references")
+        st.dataframe(freshness["endpoint_references"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(freshness["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(freshness["limitations"])
+
+    pack = st.session_state.get("evidence_freshness_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Evidence Freshness Markdown",
+            pack["markdown"],
+            file_name="evidence_freshness_pack.md",
         )

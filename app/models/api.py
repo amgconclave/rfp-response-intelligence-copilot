@@ -853,6 +853,53 @@ class ControlPackResponse(BaseModel):
     trace_id: str
 
 
+class EvidenceFreshnessSource(BaseModel):
+    document_id: str
+    filename: str
+    document_type: str
+    policy_owner: str
+    effective_date: str | None = None
+    renewal_date: str | None = None
+    age_days: int | None = None
+    days_until_renewal: int | None = None
+    expiry_status: str
+    freshness_score: int
+    risk_level: str
+    risk_drivers: list[str] = Field(default_factory=list)
+    unsupported_claim_flags: list[str] = Field(default_factory=list)
+    endpoint_references: list[str] = Field(default_factory=list)
+    citation_use_count: int
+    chunk_count: int
+    source_path: str | None = None
+
+
+class EvidenceFreshnessResponse(BaseModel):
+    title: str
+    generated_at: str
+    sources: list[EvidenceFreshnessSource]
+    summary: dict[str, Any]
+    unsupported_claims: list[dict[str, Any]] = Field(default_factory=list)
+    renewal_calendar: list[dict[str, Any]] = Field(default_factory=list)
+    owner_followups: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class EvidenceFreshnessPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class EvidenceFreshnessPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    freshness: EvidenceFreshnessResponse
+    trace_id: str
+
+
 class ProcurementQuestionRiskItem(BaseModel):
     question_id: str
     question_type: str

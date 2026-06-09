@@ -470,6 +470,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "win_loss_packs",
             },
+            {
+                "label": "Evidence Freshness",
+                "endpoint_paths": ["/evidence/freshness", "/evidence/freshness-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "freshness_packs",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -604,6 +610,17 @@ class UIVerificationService:
                 "purpose": "Win/Loss Learning generated strategy pack.",
                 "expected_artifacts": ["storage/win_loss_packs/*.md", "storage/win_loss_packs/*.json"],
             },
+            {
+                "method": "GET",
+                "path": "/evidence/freshness",
+                "purpose": "Evidence Freshness tab source age, renewal, owner, endpoint, and claim-risk view.",
+            },
+            {
+                "method": "POST",
+                "path": "/evidence/freshness-pack",
+                "purpose": "Evidence Freshness generated expiry risk pack.",
+                "expected_artifacts": ["storage/freshness_packs/*.md", "storage/freshness_packs/*.json"],
+            },
         ]
 
     def _local_run_commands(self) -> list[str]:
@@ -683,6 +700,14 @@ class UIVerificationService:
             ),
             (
                 'curl -X POST "http://127.0.0.1:8000/learning/win-loss-pack" '
+                '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
+            ),
+            (
+                'curl -X GET "http://127.0.0.1:8000/evidence/freshness" '
+                '-H "X-API-Key: local-demo-key"'
+            ),
+            (
+                'curl -X POST "http://127.0.0.1:8000/evidence/freshness-pack" '
                 '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
             ),
         ]

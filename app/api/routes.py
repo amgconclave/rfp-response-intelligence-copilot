@@ -37,6 +37,9 @@ from app.models.api import (
     DraftRequest,
     EvaluateRequest,
     EvaluationMetrics,
+    EvidenceFreshnessPackRequest,
+    EvidenceFreshnessPackResponse,
+    EvidenceFreshnessResponse,
     EvidenceGapRequest,
     EvidenceGapResponse,
     ExecutiveRiskReportRequest,
@@ -2253,6 +2256,66 @@ async def rag_eval_coverage_pack(
 
 
 @router.get(
+    "/evidence/freshness",
+    response_model=EvidenceFreshnessResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def evidence_freshness(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> EvidenceFreshnessResponse:
+    trace_id = get_trace_id(request)
+    await _freshness_inputs(container)
+    result = container.evidence_freshness.freshness_report(trace_id)
+    container.audit.record(
+        trace_id,
+        "evidence.freshness_viewed",
+        "evidence_freshness",
+        metadata={
+            "sources": result.summary["source_count"],
+            "expired": result.summary["expired_count"],
+            "unsupported_claims": result.summary["unsupported_claim_count"],
+            "high_or_critical": result.summary["high_or_critical_risk_count"],
+        },
+    )
+    return result
+
+
+@router.post(
+    "/evidence/freshness-pack",
+    response_model=EvidenceFreshnessPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def evidence_freshness_pack(
+    request: Request,
+    payload: EvidenceFreshnessPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> EvidenceFreshnessPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or EvidenceFreshnessPackRequest()
+    await _freshness_inputs(container)
+    freshness = container.evidence_freshness.freshness_report(f"{trace_id}-freshness")
+    pack = container.evidence_freshness.freshness_pack(
+        trace_id,
+        freshness,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "evidence.freshness_pack_generated",
+        "evidence_freshness_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "sources": pack.freshness.summary["source_count"],
+            "expired": pack.freshness.summary["expired_count"],
+        },
+    )
+    return pack
+
+
+@router.get(
     "/compliance/evidence-matrix",
     response_model=ComplianceEvidenceMatrixResponse,
     dependencies=[Depends(require_api_key)],
@@ -2621,6 +2684,30 @@ async def _compliance_inputs(
         requirement_matrix=matrix,
     )
     return analysis, matrix, review.findings
+
+
+async def _freshness_inputs(container: ServiceContainer) -> None:
+    sample_docs = [
+        ("sample_data/acme_enterprise_rfp.md", "rfp"),
+        ("sample_data/prior_proposal.md", "proposal"),
+        ("sample_data/product_overview.md", "product"),
+        ("sample_data/security_policy.md", "security"),
+        ("sample_data/compliance_policy.md", "compliance"),
+        ("sample_data/pricing_notes.md", "pricing"),
+        ("sample_data/implementation_guide.md", "implementation"),
+        ("sample_data/dpa_privacy_policy.md", "privacy"),
+        ("sample_data/sla_support_policy.md", "support"),
+        ("sample_data/ai_governance_security.md", "security"),
+        ("sample_data/disaster_recovery_plan.md", "disaster_recovery"),
+        ("sample_data/customer_success_onboarding.md", "customer_success"),
+        ("sample_data/customer_contract_terms.md", "contract"),
+    ]
+    loaded = {document.filename for document in container.repo.documents.values()}
+    for fixture_path, document_type in sample_docs:
+        filename = Path(fixture_path).name
+        if filename not in loaded:
+            await container.ingestion.ingest_path(fixture_path, document_type=document_type, source="sample_data")
+            loaded.add(filename)
 
 
 async def _procurement_inputs(

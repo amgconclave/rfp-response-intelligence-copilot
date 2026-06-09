@@ -17,6 +17,7 @@ from app.services.deal_readiness import DealReadinessService
 from app.services.demo_script import DemoScriptService
 from app.services.draft_generation import DraftGenerationService
 from app.services.evaluation import EvaluationService
+from app.services.evidence_freshness import EvidenceFreshnessService
 from app.services.evidence_gap import EvidenceGapService
 from app.services.final_handoff import FinalHandoffService
 from app.services.git_readiness import GitReadinessService
@@ -91,6 +92,7 @@ class ServiceContainer:
         self.workbench = RfpWorkbenchService(self.repo, settings, self.metrics)
         self.review_board = RfpReviewBoardService()
         self.evaluation = EvaluationService(self.retrieval, self.generation)
+        self.evidence_freshness = EvidenceFreshnessService(self.repo, settings)
         self.objection_handling = CompetitiveObjectionHandlingService(
             self.repo,
             settings,

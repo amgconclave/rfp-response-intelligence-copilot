@@ -280,6 +280,14 @@ class ArtifactInventoryService:
                 "Get-ChildItem -Recurse -File storage\\objection_packs -ErrorAction SilentlyContinue | "
                 "Select-Object FullName,Length,LastWriteTime"
             ),
+            (
+                'rg "evidence/freshness|Evidence Freshness|freshness_packs|expiry risk|renewal" '
+                "app dashboard docs README.md tests sample_data Makefile"
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\freshness_packs -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
         ]
 
     def _reviewer_proof_checklist(self) -> list[str]:
@@ -318,6 +326,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /learning/win-loss-pack to write the Win/Loss Learning Strategy Pack "
                 "under storage/win_loss_packs/."
+            ),
+            (
+                "Call POST /evidence/freshness-pack to write the Evidence Freshness Pack "
+                "under storage/freshness_packs/."
             ),
             (
                 "Inspect storage/artifact_indexes plus at least one Markdown/JSON artifact from each "
@@ -481,6 +493,12 @@ class ArtifactInventoryService:
                 "win_loss_packs",
                 "POST /learning/win-loss-pack",
                 "Win/loss learning strategy pack with retrieval, eval, and response guidance updates.",
+            ),
+            self._spec(
+                "freshness_packs",
+                "freshness_packs",
+                "POST /evidence/freshness-pack",
+                "Evidence freshness, renewal, owner, endpoint, and unsupported-claim risk artifacts.",
             ),
             self._spec(
                 "audit_packs",

@@ -276,6 +276,7 @@ class ReleaseService:
             "bid_packs": "Bid/No-Bid scenario simulator and ROI Impact packs",
             "objection_packs": "Competitive objection handling packs",
             "win_loss_packs": "Win/Loss Learning Strategy packs",
+            "freshness_packs": "Evidence freshness and expiry risk packs",
             "portfolio_packs": "Portfolio interview packs",
             "release_packs": "GitHub publish packs",
             "ui_verification": "Dashboard Smoke and UI verification packs",

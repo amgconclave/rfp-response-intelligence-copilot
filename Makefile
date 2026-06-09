@@ -3,7 +3,7 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8000
 DASHBOARD_PORT ?= 8501
 
-.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
+.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack freshness freshness-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
 
 install:
 	$(PYTHON) -m pip install -e .
@@ -36,6 +36,12 @@ compliance-matrix:
 
 compliance-pack:
 	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/compliance/control-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
+
+freshness:
+	$(PYTHON) -c "import httpx; f=httpx.get('http://127.0.0.1:8000/evidence/freshness', headers={'X-API-Key': 'local-demo-key'}, timeout=30).json(); print({'avg_score': f['summary']['average_freshness_score'], 'sources': f['summary']['source_count'], 'expired': f['summary']['expired_count'], 'flags': f['summary']['unsupported_claim_count']})"
+
+freshness-pack:
+	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/evidence/freshness-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
 
 procurement-risk:
 	$(PYTHON) -c "import httpx; r=httpx.get('http://127.0.0.1:8000/procurement/question-risk', headers={'X-API-Key': 'local-demo-key'}, timeout=30).json(); print({'questions': r['coverage_summary']['question_count'], 'coverage': r['coverage_summary']['coverage_ratio'], 'blocked': r['approval_summary']['blocked_count']})"

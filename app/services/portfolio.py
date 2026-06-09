@@ -209,6 +209,28 @@ class PortfolioService:
                 ],
             ),
             self._skill(
+                "evidence-freshness-expiry-risk",
+                "Evidence freshness and expiry risk pack",
+                [
+                    "Source age scoring",
+                    "Renewal-date and owner routing",
+                    "Unsupported-claim freshness flags",
+                    "Endpoint references for stale evidence risk",
+                    "Markdown/JSON freshness artifacts",
+                ],
+                ["/evidence/freshness", "/evidence/freshness-pack"],
+                ["app/services/evidence_freshness.py"],
+                ["tests/test_evidence_freshness.py", "python scripts\\dashboard_smoke.py"],
+                ["storage/freshness_packs/*.md", "storage/freshness_packs/*.json"],
+                ["python -m app.demo"],
+                [
+                    "sample_data/security_policy.md",
+                    "sample_data/compliance_policy.md",
+                    "sample_data/dpa_privacy_policy.md",
+                    "sample_data/disaster_recovery_plan.md",
+                ],
+            ),
+            self._skill(
                 "procurement-approval-workflow",
                 "Procurement Q&A risk simulation and reviewer approval workflow",
                 [
@@ -463,6 +485,7 @@ class PortfolioService:
             "rg \"bid/scenario-analysis|bid/roi-pack|Bid/No-Bid|ROI Impact|bid_packs|risk-adjusted ROI\" app dashboard docs README.md tests scripts sample_data Makefile",
             "rg \"objection-handling|Competitive Objection|Objection Handling|objection_packs\" app dashboard docs README.md tests Makefile",
             "rg \"learning/win-loss|Win/Loss Learning|win_loss_packs|rfp_outcomes\" app dashboard docs README.md tests sample_data Makefile",
+            "rg \"evidence/freshness|Evidence Freshness|freshness_packs|expiry risk|renewal\" app dashboard docs README.md tests sample_data Makefile",
         ]
 
     def _pack_payload(
