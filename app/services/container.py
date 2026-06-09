@@ -24,6 +24,7 @@ from app.services.ingestion import DocumentIngestionService
 from app.services.launch_checklist import LaunchChecklistService
 from app.services.leadership_brief import LeadershipBriefService
 from app.services.metrics import MetricsService
+from app.services.objection_handling import CompetitiveObjectionHandlingService
 from app.services.portfolio import PortfolioService
 from app.services.procurement import ProcurementQuestionRiskService
 from app.services.release import ReleaseService
@@ -86,6 +87,13 @@ class ServiceContainer:
         self.workbench = RfpWorkbenchService(self.repo, settings, self.metrics)
         self.review_board = RfpReviewBoardService()
         self.evaluation = EvaluationService(self.retrieval, self.generation)
+        self.objection_handling = CompetitiveObjectionHandlingService(
+            self.repo,
+            settings,
+            self.retrieval,
+            self.customer_intelligence,
+            self.review_board,
+        )
         self.procurement = ProcurementQuestionRiskService(
             self.repo,
             settings,

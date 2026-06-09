@@ -38,6 +38,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `ActionPlanService`: turns requirements, gaps, and review findings into stakeholder tasks.
 - `DealReadinessService`: scores launch readiness, executive risk, and blockers.
 - `WinStrategyService`: simulates competitor posture, pricing risk, and pursuit strategy.
+- `CompetitiveObjectionHandlingService`: generates cited competitor, pricing, security, compliance, and implementation objection responses with confidence and reviewer workflow artifacts.
 - `ContractRiskService`: identifies risky customer terms and writes negotiation briefs.
 - `EvidenceGapService`: produces source request packs for unsupported claims.
 - `TimelineOrchestrationService`: creates proposal milestones and submission calendar packs.
@@ -85,6 +86,7 @@ Generated files are not committed. They are reproducible outputs from local API 
 - `storage/compliance_packs/`
 - `storage/procurement_packs/`
 - `storage/bid_packs/`
+- `storage/objection_packs/`
 - `storage/portfolio_packs/`
 - `storage/reviewer_packs/`
 - `storage/api_contracts/`

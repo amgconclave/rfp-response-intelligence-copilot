@@ -161,6 +161,9 @@ class ReleaseService:
                 "Procurement Approval Workflow Pack writes Markdown and JSON under storage/procurement_packs."
             ),
             "bid_roi_pack": "ROI Impact Pack writes Markdown and JSON under storage/bid_packs.",
+            "objection_pack": (
+                "Competitive Objection Handling Pack writes Markdown and JSON under storage/objection_packs."
+            ),
             "demo": "Final demo summary plus release gate status and publish pack path.",
             "readme": "README documents Release Candidate and Publish Pack workflow.",
             "api_docs": "API docs list /release/quality-gate and /release/publish-pack.",
@@ -231,6 +234,11 @@ class ReleaseService:
                 "artifact_root": str((self.settings.storage_dir / "bid_packs").resolve()),
                 "endpoints": ["/bid/scenario-analysis", "/bid/roi-pack"],
             },
+            "objections": {
+                "service_path": "app/services/objection_handling.py",
+                "artifact_root": str((self.settings.storage_dir / "objection_packs").resolve()),
+                "endpoints": ["/rfp/objection-handling", "/rfp/objection-handling-pack"],
+            },
             "api": {
                 "endpoint_count": len(paths),
                 "artifact_endpoint_count": smoke_matrix.readiness_summary.artifact_writing_endpoints,
@@ -259,6 +267,7 @@ class ReleaseService:
             "compliance_packs": "Compliance evidence matrix and control mapping packs",
             "procurement_packs": "Procurement Q&A risk and approval workflow packs",
             "bid_packs": "Bid/No-Bid scenario simulator and ROI Impact packs",
+            "objection_packs": "Competitive objection handling packs",
             "portfolio_packs": "Portfolio interview packs",
             "release_packs": "GitHub publish packs",
             "ui_verification": "Dashboard Smoke and UI verification packs",
@@ -476,6 +485,7 @@ class ReleaseService:
                 "make compliance-pack",
                 "make procurement-pack",
                 "make bid-roi-pack",
+                "make objection-pack",
                 "python -m app.demo",
                 (
                     'rg "release/quality-gate|release/publish-pack|Release Candidate|Publish Pack|'
@@ -491,6 +501,7 @@ class ReleaseService:
                 "compliance_pack": "storage/compliance_packs contains Markdown and JSON control mapping files.",
                 "procurement_pack": "storage/procurement_packs contains Markdown and JSON approval workflow files.",
                 "bid_roi_pack": "storage/bid_packs contains Markdown and JSON ROI Impact Pack files.",
+                "objection_pack": "storage/objection_packs contains Markdown and JSON objection handling files.",
                 "demo": "Prints release gate status/score and publish pack path.",
                 "artifact_listing": "storage/release_packs contains Markdown and JSON publish pack files.",
             },

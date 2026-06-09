@@ -44,6 +44,8 @@ class LaunchChecklistService:
                 "POST /procurement/approval-pack",
                 "GET /bid/scenario-analysis",
                 "POST /bid/roi-pack",
+                "POST /rfp/objection-handling",
+                "POST /rfp/objection-handling-pack",
                 "GET /ops/ci-doctor",
                 "POST /ops/audit-pack",
                 "GET /api/contract-audit",
@@ -106,6 +108,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\bid_packs -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "objection-handling|Competitive Objection|Objection Handling|'
+                    'objection_packs" app dashboard docs README.md tests Makefile'
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\objection_packs -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -280,6 +290,7 @@ class LaunchChecklistService:
             "compliance_packs": "storage/compliance_packs",
             "procurement_packs": "storage/procurement_packs",
             "bid_packs": "storage/bid_packs",
+            "objection_packs": "storage/objection_packs",
             "api_contracts": "storage/api_contracts",
             "portfolio_packs": "storage/portfolio_packs",
             "release_packs": "storage/release_packs",
@@ -724,6 +735,28 @@ class LaunchChecklistService:
                     "proof commands, and limitations."
                 ),
                 ["storage/bid_packs/*.md", "storage/bid_packs/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Competitive objection handling",
+                "POST",
+                "/rfp/objection-handling",
+                "enterprise",
+                200,
+                (
+                    "Returns cited objection responses for competitor, pricing, security, compliance, "
+                    "and implementation concerns with confidence and reviewer status."
+                ),
+                body='{"competitor_context":["Incumbent competitor is cheaper."],"top_k":4}',
+            ),
+            self._row(
+                "Objection Handling Pack",
+                "POST",
+                "/rfp/objection-handling-pack",
+                "artifact",
+                200,
+                "Writes competitive objection responses, reviewer workflow, endpoint references, and proof commands.",
+                ["storage/objection_packs/*.md", "storage/objection_packs/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

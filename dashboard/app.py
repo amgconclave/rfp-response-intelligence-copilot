@@ -93,6 +93,7 @@ tabs = st.tabs(
         "Compliance Evidence",
         "Procurement Q&A",
         "Bid/No-Bid ROI",
+        "Objection Handling Pack",
     ]
 )
 
@@ -2013,4 +2014,88 @@ with tabs[32]:
             "Download ROI Impact Markdown",
             pack["markdown"],
             file_name="bid_roi_impact_pack.md",
+        )
+
+
+with tabs[33]:
+    st.subheader("Competitive Objection Handling Pack")
+    st.caption(
+        "Generate cited objection responses for competitor, pricing, security, compliance, "
+        "and implementation concerns; show confidence, reviewer status, missing evidence, and local artifact proof."
+    )
+    competitor_context = st.text_area(
+        "Objection competitor context",
+        "Incumbent competitor may bundle workflow tooling and offer a 25% discount during procurement.",
+        height=90,
+    )
+    objection_notes = st.text_area(
+        "Custom objection notes",
+        "Customer asks why they should not choose a cheaper bundled competitor.",
+        height=90,
+    )
+    payload = {
+        "competitor_context": [line.strip() for line in competitor_context.splitlines() if line.strip()],
+        "objection_notes": [line.strip() for line in objection_notes.splitlines() if line.strip()],
+        "top_k": 4,
+    }
+    if st.session_state.get("analysis"):
+        payload["analysis"] = st.session_state.analysis
+    if st.session_state.get("matrix"):
+        payload["matrix"] = st.session_state.matrix
+    if st.session_state.get("win_strategy"):
+        payload["win_strategy"] = st.session_state.win_strategy
+
+    cols = st.columns(2)
+    if cols[0].button("Generate objection handling"):
+        st.session_state.objection_handling = post_json("/rfp/objection-handling", payload)
+    if cols[1].button("Export Objection Handling Pack"):
+        pack_payload = {**payload, "write_artifact": True}
+        if st.session_state.get("objection_handling"):
+            pack_payload["objection_handling"] = st.session_state.objection_handling
+        pack = post_json("/rfp/objection-handling-pack", pack_payload)
+        st.session_state.objection_handling_pack = pack
+        st.session_state.objection_handling = pack["objection_handling"]
+        st.success(f"Objection Handling Pack generated under objection_packs: {pack['artifact_path']}")
+
+    handling = st.session_state.get("objection_handling")
+    if handling:
+        coverage = handling["coverage_summary"]
+        confidence = handling["confidence_summary"]
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Objections", coverage["objection_count"])
+        metric_cols[1].metric("Coverage", coverage["coverage_ratio"])
+        metric_cols[2].metric("Avg confidence", confidence["average_confidence"])
+        metric_cols[3].metric("Blocked", coverage["blocked_count"])
+        st.dataframe(
+            [
+                {
+                    "concern": item["concern_type"],
+                    "risk": item["risk_level"],
+                    "confidence": item["confidence"],
+                    "approval": item["approval_status"],
+                    "reviewer": item["required_reviewer_role"],
+                    "citations": ", ".join(citation["filename"] for citation in item["citations"]),
+                    "missing": "; ".join(item["missing_evidence"]),
+                }
+                for item in handling["objections"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Endpoint references")
+        st.dataframe(handling["endpoint_references"], use_container_width=True)
+        st.write("Proof commands")
+        st.code("\n".join(handling["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(handling["limitations"])
+
+    pack = st.session_state.get("objection_handling_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.write("Reviewer workflow")
+        st.dataframe(pack["pack"]["reviewer_workflow"], use_container_width=True)
+        st.download_button(
+            "Download Objection Handling Markdown",
+            pack["markdown"],
+            file_name="competitive_objection_handling_pack.md",
         )

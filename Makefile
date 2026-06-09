@@ -3,7 +3,7 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8000
 DASHBOARD_PORT ?= 8501
 
-.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack procurement-risk procurement-pack bid-scenarios bid-roi-pack smoke checklist runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
+.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack procurement-risk procurement-pack bid-scenarios bid-roi-pack objection-handling objection-pack smoke checklist runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
 
 install:
 	$(PYTHON) -m pip install -e .
@@ -48,6 +48,12 @@ bid-scenarios:
 
 bid-roi-pack:
 	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/bid/roi-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
+
+objection-handling:
+	$(PYTHON) -c "import httpx; r=httpx.post('http://127.0.0.1:8000/rfp/objection-handling', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json(); print({'objections': r['coverage_summary']['objection_count'], 'coverage': r['coverage_summary']['coverage_ratio'], 'confidence': r['confidence_summary']['average_confidence']})"
+
+objection-pack:
+	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/rfp/objection-handling-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
 
 smoke:
 	$(PYTHON) -c "import httpx; print(httpx.get('http://127.0.0.1:8000/ops/smoke-matrix', headers={'X-API-Key': 'local-demo-key'}, timeout=20).json()['readiness_summary'])"

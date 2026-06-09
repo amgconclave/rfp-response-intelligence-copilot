@@ -452,6 +452,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "bid_packs",
             },
+            {
+                "label": "Objection Handling Pack",
+                "endpoint_paths": ["/rfp/objection-handling", "/rfp/objection-handling-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "objection_packs",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -552,6 +558,17 @@ class UIVerificationService:
                 "path": "/bid/roi-pack",
                 "purpose": "Bid/No-Bid ROI generated impact pack.",
                 "expected_artifacts": ["storage/bid_packs/*.md", "storage/bid_packs/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/objection-handling",
+                "purpose": "Objection Handling tab cited response catalog.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/objection-handling-pack",
+                "purpose": "Objection Handling generated reviewer pack.",
+                "expected_artifacts": ["storage/objection_packs/*.md", "storage/objection_packs/*.json"],
             },
         ]
 

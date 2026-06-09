@@ -252,6 +252,55 @@ class PricingRiskMemoResponse(BaseModel):
     trace_id: str
 
 
+class ObjectionHandlingRequest(WinStrategyRequest):
+    objection_notes: list[str] = Field(default_factory=list)
+    top_k: int = 4
+
+
+class ObjectionResponseItem(BaseModel):
+    objection_id: str
+    concern_type: str
+    buyer_objection: str
+    competitor_angle: str
+    response_posture: str
+    cited_response: str
+    confidence: float
+    risk_level: str
+    approval_status: str
+    required_reviewer_role: str
+    citations: list[Citation] = Field(default_factory=list)
+    source_snippets: list[dict[str, Any]] = Field(default_factory=list)
+    missing_evidence: list[str] = Field(default_factory=list)
+    reviewer_notes: list[str] = Field(default_factory=list)
+    recommended_followups: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ObjectionHandlingResponse(BaseModel):
+    title: str
+    objections: list[ObjectionResponseItem]
+    coverage_summary: dict[str, Any]
+    confidence_summary: dict[str, Any]
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ObjectionHandlingPackRequest(ObjectionHandlingRequest):
+    objection_handling: ObjectionHandlingResponse | None = None
+    write_artifact: bool = True
+
+
+class ObjectionHandlingPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    objection_handling: ObjectionHandlingResponse
+    trace_id: str
+
+
 class ContractRiskClause(BaseModel):
     clause_id: str
     category: str

@@ -352,6 +352,26 @@ async def main() -> None:
         bid_scenario_analysis,
         write_artifact=True,
     )
+    objection_handling = await container.objection_handling.objection_handling(
+        trace_id="demo-objection-handling",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        win_strategy=win_strategy,
+        response_memory_matches=memory_matches,
+        review_findings=package_review.findings,
+        competitor_context=[
+            "Incumbent competitor may bundle workflow tooling and offer a 25% discount during procurement.",
+        ],
+        pricing_notes=[
+            "Use standard tiers; route discounts, price matching, payment terms, and custom packaging for approval.",
+        ],
+        top_k=4,
+    )
+    objection_pack = container.objection_handling.handling_pack(
+        "demo-objection-pack",
+        objection_handling,
+        write_artifact=True,
+    )
     owner_counts = Counter(task.owner_role for task in action_plan)
 
     print("RFP Response Intelligence Copilot demo")
@@ -496,6 +516,16 @@ async def main() -> None:
     print(f"ROI Impact Pack: {bid_roi_pack.artifact_path}")
     print(f"ROI Impact Pack JSON: {bid_roi_pack.json_artifact_path}")
     print("Bid packs directory: storage/bid_packs")
+    print(
+        "Objection handling: "
+        f"objections={objection_handling.coverage_summary['objection_count']} "
+        f"coverage={objection_handling.coverage_summary['coverage_ratio']} "
+        f"confidence={objection_handling.confidence_summary['average_confidence']} "
+        f"blocked={objection_handling.coverage_summary['blocked_count']}"
+    )
+    print(f"Competitive Objection Handling Pack: {objection_pack.artifact_path}")
+    print(f"Competitive Objection Handling Pack JSON: {objection_pack.json_artifact_path}")
+    print("Objection packs directory: storage/objection_packs")
     print(f"Eval pass: {evaluation.passed}")
     print(f"Retrieval precision@k: {evaluation.retrieval_precision_at_k}")
     print(f"Citation coverage: {evaluation.citation_coverage}")
@@ -551,6 +581,8 @@ async def main() -> None:
         f"procurement_packs={procurement_approval_pack.artifact_path} "
         f"bid_scenarios={len(bid_scenario_analysis.scenarios)} "
         f"bid_packs={bid_roi_pack.artifact_path} "
+        f"objection_handling={objection_handling.coverage_summary['coverage_ratio']} "
+        f"objection_packs={objection_pack.artifact_path} "
         f"red_team={red_team['passed']} brief={leadership_brief.artifact_path}"
     )
 

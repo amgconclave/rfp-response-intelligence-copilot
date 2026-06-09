@@ -264,6 +264,14 @@ class ArtifactInventoryService:
                 "Get-ChildItem -Recurse -File storage\\bid_packs -ErrorAction SilentlyContinue | "
                 "Select-Object FullName,Length,LastWriteTime"
             ),
+            (
+                'rg "objection-handling|Competitive Objection|Objection Handling|'
+                'objection_packs" app dashboard docs README.md tests Makefile'
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\objection_packs -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
         ]
 
     def _reviewer_proof_checklist(self) -> list[str]:
@@ -290,6 +298,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /bid/roi-pack to write the Bid/No-Bid ROI Impact Pack "
                 "under storage/bid_packs/."
+            ),
+            (
+                "Call POST /rfp/objection-handling-pack to write the Competitive Objection Handling Pack "
+                "under storage/objection_packs/."
             ),
             (
                 "Inspect storage/artifact_indexes plus at least one Markdown/JSON artifact from each "
@@ -435,6 +447,12 @@ class ArtifactInventoryService:
                 "bid_packs",
                 "POST /bid/roi-pack",
                 "Bid/No-Bid scenario simulator and ROI Impact Pack Markdown and JSON.",
+            ),
+            self._spec(
+                "objection_packs",
+                "objection_packs",
+                "POST /rfp/objection-handling-pack",
+                "Competitive objection handling responses, reviewer workflow, confidence, and citations.",
             ),
             self._spec(
                 "audit_packs",

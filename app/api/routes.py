@@ -62,6 +62,10 @@ from app.models.api import (
     LeadershipBriefResponse,
     NegotiationBriefRequest,
     NegotiationBriefResponse,
+    ObjectionHandlingPackRequest,
+    ObjectionHandlingPackResponse,
+    ObjectionHandlingRequest,
+    ObjectionHandlingResponse,
     PortfolioEvidenceIndexResponse,
     PortfolioInterviewPackRequest,
     PortfolioInterviewPackResponse,
@@ -762,6 +766,124 @@ async def pricing_risk_memo(
         },
     )
     return memo
+
+
+@router.post(
+    "/rfp/objection-handling",
+    response_model=ObjectionHandlingResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def objection_handling(
+    request: Request,
+    payload: ObjectionHandlingRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ObjectionHandlingResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ObjectionHandlingRequest()
+    analysis, matrix, customer_fit, readiness, memory_matches, action_plan_items = _win_strategy_inputs(
+        request_payload,
+        trace_id,
+        container,
+    )
+    strategy = container.win_strategy.create_win_strategy(
+        trace_id=f"{trace_id}-win-strategy",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        customer_fit=customer_fit,
+        readiness_scorecard=readiness,
+        response_memory_matches=memory_matches,
+        action_plan=action_plan_items,
+        review_findings=request_payload.review_findings,
+        competitor_context=request_payload.competitor_context,
+        pricing_notes=request_payload.pricing_notes,
+    )
+    result = await container.objection_handling.objection_handling(
+        trace_id,
+        analysis=analysis,
+        requirement_matrix=matrix,
+        win_strategy=strategy,
+        response_memory_matches=memory_matches,
+        review_findings=request_payload.review_findings,
+        competitor_context=request_payload.competitor_context,
+        pricing_notes=request_payload.pricing_notes,
+        objection_notes=request_payload.objection_notes,
+        top_k=request_payload.top_k,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.objection_handling_created",
+        "objection_handling",
+        metadata={
+            "objections": result.coverage_summary["objection_count"],
+            "coverage_ratio": result.coverage_summary["coverage_ratio"],
+            "blocked": result.coverage_summary["blocked_count"],
+            "average_confidence": result.confidence_summary["average_confidence"],
+        },
+    )
+    return result
+
+
+@router.post(
+    "/rfp/objection-handling-pack",
+    response_model=ObjectionHandlingPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def objection_handling_pack(
+    request: Request,
+    payload: ObjectionHandlingPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ObjectionHandlingPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ObjectionHandlingPackRequest()
+    handling = request_payload.objection_handling
+    if handling is None:
+        analysis, matrix, customer_fit, readiness, memory_matches, action_plan_items = _win_strategy_inputs(
+            request_payload,
+            trace_id,
+            container,
+        )
+        strategy = container.win_strategy.create_win_strategy(
+            trace_id=f"{trace_id}-win-strategy",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            customer_fit=customer_fit,
+            readiness_scorecard=readiness,
+            response_memory_matches=memory_matches,
+            action_plan=action_plan_items,
+            review_findings=request_payload.review_findings,
+            competitor_context=request_payload.competitor_context,
+            pricing_notes=request_payload.pricing_notes,
+        )
+        handling = await container.objection_handling.objection_handling(
+            f"{trace_id}-objections",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            win_strategy=strategy,
+            response_memory_matches=memory_matches,
+            review_findings=request_payload.review_findings,
+            competitor_context=request_payload.competitor_context,
+            pricing_notes=request_payload.pricing_notes,
+            objection_notes=request_payload.objection_notes,
+            top_k=request_payload.top_k,
+        )
+    pack = container.objection_handling.handling_pack(
+        trace_id,
+        handling,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.objection_handling_pack_exported",
+        "objection_handling_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "objections": pack.objection_handling.coverage_summary["objection_count"],
+            "coverage_ratio": pack.objection_handling.coverage_summary["coverage_ratio"],
+        },
+    )
+    return pack
 
 
 @router.post(

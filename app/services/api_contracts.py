@@ -171,6 +171,8 @@ class ApiContractService:
             "/procurement/approval-pack",
             "/bid/scenario-analysis",
             "/bid/roi-pack",
+            "/rfp/objection-handling",
+            "/rfp/objection-handling-pack",
             "/ops/smoke-matrix",
             "/ops/launch-checklist",
             "/ui/dashboard-smoke",
@@ -258,6 +260,8 @@ class ApiContractService:
             "storage/procurement_packs": "procurement_packs",
             "/bid/roi-pack": "bid_roi_pack",
             "storage/bid_packs": "bid_packs",
+            "/rfp/objection-handling-pack": "objection_pack",
+            "storage/objection_packs": "objection_packs",
         }
         missing = [path for path, token in required.items() if token not in demo]
         return ApiContractCheck(
@@ -506,6 +510,8 @@ class ApiContractService:
             "/compliance/control-pack": '{"write_artifact":true}',
             "/procurement/approval-pack": '{"write_artifact":true}',
             "/bid/roi-pack": '{"write_artifact":true}',
+            "/rfp/objection-handling": '{"competitor_context":["Incumbent competitor is cheaper."],"top_k":4}',
+            "/rfp/objection-handling-pack": '{"write_artifact":true}',
         }
         no_body_paths = {"/health", "/documents", "/metrics/usage", "/audit/events"}
         return bodies.get(path, "{}" if path not in no_body_paths else None)

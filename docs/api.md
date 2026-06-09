@@ -598,6 +598,45 @@ Writes a Markdown and JSON pricing risk memo under `storage/pricing_memos/` by d
 
 The memo includes pricing assumptions, discount/packaging risks, compliance blockers, competitor framing, cited proof points, leadership recommendation, exact local commands, JD skills demonstrated, and five interviewer talking points. The response includes `artifact_path`, `json_artifact_path`, `markdown`, `memo`, and `trace_id`.
 
+### `POST /rfp/objection-handling`
+
+Generates deterministic, cited objection responses for competitor, pricing, security, compliance, and implementation concerns. If called with `{}` in local demo mode, the endpoint analyzes the sample RFP, builds the requirement matrix, creates win-strategy context, and retrieves local evidence from the ingested/sample corpus.
+
+```json
+{
+  "analysis": {},
+  "matrix": [],
+  "customer_profile_id": "regulated_healthcare",
+  "competitor_context": [
+    "Incumbent competitor is cheaper and bundling workflow tooling."
+  ],
+  "pricing_notes": [
+    "Route discounts, payment terms, and custom packaging for approval."
+  ],
+  "objection_notes": [
+    "Customer asks why they should not choose the cheaper bundled competitor."
+  ],
+  "top_k": 4
+}
+```
+
+The response includes objection records by `concern_type`, buyer objection text, competitor angle, response posture, cited response, confidence, risk level, approval status, required reviewer role, citations, source snippets, missing evidence, recommended follow-ups, endpoint references, local proof commands, and limitations.
+
+### `POST /rfp/objection-handling-pack`
+
+Writes Markdown and JSON Competitive Objection Handling Pack artifacts under `storage/objection_packs/` by default. The endpoint accepts the same inputs as `/rfp/objection-handling` plus an optional precomputed `objection_handling` response and `write_artifact` flag.
+
+```json
+{
+  "competitor_context": [
+    "Incumbent competitor is cheaper and bundling workflow tooling."
+  ],
+  "write_artifact": true
+}
+```
+
+The pack includes a summary, all cited objection responses, high-risk objections, reviewer workflow, endpoint references, proof commands, limitations, and artifact paths.
+
 ### `POST /rfp/contract-risk`
 
 Analyzes customer contract or procurement terms from pasted `text`, an ingested `contract_document_id`, or a local `fixture_path`. The deterministic analyzer flags liability, data processing, security obligations, SLA/service credits, audit rights, termination, indemnity, data residency, AI/data use, and pricing/payment risks.

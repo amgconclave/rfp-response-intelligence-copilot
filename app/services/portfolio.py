@@ -49,6 +49,7 @@ class PortfolioService:
                 "compliance_packs": str((self.settings.storage_dir / "compliance_packs").resolve()),
                 "procurement_packs": str((self.settings.storage_dir / "procurement_packs").resolve()),
                 "bid_packs": str((self.settings.storage_dir / "bid_packs").resolve()),
+                "objection_packs": str((self.settings.storage_dir / "objection_packs").resolve()),
             },
             limitations=[
                 "Local portfolio mode uses deterministic mock LLM behavior by default; paid OpenAI/Azure APIs are optional adapters.",
@@ -243,6 +244,22 @@ class PortfolioService:
                 ["sample_data/customer_profiles.json", "docs/api.md"],
             ),
             self._skill(
+                "competitive-objection-handling",
+                "Competitive objection handling with cited, reviewer-gated responses",
+                [
+                    "Competitor, pricing, security, compliance, and implementation objection catalog",
+                    "Citation-backed response posture",
+                    "Confidence and reviewer approval status",
+                    "Markdown/JSON reviewer pack",
+                ],
+                ["/rfp/objection-handling", "/rfp/objection-handling-pack"],
+                ["app/services/objection_handling.py"],
+                ["tests/test_objection_handling.py", "python scripts\\dashboard_smoke.py"],
+                ["storage/objection_packs/*.md", "storage/objection_packs/*.json"],
+                ["make objection-pack", "python -m app.demo"],
+                ["sample_data/pricing_notes.md", "sample_data/security_policy.md", "docs/api.md"],
+            ),
+            self._skill(
                 "requirement-matrix-review",
                 "Requirement matrix and review-board workflow",
                 ["Requirement ownership, risk status, package review, groundedness review"],
@@ -407,6 +424,7 @@ class PortfolioService:
             "rg \"compliance/evidence-matrix|compliance/control-pack|Compliance Evidence|Control Mapping|compliance_packs|control coverage\" app dashboard docs README.md tests scripts sample_data Makefile",
             "rg \"procurement/question-risk|procurement/approval-pack|Procurement Q&A|Approval Workflow|procurement_packs|question risk\" app dashboard docs README.md tests scripts sample_data Makefile",
             "rg \"bid/scenario-analysis|bid/roi-pack|Bid/No-Bid|ROI Impact|bid_packs|risk-adjusted ROI\" app dashboard docs README.md tests scripts sample_data Makefile",
+            "rg \"objection-handling|Competitive Objection|Objection Handling|objection_packs\" app dashboard docs README.md tests Makefile",
         ]
 
     def _pack_payload(
