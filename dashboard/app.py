@@ -95,6 +95,7 @@ tabs = st.tabs(
         "Bid/No-Bid ROI",
         "Objection Handling Pack",
         "Win/Loss Learning",
+        "Reviewer Collaboration",
     ]
 )
 
@@ -2166,4 +2167,87 @@ with tabs[34]:
             "Download Win/Loss Strategy Markdown",
             pack["markdown"],
             file_name="win_loss_strategy_pack.md",
+        )
+
+
+with tabs[35]:
+    st.subheader("Reviewer Collaboration")
+    st.caption(
+        "Build local reviewer assignments, decision comments, approval status, and redline summary "
+        "from the current RFP package signals."
+    )
+    collaboration_payload = {}
+    if st.session_state.get("analysis"):
+        collaboration_payload["analysis"] = st.session_state.analysis
+    if st.session_state.get("matrix"):
+        collaboration_payload["matrix"] = st.session_state.matrix
+    if st.session_state.get("draft"):
+        collaboration_payload["draft_response"] = st.session_state.draft
+    if st.session_state.get("review_report"):
+        collaboration_payload["review_findings"] = st.session_state.review_report["findings"]
+        collaboration_payload["review_passed"] = st.session_state.review_report["passed"]
+    if st.session_state.get("action_plan"):
+        collaboration_payload["action_plan"] = st.session_state.action_plan["tasks"]
+    if st.session_state.get("contract_risk"):
+        collaboration_payload["contract_risk"] = st.session_state.contract_risk
+    if st.session_state.get("submission_decision"):
+        collaboration_payload["submission_decision"] = st.session_state.submission_decision
+
+    cols = st.columns(2)
+    if cols[0].button("Build collaboration board"):
+        board = post_json("/rfp/reviewer-collaboration", collaboration_payload)
+        st.session_state.reviewer_collaboration = board
+    if cols[1].button("Export Collaboration Pack"):
+        pack_payload = {**collaboration_payload, "write_artifact": True}
+        if st.session_state.get("reviewer_collaboration"):
+            pack_payload["collaboration"] = st.session_state.reviewer_collaboration
+        pack = post_json("/rfp/reviewer-collaboration-pack", pack_payload)
+        st.session_state.reviewer_collaboration_pack = pack
+        st.session_state.reviewer_collaboration = pack["collaboration"]
+        st.success(f"Reviewer Collaboration Pack generated under review_boards: {pack['artifact_path']}")
+
+    board = st.session_state.get("reviewer_collaboration")
+    if board:
+        summary = board["approval_summary"]
+        redlines = board["redline_summary"]
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Board", board["board_status"])
+        metric_cols[1].metric("Assignments", summary["assignment_count"])
+        metric_cols[2].metric("Blocked", summary["blocked_count"])
+        metric_cols[3].metric("Redlines", redlines["redline_count"])
+        st.write("Assignments")
+        st.dataframe(
+            [
+                {
+                    "reviewer": item["reviewer_name"],
+                    "role": item["reviewer_role"],
+                    "priority": item["priority"],
+                    "status": item["status"],
+                    "approval": item["approval_status"],
+                    "requirements": ", ".join(item["requirement_ids"]),
+                    "blocking_items": "; ".join(item["blocking_items"]),
+                }
+                for item in board["assignments"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Decision comments")
+        st.dataframe(board["decision_comments"], use_container_width=True)
+        st.write("Redline summary")
+        st.json(redlines)
+        st.write("Reviewer queue")
+        st.dataframe(board["reviewer_queue"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(board["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(board["limitations"])
+
+    pack = st.session_state.get("reviewer_collaboration_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Reviewer Collaboration Markdown",
+            pack["markdown"],
+            file_name="reviewer_collaboration_pack.md",
         )

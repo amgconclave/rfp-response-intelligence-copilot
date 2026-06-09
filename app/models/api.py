@@ -157,6 +157,79 @@ class ReviewPackageResponse(ReviewReport):
     artifact_path: str | None = None
 
 
+class ReviewerAssignment(BaseModel):
+    assignment_id: str
+    reviewer_role: str
+    reviewer_name: str
+    scope: str
+    priority: str
+    status: str
+    approval_status: str
+    due_hint: str
+    requirement_ids: list[str] = Field(default_factory=list)
+    source_signals: list[str] = Field(default_factory=list)
+    blocking_items: list[str] = Field(default_factory=list)
+    citation_refs: list[str] = Field(default_factory=list)
+
+
+class ReviewerDecisionComment(BaseModel):
+    comment_id: str
+    reviewer_role: str
+    reviewer_name: str
+    category: str
+    severity: str
+    sentiment: str
+    comment: str
+    required_action: str
+    status: str
+    related_requirement_id: str | None = None
+    related_artifact: str | None = None
+    citation_refs: list[str] = Field(default_factory=list)
+
+
+class ReviewerCollaborationRequest(BaseModel):
+    rfp_document_id: str | None = None
+    analysis: AnalyzeResponse | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+    matrix: list[RequirementMatrixRow] | None = None
+    requirement_matrix: list[RequirementMatrixRow] | None = None
+    draft_response: DraftResponse | None = None
+    review_findings: list[ReviewFinding] = Field(default_factory=list)
+    review_passed: bool | None = None
+    action_plan: list[StakeholderTask] = Field(default_factory=list)
+    evidence_gaps: list[EvidenceGap] | None = None
+    contract_risk: ContractRiskResponse | None = None
+    submission_decision: SubmissionDecisionResponse | None = None
+
+
+class ReviewerCollaborationResponse(BaseModel):
+    title: str
+    board_status: str
+    assignments: list[ReviewerAssignment]
+    decision_comments: list[ReviewerDecisionComment]
+    approval_summary: dict[str, Any]
+    redline_summary: dict[str, Any]
+    reviewer_queue: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ReviewerCollaborationPackRequest(ReviewerCollaborationRequest):
+    collaboration: ReviewerCollaborationResponse | None = None
+    write_artifact: bool = True
+
+
+class ReviewerCollaborationPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    collaboration: ReviewerCollaborationResponse
+    trace_id: str
+
+
 class ActionPlanRequest(BaseModel):
     rfp_document_id: str | None = None
     analyzed_payload: AnalyzeResponse | None = None

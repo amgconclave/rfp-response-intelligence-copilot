@@ -272,6 +272,7 @@ class ReleaseService:
             "rag_coverage": "RAG corpus expansion and eval coverage artifacts",
             "compliance_packs": "Compliance evidence matrix and control mapping packs",
             "procurement_packs": "Procurement Q&A risk and approval workflow packs",
+            "review_boards": "Reviewer Collaboration assignment, comment, approval, and redline packs",
             "bid_packs": "Bid/No-Bid scenario simulator and ROI Impact packs",
             "objection_packs": "Competitive objection handling packs",
             "win_loss_packs": "Win/Loss Learning Strategy packs",
@@ -507,6 +508,9 @@ class ReleaseService:
                 "rag_coverage": "storage/rag_coverage contains Markdown and JSON coverage pack files.",
                 "compliance_pack": "storage/compliance_packs contains Markdown and JSON control mapping files.",
                 "procurement_pack": "storage/procurement_packs contains Markdown and JSON approval workflow files.",
+                "reviewer_collaboration_pack": (
+                    "storage/review_boards contains Markdown and JSON reviewer collaboration files."
+                ),
                 "bid_roi_pack": "storage/bid_packs contains Markdown and JSON ROI Impact Pack files.",
                 "objection_pack": "storage/objection_packs contains Markdown and JSON objection handling files.",
                 "demo": "Prints release gate status/score and publish pack path.",

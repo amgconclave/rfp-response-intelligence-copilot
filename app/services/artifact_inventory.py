@@ -257,6 +257,14 @@ class ArtifactInventoryService:
                 "Select-Object FullName,Length,LastWriteTime"
             ),
             (
+                'rg "reviewer-collaboration|Reviewer Collaboration|review_boards|decision comments" '
+                "app dashboard docs README.md tests sample_data Makefile"
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\review_boards -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
                 'rg "bid/scenario-analysis|bid/roi-pack|Bid/No-Bid|ROI Impact|bid_packs|'
                 'risk-adjusted ROI" app dashboard docs README.md tests scripts sample_data Makefile'
             ),
@@ -294,6 +302,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /procurement/approval-pack to write the Procurement Q&A Approval Workflow Pack "
                 "under storage/procurement_packs/."
+            ),
+            (
+                "Call POST /rfp/reviewer-collaboration-pack to write the Reviewer Collaboration Pack "
+                "under storage/review_boards/."
             ),
             (
                 "Call POST /bid/roi-pack to write the Bid/No-Bid ROI Impact Pack "
@@ -445,6 +457,12 @@ class ArtifactInventoryService:
                 "procurement_packs",
                 "POST /procurement/approval-pack",
                 "Procurement Q&A risk simulator and approval workflow Markdown and JSON.",
+            ),
+            self._spec(
+                "review_boards",
+                "review_boards",
+                "POST /rfp/reviewer-collaboration-pack",
+                "Reviewer assignments, decision comments, approval statuses, and redline summary artifacts.",
             ),
             self._spec(
                 "bid_packs",

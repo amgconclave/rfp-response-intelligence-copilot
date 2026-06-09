@@ -324,6 +324,12 @@ class UIVerificationService:
             },
             {"label": "Action Plan / Handoff Board", "endpoint_paths": ["/rfp/action-plan", "/rfp/handoff-board"]},
             {"label": "Review Board / Red Team", "endpoint_paths": ["/rfp/review-answer", "/rfp/review-package"]},
+            {
+                "label": "Reviewer Collaboration",
+                "endpoint_paths": ["/rfp/reviewer-collaboration", "/rfp/reviewer-collaboration-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "review_boards",
+            },
             {"label": "Evaluation and Metrics", "endpoint_paths": ["/rfp/evaluate", "/metrics/usage"]},
             {"label": "Audit Events", "endpoint_paths": ["/audit/events"]},
             {
@@ -483,6 +489,17 @@ class UIVerificationService:
             },
             {"method": "GET", "path": "/reviewer/quickstart", "purpose": "Reviewer workflow tab."},
             {"method": "POST", "path": "/reviewer/walkthrough-pack", "purpose": "Reviewer generated Walkthrough Pack."},
+            {
+                "method": "POST",
+                "path": "/rfp/reviewer-collaboration",
+                "purpose": "Reviewer Collaboration tab board view.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/reviewer-collaboration-pack",
+                "purpose": "Reviewer Collaboration generated pack.",
+                "expected_artifacts": ["storage/review_boards/*.md", "storage/review_boards/*.json"],
+            },
             {"method": "GET", "path": "/api/contract-audit", "purpose": "API Contract tab audit snapshot."},
             {
                 "method": "POST",

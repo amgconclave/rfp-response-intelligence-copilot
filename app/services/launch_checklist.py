@@ -42,6 +42,8 @@ class LaunchChecklistService:
                 "POST /compliance/control-pack",
                 "GET /procurement/question-risk",
                 "POST /procurement/approval-pack",
+                "POST /rfp/reviewer-collaboration",
+                "POST /rfp/reviewer-collaboration-pack",
                 "GET /bid/scenario-analysis",
                 "POST /bid/roi-pack",
                 "POST /rfp/objection-handling",
@@ -102,6 +104,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\procurement_packs -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "reviewer-collaboration|Reviewer Collaboration|review_boards|decision comments" '
+                    "app dashboard docs README.md tests sample_data Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\review_boards -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -299,6 +309,7 @@ class LaunchChecklistService:
             "rag_coverage": "storage/rag_coverage",
             "compliance_packs": "storage/compliance_packs",
             "procurement_packs": "storage/procurement_packs",
+            "review_boards": "storage/review_boards",
             "bid_packs": "storage/bid_packs",
             "objection_packs": "storage/objection_packs",
             "win_loss_packs": "storage/win_loss_packs",
@@ -441,6 +452,25 @@ class LaunchChecklistService:
                 200,
                 "Returns package-level findings and optional reviewed export payload.",
                 body='{"analyzed_payload":{},"write_artifact":false}',
+            ),
+            self._row(
+                "Reviewer collaboration board",
+                "POST",
+                "/rfp/reviewer-collaboration",
+                "enterprise",
+                200,
+                "Returns reviewer assignments, decision comments, approval status, and redline summary.",
+                body="{}",
+            ),
+            self._row(
+                "Reviewer Collaboration Pack",
+                "POST",
+                "/rfp/reviewer-collaboration-pack",
+                "artifact",
+                200,
+                "Writes reviewer collaboration Markdown and JSON artifacts.",
+                ["storage/review_boards/*.md", "storage/review_boards/*.json"],
+                '{"write_artifact":true}',
             ),
             self._row(
                 "Action plan",

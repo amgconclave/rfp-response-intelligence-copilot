@@ -335,6 +335,22 @@ async def main() -> None:
         procurement_question_risk,
         write_artifact=True,
     )
+    reviewer_collaboration = container.reviewer_collaboration.create_board(
+        trace_id="demo-reviewer-collaboration",
+        requirement_matrix=matrix,
+        draft_response=draft,
+        review_findings=package_review.findings,
+        review_passed=package_review.passed,
+        action_plan=action_plan,
+        evidence_gaps=evidence_gaps,
+        contract_risk=contract_risk,
+        submission_decision=submission_decision,
+    )
+    reviewer_collaboration_pack = container.reviewer_collaboration.collaboration_pack(
+        "demo-reviewer-collaboration-pack",
+        reviewer_collaboration,
+        write_artifact=True,
+    )
     bid_scenario_analysis = container.bid_simulator.scenario_analysis(
         trace_id="demo-bid-scenario-analysis",
         requirement_matrix=matrix,
@@ -520,6 +536,16 @@ async def main() -> None:
     print(f"Procurement Approval Workflow Pack JSON: {procurement_approval_pack.json_artifact_path}")
     print("Procurement packs directory: storage/procurement_packs")
     print(
+        "Reviewer collaboration: "
+        f"status={reviewer_collaboration.board_status} "
+        f"assignments={len(reviewer_collaboration.assignments)} "
+        f"comments={len(reviewer_collaboration.decision_comments)} "
+        f"redlines={reviewer_collaboration.redline_summary['redline_count']}"
+    )
+    print(f"Reviewer Collaboration Pack: {reviewer_collaboration_pack.artifact_path}")
+    print(f"Reviewer Collaboration Pack JSON: {reviewer_collaboration_pack.json_artifact_path}")
+    print("Review boards directory: storage/review_boards")
+    print(
         "Bid/No-Bid scenario analysis: "
         f"scenarios={len(bid_scenario_analysis.scenarios)} "
         f"recommended={bid_scenario_analysis.recommended_scenario_id} "
@@ -601,6 +627,9 @@ async def main() -> None:
         f"compliance_packs={compliance_control_pack.artifact_path} "
         f"procurement question risk={procurement_question_risk.coverage_summary['coverage_ratio']} "
         f"procurement_packs={procurement_approval_pack.artifact_path} "
+        f"reviewer_collaboration={reviewer_collaboration.board_status}/"
+        f"{len(reviewer_collaboration.assignments)} "
+        f"review_boards={reviewer_collaboration_pack.artifact_path} "
         f"bid_scenarios={len(bid_scenario_analysis.scenarios)} "
         f"bid_packs={bid_roi_pack.artifact_path} "
         f"objection_handling={objection_handling.coverage_summary['coverage_ratio']} "

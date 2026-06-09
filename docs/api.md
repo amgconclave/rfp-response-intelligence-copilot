@@ -502,6 +502,37 @@ Reviews a requirement matrix, draft response, answer payloads, and/or export pac
 
 The response includes the review report, the reviewed requirement matrix, optional export package JSON, and optional artifact path.
 
+### `POST /rfp/reviewer-collaboration`
+
+Creates a local reviewer collaboration board with named reviewer assignments, decision comments, approval statuses, reviewer queue, and a redline summary. The endpoint accepts the same workflow signals used elsewhere: analyzed payload, requirement matrix, draft response, review findings, action plan, evidence gaps, contract risk, and submission decision. If called with `{}`, it uses the local sample RFP and contract terms.
+
+```json
+{
+  "analysis": {},
+  "matrix": [],
+  "draft_response": {},
+  "review_findings": [],
+  "action_plan": [],
+  "evidence_gaps": [],
+  "contract_risk": {},
+  "review_passed": false
+}
+```
+
+The response includes `board_status`, `assignments`, `decision_comments`, `approval_summary`, `redline_summary`, `reviewer_queue`, local proof commands, limitations, and `trace_id`.
+
+### `POST /rfp/reviewer-collaboration-pack`
+
+Writes the reviewer collaboration board as Markdown and JSON under `storage/review_boards/`.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack is intended for local review-board artifacts: owner assignments, approval status, decision comments, contract/draft redlines, proof commands, and known limitations.
+
 ### `POST /rfp/action-plan`
 
 Creates deterministic stakeholder tasks from analyzed requirements, a requirement matrix, customer profile or customer fit, and review findings. Owner roles are `sales`, `solutions`, `security`, `legal`, `product`, and `engineering`.

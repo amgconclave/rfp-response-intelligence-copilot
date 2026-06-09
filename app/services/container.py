@@ -31,6 +31,7 @@ from app.services.release import ReleaseService
 from app.services.retrieval import RetrievalService
 from app.services.review_board import RfpReviewBoardService
 from app.services.reviewer import ReviewerQuickstartService
+from app.services.reviewer_collaboration import ReviewerCollaborationService
 from app.services.rfp_analysis import RfpAnalysisService
 from app.services.runtime_demo import RuntimeDemoService
 from app.services.submission_decision import SubmissionDecisionService
@@ -70,6 +71,7 @@ class ServiceContainer:
         self.portfolio = PortfolioService(settings)
         self.release = ReleaseService(settings)
         self.reviewer = ReviewerQuickstartService(settings)
+        self.reviewer_collaboration = ReviewerCollaborationService(settings)
         self.ui_verification = UIVerificationService(settings)
         self.final_handoff = FinalHandoffService(settings)
         self.git_readiness = GitReadinessService(settings)

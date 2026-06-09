@@ -3,7 +3,7 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8000
 DASHBOARD_PORT ?= 8501
 
-.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack procurement-risk procurement-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
+.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
 
 install:
 	$(PYTHON) -m pip install -e .
@@ -42,6 +42,12 @@ procurement-risk:
 
 procurement-pack:
 	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/procurement/approval-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
+
+reviewer-collaboration:
+	$(PYTHON) -c "import httpx; b=httpx.post('http://127.0.0.1:8000/rfp/reviewer-collaboration', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json(); print({'status': b['board_status'], 'assignments': len(b['assignments']), 'comments': len(b['decision_comments']), 'redlines': b['redline_summary']['redline_count']})"
+
+reviewer-collaboration-pack:
+	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/rfp/reviewer-collaboration-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
 
 bid-scenarios:
 	$(PYTHON) -c "import httpx; r=httpx.get('http://127.0.0.1:8000/bid/scenario-analysis', headers={'X-API-Key': 'local-demo-key'}, timeout=30).json(); print({'scenarios': r['coverage_summary']['scenario_count'], 'recommended': r['recommended_scenario_id'], 'best_roi': r['coverage_summary']['best_risk_adjusted_roi']})"

@@ -89,6 +89,10 @@ from app.models.api import (
     ResponseMemorySearchResponse,
     ReviewAnswerRequest,
     ReviewAnswerResponse,
+    ReviewerCollaborationPackRequest,
+    ReviewerCollaborationPackResponse,
+    ReviewerCollaborationRequest,
+    ReviewerCollaborationResponse,
     ReviewerCollectionRequest,
     ReviewerCollectionResponse,
     ReviewerQuickstartResponse,
@@ -522,6 +526,69 @@ async def review_package(
         export_package=export_payload,
         artifact_path=artifact_path,
     )
+
+
+@router.post(
+    "/rfp/reviewer-collaboration",
+    response_model=ReviewerCollaborationResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def reviewer_collaboration(
+    payload: ReviewerCollaborationRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewerCollaborationResponse:
+    trace_id = get_trace_id(request)
+    inputs = _reviewer_collaboration_inputs(payload, trace_id, container)
+    board = container.reviewer_collaboration.create_board(trace_id=trace_id, **inputs)
+    container.audit.record(
+        trace_id,
+        "rfp.reviewer_collaboration_created",
+        "reviewer_collaboration",
+        metadata={
+            "assignments": len(board.assignments),
+            "comments": len(board.decision_comments),
+            "board_status": board.board_status,
+        },
+    )
+    return board
+
+
+@router.post(
+    "/rfp/reviewer-collaboration-pack",
+    response_model=ReviewerCollaborationPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def reviewer_collaboration_pack(
+    payload: ReviewerCollaborationPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewerCollaborationPackResponse:
+    trace_id = get_trace_id(request)
+    collaboration = payload.collaboration
+    if collaboration is None:
+        inputs = _reviewer_collaboration_inputs(payload, trace_id, container)
+        collaboration = container.reviewer_collaboration.create_board(
+            trace_id=f"{trace_id}-collaboration",
+            **inputs,
+        )
+    pack = container.reviewer_collaboration.collaboration_pack(
+        trace_id=trace_id,
+        collaboration=collaboration,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.reviewer_collaboration_pack_created",
+        "reviewer_collaboration_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "assignments": len(pack.collaboration.assignments),
+            "comments": len(pack.collaboration.decision_comments),
+        },
+    )
+    return pack
 
 
 @router.post(
@@ -2941,6 +3008,113 @@ def _draft_from_repo_or_sample(
         revision_notes=["Generated locally for submission decision fallback."],
         trace_id=f"{trace_id}-draft-fallback",
     )
+
+
+def _reviewer_collaboration_inputs(
+    payload: ReviewerCollaborationRequest | ReviewerCollaborationPackRequest,
+    trace_id: str,
+    container: ServiceContainer,
+) -> dict:
+    has_supplied_input = any(
+        [
+            payload.rfp_document_id,
+            payload.analysis,
+            payload.analyzed_payload,
+            payload.matrix,
+            payload.requirement_matrix,
+            payload.draft_response,
+            payload.review_findings,
+            payload.action_plan,
+            payload.evidence_gaps,
+            payload.contract_risk,
+            payload.submission_decision,
+        ]
+    )
+    analysis = payload.analysis or payload.analyzed_payload
+    if analysis is None and payload.rfp_document_id is not None:
+        analysis = _analysis_from_document_id(payload.rfp_document_id, trace_id, container)
+    if analysis is None and not has_supplied_input:
+        sample_path = container.settings.sample_data_dir / "acme_enterprise_rfp.md"
+        if sample_path.exists():
+            analysis = container.analysis.analyze(sample_path.read_text(encoding="utf-8"), f"{trace_id}-sample")
+
+    matrix = payload.matrix or payload.requirement_matrix
+    if matrix is None and analysis is not None:
+        matrix = container.workbench.create_requirement_matrix(analysis)
+    matrix = matrix or []
+
+    draft = payload.draft_response
+    if draft is None and analysis is not None:
+        draft = _draft_from_repo_or_sample(container, analysis, trace_id)
+
+    review_findings = list(payload.review_findings)
+    review_passed = payload.review_passed
+    if not review_findings and (matrix or draft is not None):
+        review = container.review_board.review_package(
+            trace_id=f"{trace_id}-review",
+            requirement_matrix=matrix,
+            draft_response=draft,
+        )
+        review_findings = review.findings
+        review_passed = review.passed
+
+    action_plan_items = list(payload.action_plan)
+    if not action_plan_items and matrix:
+        action_plan_items, _ = container.action_plan.create_action_plan(
+            trace_id=f"{trace_id}-action-plan",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=review_findings,
+        )
+
+    contract = payload.contract_risk
+    if contract is None and not has_supplied_input:
+        contract_path = container.settings.sample_data_dir / "customer_contract_terms.md"
+        if contract_path.exists():
+            contract = container.contract_risk.analyze(
+                contract_path.read_text(encoding="utf-8"),
+                f"{trace_id}-contract-risk",
+                customer_profile_id="regulated_healthcare",
+            )
+
+    gaps = payload.evidence_gaps
+    if gaps is None and (analysis is not None or matrix or review_findings or action_plan_items):
+        readiness = container.deal_readiness.create_scorecard(
+            trace_id=f"{trace_id}-readiness",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=review_findings,
+            action_plan=action_plan_items,
+        )
+        strategy = container.win_strategy.create_win_strategy(
+            trace_id=f"{trace_id}-win-strategy",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            readiness_scorecard=readiness,
+            action_plan=action_plan_items,
+            review_findings=review_findings,
+        )
+        gaps, _ = container.evidence_gap.create_gap_plan(
+            trace_id=f"{trace_id}-gaps",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=review_findings,
+            readiness_scorecard=readiness,
+            win_strategy=strategy,
+            contract_risk=contract,
+            action_plan=action_plan_items,
+        )
+
+    return {
+        "requirement_matrix": matrix,
+        "draft_response": draft,
+        "review_findings": review_findings,
+        "review_passed": review_passed,
+        "action_plan": action_plan_items,
+        "evidence_gaps": gaps or [],
+        "contract_risk": contract,
+        "submission_decision": payload.submission_decision,
+    }
 
 
 def _timeline_inputs(
