@@ -173,6 +173,8 @@ class ApiContractService:
             "/bid/roi-pack",
             "/rfp/objection-handling",
             "/rfp/objection-handling-pack",
+            "/learning/win-loss",
+            "/learning/win-loss-pack",
             "/ops/smoke-matrix",
             "/ops/launch-checklist",
             "/ui/dashboard-smoke",
@@ -262,6 +264,8 @@ class ApiContractService:
             "storage/bid_packs": "bid_packs",
             "/rfp/objection-handling-pack": "objection_pack",
             "storage/objection_packs": "objection_packs",
+            "/learning/win-loss-pack": "win_loss_pack",
+            "storage/win_loss_packs": "win_loss_packs",
         }
         missing = [path for path, token in required.items() if token not in demo]
         return ApiContractCheck(
@@ -512,6 +516,8 @@ class ApiContractService:
             "/bid/roi-pack": '{"write_artifact":true}',
             "/rfp/objection-handling": '{"competitor_context":["Incumbent competitor is cheaper."],"top_k":4}',
             "/rfp/objection-handling-pack": '{"write_artifact":true}',
+            "/learning/win-loss": '{"outcomes_fixture_path":"sample_data/rfp_outcomes.json","top_k_patterns":6}',
+            "/learning/win-loss-pack": '{"write_artifact":true}',
         }
         no_body_paths = {"/health", "/documents", "/metrics/usage", "/audit/events"}
         return bodies.get(path, "{}" if path not in no_body_paths else None)

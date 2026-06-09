@@ -1,0 +1,160 @@
+{
+  "outcomes": [
+    {
+      "outcome_id": "outcome-healthcare-win-001",
+      "result": "win",
+      "customer_profile_id": "regulated_healthcare",
+      "industry": "healthcare",
+      "deal_value": 650000,
+      "competitor": "Incumbent workflow suite",
+      "submitted_at": "2026-03-14",
+      "decision_notes": [
+        "Buyer cited confidence in SSO, encryption, SOC 2, and implementation readiness.",
+        "Security review accepted cited auditability language without a custom exception."
+      ],
+      "evidence_used": [
+        {
+          "evidence_id": "security-sso-encryption",
+          "category": "security",
+          "claim": "SSO, MFA, TLS, AES-256 encryption, and audit logging are supported for enterprise deployments.",
+          "source": "security_policy.md",
+          "citation": "security_policy.md",
+          "strength": 0.94
+        },
+        {
+          "evidence_id": "compliance-soc2-gdpr",
+          "category": "compliance",
+          "claim": "SOC 2 and GDPR-oriented controls are handled through documented approval workflows.",
+          "source": "compliance_policy.md",
+          "citation": "compliance_policy.md",
+          "strength": 0.88
+        },
+        {
+          "evidence_id": "implementation-phased-rollout",
+          "category": "implementation",
+          "claim": "Implementation can be delivered through discovery, configuration, validation, and staged rollout.",
+          "source": "implementation_guide.md",
+          "citation": "implementation_guide.md",
+          "strength": 0.82
+        }
+      ],
+      "missing_evidence": [],
+      "pricing_posture": "value_defense",
+      "win_loss_reasons": [
+        "Cited security and implementation proof reduced buyer risk.",
+        "Value defense beat incumbent bundle pressure without unsupported claims."
+      ]
+    },
+    {
+      "outcome_id": "outcome-fintech-win-002",
+      "result": "win",
+      "customer_profile_id": "fintech",
+      "industry": "financial_services",
+      "deal_value": 820000,
+      "competitor": "Point-solution specialist",
+      "submitted_at": "2026-04-02",
+      "decision_notes": [
+        "Buyer scored governance, audit, support, and pricing clarity above cheaper alternatives.",
+        "Approved response memory accelerated final review."
+      ],
+      "evidence_used": [
+        {
+          "evidence_id": "ai-governance-audit",
+          "category": "ai_governance",
+          "claim": "AI-assisted drafts are reviewed, logged, and constrained by approved source evidence.",
+          "source": "ai_governance_security.md",
+          "citation": "ai_governance_security.md",
+          "strength": 0.87
+        },
+        {
+          "evidence_id": "support-escalation",
+          "category": "support",
+          "claim": "Support coverage and escalation paths are documented for enterprise onboarding.",
+          "source": "sla_support_policy.md",
+          "citation": "sla_support_policy.md",
+          "strength": 0.79
+        },
+        {
+          "evidence_id": "pricing-packaging",
+          "category": "pricing",
+          "claim": "Commercial packaging is scoped by tier, implementation services, and usage assumptions.",
+          "source": "pricing_notes.md",
+          "citation": "pricing_notes.md",
+          "strength": 0.76
+        }
+      ],
+      "missing_evidence": [],
+      "pricing_posture": "standard_with_guardrails",
+      "win_loss_reasons": [
+        "Governance proof and pricing guardrails differentiated the response.",
+        "Approved response snippets kept tone consistent across security and commercial sections."
+      ]
+    },
+    {
+      "outcome_id": "outcome-public-sector-loss-003",
+      "result": "loss",
+      "customer_profile_id": "public_sector",
+      "industry": "public_sector",
+      "deal_value": 900000,
+      "competitor": "Public-sector incumbent",
+      "submitted_at": "2026-04-18",
+      "decision_notes": [
+        "Buyer required stronger regulatory proof than the sample corpus supported.",
+        "The team could not substantiate StateRAMP/FedRAMP-style language before the deadline."
+      ],
+      "evidence_used": [
+        {
+          "evidence_id": "compliance-general-policy",
+          "category": "compliance",
+          "claim": "Compliance posture is documented for SOC 2 and GDPR-style controls.",
+          "source": "compliance_policy.md",
+          "citation": "compliance_policy.md",
+          "strength": 0.58
+        }
+      ],
+      "missing_evidence": [
+        "No approved FedRAMP or StateRAMP authorization evidence.",
+        "No public-sector data residency attestation.",
+        "No explicit government security package implementation plan."
+      ],
+      "pricing_posture": "discount_requested",
+      "win_loss_reasons": [
+        "Missing compliance evidence created a non-responsive score.",
+        "Weak proof could not overcome incumbent public-sector references."
+      ]
+    },
+    {
+      "outcome_id": "outcome-healthcare-loss-004",
+      "result": "loss",
+      "customer_profile_id": "regulated_healthcare",
+      "industry": "healthcare",
+      "deal_value": 360000,
+      "competitor": "Bundled platform vendor",
+      "submitted_at": "2026-05-05",
+      "decision_notes": [
+        "Buyer accepted a cheaper bundled offer after commercial review.",
+        "Custom uptime and zero data loss questions were not supported by approved evidence."
+      ],
+      "evidence_used": [
+        {
+          "evidence_id": "support-standard-sla",
+          "category": "support",
+          "claim": "Support coverage is available under documented enterprise terms.",
+          "source": "sla_support_policy.md",
+          "citation": "sla_support_policy.md",
+          "strength": 0.61
+        }
+      ],
+      "missing_evidence": [
+        "No approved 99.99 uptime guarantee.",
+        "No zero data loss guarantee.",
+        "No finance-approved discount exception."
+      ],
+      "pricing_posture": "price_match_requested",
+      "win_loss_reasons": [
+        "Unsupported uptime and zero data loss claims had to be removed.",
+        "Pricing discount guardrails were unclear during final negotiation."
+      ]
+    }
+  ]
+}

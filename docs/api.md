@@ -178,6 +178,31 @@ Writes Markdown and JSON ROI Impact Pack artifacts under ignored `storage/bid_pa
 
 The pack includes an executive decision memo, scenario comparison table, ROI math, blockers, follow-up owners, proof commands, limitations, embedded scenario analysis JSON, Markdown, JSON, and trace ID.
 
+### `POST /learning/win-loss`
+
+Ingests fake local post-RFP outcomes from `sample_data/rfp_outcomes.json` by default and returns a deterministic Win/Loss Learning Loop analysis. The response includes outcome count, win rate, winning evidence patterns, losing risk patterns, retrieval recommendations, eval/red-team recommendations, response guidance updates, owner actions, proof commands, limitations, and trace ID.
+
+```bash
+curl -X POST "http://127.0.0.1:8000/learning/win-loss" \
+  -H "X-API-Key: local-demo-key" \
+  -H "Content-Type: application/json" \
+  -d "{}"
+```
+
+Optional body fields include `outcomes_fixture_path`, inline `outcomes`, `analysis`, `matrix`, `win_strategy`, `eval_metrics`, and `top_k_patterns`.
+
+### `POST /learning/win-loss-pack`
+
+Writes Markdown and JSON Win/Loss Learning Strategy Pack artifacts under ignored `storage/win_loss_packs/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes an executive summary, winning evidence pattern table, loss guardrails, retrieval updates, eval updates, response guidance updates, owner action plan, proof commands, limitations, embedded learning response JSON, Markdown, JSON, and trace ID.
+
 ### `POST /api/reviewer-collection`
 
 Writes a Markdown and JSON Reviewer Collection Pack under ignored `storage/api_contracts/` by default. The collection includes endpoint inventory grouped by domain, sample curl and PowerShell commands with `X-API-Key`, demo-token flow, expected status codes, auth notes, generated artifact endpoints, RAG/eval/red-team verification order, recruiter and engineer explanation, local-only limitations, embedded API Contract Snapshot, Markdown, JSON, and trace ID.

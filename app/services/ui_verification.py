@@ -458,6 +458,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "objection_packs",
             },
+            {
+                "label": "Win/Loss Learning",
+                "endpoint_paths": ["/learning/win-loss", "/learning/win-loss-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "win_loss_packs",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -570,6 +576,17 @@ class UIVerificationService:
                 "purpose": "Objection Handling generated reviewer pack.",
                 "expected_artifacts": ["storage/objection_packs/*.md", "storage/objection_packs/*.json"],
             },
+            {
+                "method": "POST",
+                "path": "/learning/win-loss",
+                "purpose": "Win/Loss Learning tab outcome ingestion and recommendation analysis.",
+            },
+            {
+                "method": "POST",
+                "path": "/learning/win-loss-pack",
+                "purpose": "Win/Loss Learning generated strategy pack.",
+                "expected_artifacts": ["storage/win_loss_packs/*.md", "storage/win_loss_packs/*.json"],
+            },
         ]
 
     def _local_run_commands(self) -> list[str]:
@@ -641,6 +658,14 @@ class UIVerificationService:
             ),
             (
                 'curl -X POST "http://127.0.0.1:8000/bid/roi-pack" '
+                '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
+            ),
+            (
+                'curl -X POST "http://127.0.0.1:8000/learning/win-loss" '
+                '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
+            ),
+            (
+                'curl -X POST "http://127.0.0.1:8000/learning/win-loss-pack" '
                 '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
             ),
         ]

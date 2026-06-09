@@ -372,6 +372,18 @@ async def main() -> None:
         objection_handling,
         write_artifact=True,
     )
+    win_loss_learning = container.win_loss_learning.learn(
+        trace_id="demo-win-loss-learning",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        win_strategy=win_strategy,
+        eval_metrics=evaluation,
+    )
+    win_loss_pack = container.win_loss_learning.strategy_pack(
+        "demo-win-loss-pack",
+        win_loss_learning,
+        write_artifact=True,
+    )
     owner_counts = Counter(task.owner_role for task in action_plan)
 
     print("RFP Response Intelligence Copilot demo")
@@ -526,6 +538,16 @@ async def main() -> None:
     print(f"Competitive Objection Handling Pack: {objection_pack.artifact_path}")
     print(f"Competitive Objection Handling Pack JSON: {objection_pack.json_artifact_path}")
     print("Objection packs directory: storage/objection_packs")
+    print(
+        "Win/Loss learning: "
+        f"outcomes={win_loss_learning.outcome_count} "
+        f"win_rate={win_loss_learning.win_rate} "
+        f"win_patterns={len(win_loss_learning.winning_evidence_patterns)} "
+        f"loss_patterns={len(win_loss_learning.losing_risk_patterns)}"
+    )
+    print(f"Win/Loss Strategy Pack: {win_loss_pack.artifact_path}")
+    print(f"Win/Loss Strategy Pack JSON: {win_loss_pack.json_artifact_path}")
+    print("Win/Loss packs directory: storage/win_loss_packs")
     print(f"Eval pass: {evaluation.passed}")
     print(f"Retrieval precision@k: {evaluation.retrieval_precision_at_k}")
     print(f"Citation coverage: {evaluation.citation_coverage}")
@@ -583,6 +605,8 @@ async def main() -> None:
         f"bid_packs={bid_roi_pack.artifact_path} "
         f"objection_handling={objection_handling.coverage_summary['coverage_ratio']} "
         f"objection_packs={objection_pack.artifact_path} "
+        f"win_loss={win_loss_learning.win_rate}/{win_loss_learning.outcome_count} "
+        f"win_loss_packs={win_loss_pack.artifact_path} "
         f"red_team={red_team['passed']} brief={leadership_brief.artifact_path}"
     )
 

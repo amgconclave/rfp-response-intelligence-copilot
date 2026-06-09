@@ -113,6 +113,10 @@ from app.models.api import (
     UIVerificationPackRequest,
     UIVerificationPackResponse,
     UsageResponse,
+    WinLossLearningRequest,
+    WinLossLearningResponse,
+    WinLossStrategyPackRequest,
+    WinLossStrategyPackResponse,
     WinStrategyRequest,
     WinStrategyResponse,
 )
@@ -2376,6 +2380,88 @@ async def bid_roi_pack(
     return pack
 
 
+@router.post(
+    "/learning/win-loss",
+    response_model=WinLossLearningResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def win_loss_learning(
+    request: Request,
+    payload: WinLossLearningRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> WinLossLearningResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or WinLossLearningRequest()
+    inputs = await _win_loss_inputs(request_payload, trace_id, container)
+    try:
+        result = container.win_loss_learning.learn(
+            trace_id=trace_id,
+            outcomes=request_payload.outcomes,
+            outcomes_fixture_path=request_payload.outcomes_fixture_path,
+            top_k_patterns=request_payload.top_k_patterns,
+            **inputs,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    container.audit.record(
+        trace_id,
+        "learning.win_loss_analyzed",
+        "win_loss_learning",
+        metadata={
+            "outcome_count": result.outcome_count,
+            "win_rate": result.win_rate,
+            "winning_patterns": len(result.winning_evidence_patterns),
+            "losing_patterns": len(result.losing_risk_patterns),
+        },
+    )
+    return result
+
+
+@router.post(
+    "/learning/win-loss-pack",
+    response_model=WinLossStrategyPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def win_loss_strategy_pack(
+    request: Request,
+    payload: WinLossStrategyPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> WinLossStrategyPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or WinLossStrategyPackRequest()
+    learning = request_payload.learning_response
+    if learning is None:
+        inputs = await _win_loss_inputs(request_payload, f"{trace_id}-learning", container)
+        try:
+            learning = container.win_loss_learning.learn(
+                trace_id=f"{trace_id}-learning",
+                outcomes=request_payload.outcomes,
+                outcomes_fixture_path=request_payload.outcomes_fixture_path,
+                top_k_patterns=request_payload.top_k_patterns,
+                **inputs,
+            )
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+    pack = container.win_loss_learning.strategy_pack(
+        trace_id=trace_id,
+        learning=learning,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "learning.win_loss_pack_generated",
+        "win_loss_strategy_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "outcome_count": learning.outcome_count,
+            "win_rate": learning.win_rate,
+        },
+    )
+    return pack
+
+
 @router.get("/metrics/usage", response_model=UsageResponse, dependencies=[Depends(require_api_key)])
 async def usage(container: ServiceContainer = Depends(get_container)) -> UsageResponse:
     return UsageResponse(metrics=container.metrics.list_metrics(), totals=container.metrics.totals())
@@ -2384,6 +2470,49 @@ async def usage(container: ServiceContainer = Depends(get_container)) -> UsageRe
 @router.get("/audit/events", response_model=AuditResponse, dependencies=[Depends(require_api_key)])
 async def audit_events(container: ServiceContainer = Depends(get_container)) -> AuditResponse:
     return AuditResponse(events=container.audit.list_events())
+
+
+async def _win_loss_inputs(
+    payload: WinLossLearningRequest,
+    trace_id: str,
+    container: ServiceContainer,
+) -> dict[str, object]:
+    analysis = payload.analysis or payload.analyzed_payload
+    matrix = payload.matrix or payload.requirement_matrix
+    if analysis is None or matrix is None:
+        sample_analysis, sample_matrix, _ = await _procurement_inputs(trace_id, container)
+        analysis = analysis or sample_analysis
+        matrix = matrix or sample_matrix
+    if matrix is None and analysis is not None:
+        matrix = container.workbench.create_requirement_matrix(analysis)
+    win_strategy = payload.win_strategy
+    if win_strategy is None and (analysis is not None or matrix):
+        strategy_payload = WinStrategyRequest(
+            analysis=analysis,
+            matrix=matrix or [],
+            customer_profile_id="regulated_healthcare",
+            competitor_context=[
+                "Incumbent competitor may bundle workflow tooling and use price pressure after procurement.",
+            ],
+        )
+        strategy_inputs = _win_strategy_inputs(strategy_payload, f"{trace_id}-win-strategy", container)
+        strategy_analysis, strategy_matrix, customer_fit, readiness, memory_matches, action_plan_items = strategy_inputs
+        win_strategy = container.win_strategy.create_win_strategy(
+            trace_id=f"{trace_id}-win-strategy",
+            analysis=strategy_analysis,
+            requirement_matrix=strategy_matrix,
+            customer_fit=customer_fit,
+            readiness_scorecard=readiness,
+            response_memory_matches=memory_matches,
+            action_plan=action_plan_items,
+            competitor_context=strategy_payload.competitor_context,
+        )
+    return {
+        "analysis": analysis,
+        "requirement_matrix": matrix or [],
+        "win_strategy": win_strategy,
+        "eval_metrics": payload.eval_metrics,
+    }
 
 
 async def _compliance_inputs(

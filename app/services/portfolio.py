@@ -50,6 +50,7 @@ class PortfolioService:
                 "procurement_packs": str((self.settings.storage_dir / "procurement_packs").resolve()),
                 "bid_packs": str((self.settings.storage_dir / "bid_packs").resolve()),
                 "objection_packs": str((self.settings.storage_dir / "objection_packs").resolve()),
+                "win_loss_packs": str((self.settings.storage_dir / "win_loss_packs").resolve()),
             },
             limitations=[
                 "Local portfolio mode uses deterministic mock LLM behavior by default; paid OpenAI/Azure APIs are optional adapters.",
@@ -260,6 +261,23 @@ class PortfolioService:
                 ["sample_data/pricing_notes.md", "sample_data/security_policy.md", "docs/api.md"],
             ),
             self._skill(
+                "win-loss-learning-loop",
+                "Post-RFP win/loss learning loop for retrieval, eval, and response guidance",
+                [
+                    "Fake post-RFP outcome ingestion",
+                    "Winning evidence pattern mining",
+                    "Loss guardrails for unsupported claims",
+                    "Retrieval and eval recommendation updates",
+                    "Markdown/JSON strategy pack",
+                ],
+                ["/learning/win-loss", "/learning/win-loss-pack"],
+                ["app/services/win_loss_learning.py"],
+                ["tests/test_win_loss_learning.py", "python scripts\\dashboard_smoke.py"],
+                ["storage/win_loss_packs/*.md", "storage/win_loss_packs/*.json"],
+                ["make win-loss-pack", "python -m app.demo"],
+                ["sample_data/rfp_outcomes.json", "docs/api.md"],
+            ),
+            self._skill(
                 "requirement-matrix-review",
                 "Requirement matrix and review-board workflow",
                 ["Requirement ownership, risk status, package review, groundedness review"],
@@ -425,6 +443,7 @@ class PortfolioService:
             "rg \"procurement/question-risk|procurement/approval-pack|Procurement Q&A|Approval Workflow|procurement_packs|question risk\" app dashboard docs README.md tests scripts sample_data Makefile",
             "rg \"bid/scenario-analysis|bid/roi-pack|Bid/No-Bid|ROI Impact|bid_packs|risk-adjusted ROI\" app dashboard docs README.md tests scripts sample_data Makefile",
             "rg \"objection-handling|Competitive Objection|Objection Handling|objection_packs\" app dashboard docs README.md tests Makefile",
+            "rg \"learning/win-loss|Win/Loss Learning|win_loss_packs|rfp_outcomes\" app dashboard docs README.md tests sample_data Makefile",
         ]
 
     def _pack_payload(

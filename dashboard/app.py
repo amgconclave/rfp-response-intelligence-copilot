@@ -94,6 +94,7 @@ tabs = st.tabs(
         "Procurement Q&A",
         "Bid/No-Bid ROI",
         "Objection Handling Pack",
+        "Win/Loss Learning",
     ]
 )
 
@@ -2098,4 +2099,71 @@ with tabs[33]:
             "Download Objection Handling Markdown",
             pack["markdown"],
             file_name="competitive_objection_handling_pack.md",
+        )
+
+
+with tabs[34]:
+    st.subheader("Win/Loss Learning Loop")
+    st.caption(
+        "Ingest fake post-RFP outcomes, learn winning evidence patterns and loss guardrails, "
+        "then generate retrieval, eval, and response guidance updates."
+    )
+    fixture_path = st.text_input("Outcome fixture", "sample_data/rfp_outcomes.json")
+    payload = {"outcomes_fixture_path": fixture_path, "top_k_patterns": 6}
+    if st.session_state.get("analysis"):
+        payload["analysis"] = st.session_state.analysis
+    if st.session_state.get("matrix"):
+        payload["matrix"] = st.session_state.matrix
+    if st.session_state.get("win_strategy"):
+        payload["win_strategy"] = st.session_state.win_strategy
+
+    cols = st.columns(2)
+    if cols[0].button("Analyze win/loss outcomes"):
+        st.session_state.win_loss_learning = post_json("/learning/win-loss", payload)
+    if cols[1].button("Generate Strategy Pack"):
+        pack_payload = {**payload, "write_artifact": True}
+        if st.session_state.get("win_loss_learning"):
+            pack_payload["learning_response"] = st.session_state.win_loss_learning
+        pack = post_json("/learning/win-loss-pack", pack_payload)
+        st.session_state.win_loss_pack = pack
+        st.session_state.win_loss_learning = pack["learning_response"]
+        st.success(f"Win/Loss Strategy Pack generated under win_loss_packs: {pack['artifact_path']}")
+
+    learning = st.session_state.get("win_loss_learning")
+    if learning:
+        summary = learning["pattern_summary"]
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Outcomes", learning["outcome_count"])
+        metric_cols[1].metric("Win rate", learning["win_rate"])
+        metric_cols[2].metric("Win patterns", len(learning["winning_evidence_patterns"]))
+        metric_cols[3].metric("Loss patterns", len(learning["losing_risk_patterns"]))
+        st.write("Pattern summary")
+        st.json(summary)
+        st.write("Winning evidence patterns")
+        st.dataframe(learning["winning_evidence_patterns"], use_container_width=True)
+        st.write("Losing risk patterns")
+        st.dataframe(learning["losing_risk_patterns"], use_container_width=True)
+        st.write("Retrieval recommendations")
+        st.dataframe(learning["retrieval_recommendations"], use_container_width=True)
+        st.write("Eval recommendations")
+        st.dataframe(learning["eval_recommendations"], use_container_width=True)
+        st.write("Response guidance updates")
+        st.dataframe(learning["response_guidance_updates"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(learning["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(learning["limitations"])
+
+    pack = st.session_state.get("win_loss_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.write("Executive summary")
+        st.json(pack["pack"]["executive_summary"])
+        st.write("Owner action plan")
+        st.dataframe(pack["pack"]["owner_action_plan"], use_container_width=True)
+        st.download_button(
+            "Download Win/Loss Strategy Markdown",
+            pack["markdown"],
+            file_name="win_loss_strategy_pack.md",
         )

@@ -304,6 +304,10 @@ class ArtifactInventoryService:
                 "under storage/objection_packs/."
             ),
             (
+                "Call POST /learning/win-loss-pack to write the Win/Loss Learning Strategy Pack "
+                "under storage/win_loss_packs/."
+            ),
+            (
                 "Inspect storage/artifact_indexes plus at least one Markdown/JSON artifact from each "
                 "major artifact family."
             ),
@@ -453,6 +457,12 @@ class ArtifactInventoryService:
                 "objection_packs",
                 "POST /rfp/objection-handling-pack",
                 "Competitive objection handling responses, reviewer workflow, confidence, and citations.",
+            ),
+            self._spec(
+                "win_loss_packs",
+                "win_loss_packs",
+                "POST /learning/win-loss-pack",
+                "Win/loss learning strategy pack with retrieval, eval, and response guidance updates.",
             ),
             self._spec(
                 "audit_packs",

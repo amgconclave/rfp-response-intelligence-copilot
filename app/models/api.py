@@ -239,6 +239,73 @@ class WinStrategyResponse(BaseModel):
     trace_id: str
 
 
+class OutcomeEvidenceSignal(BaseModel):
+    evidence_id: str
+    category: str
+    claim: str
+    source: str
+    citation: str
+    strength: float = 0.5
+
+
+class PostRfpOutcome(BaseModel):
+    outcome_id: str
+    result: str
+    customer_profile_id: str
+    industry: str
+    deal_value: int
+    competitor: str | None = None
+    submitted_at: str
+    decision_notes: list[str] = Field(default_factory=list)
+    evidence_used: list[OutcomeEvidenceSignal] = Field(default_factory=list)
+    missing_evidence: list[str] = Field(default_factory=list)
+    pricing_posture: str = "standard"
+    win_loss_reasons: list[str] = Field(default_factory=list)
+
+
+class WinLossLearningRequest(BaseModel):
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json"
+    outcomes: list[PostRfpOutcome] | None = None
+    analysis: AnalyzeResponse | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+    matrix: list[RequirementMatrixRow] | None = None
+    requirement_matrix: list[RequirementMatrixRow] | None = None
+    win_strategy: WinStrategyResponse | None = None
+    eval_metrics: EvaluationMetrics | None = None
+    top_k_patterns: int = 6
+
+
+class WinLossLearningResponse(BaseModel):
+    title: str
+    outcome_count: int
+    win_rate: float
+    pattern_summary: dict[str, Any]
+    winning_evidence_patterns: list[dict[str, Any]] = Field(default_factory=list)
+    losing_risk_patterns: list[dict[str, Any]] = Field(default_factory=list)
+    retrieval_recommendations: list[dict[str, Any]] = Field(default_factory=list)
+    eval_recommendations: list[dict[str, Any]] = Field(default_factory=list)
+    response_guidance_updates: list[dict[str, Any]] = Field(default_factory=list)
+    recommended_next_actions: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class WinLossStrategyPackRequest(WinLossLearningRequest):
+    learning_response: WinLossLearningResponse | None = None
+    write_artifact: bool = True
+
+
+class WinLossStrategyPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    learning_response: WinLossLearningResponse
+    trace_id: str
+
+
 class PricingRiskMemoRequest(WinStrategyRequest):
     win_strategy: WinStrategyResponse | None = None
     write_artifact: bool = True

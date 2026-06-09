@@ -164,6 +164,7 @@ class ReleaseService:
             "objection_pack": (
                 "Competitive Objection Handling Pack writes Markdown and JSON under storage/objection_packs."
             ),
+            "win_loss_pack": "Win/Loss Learning Strategy Pack writes Markdown and JSON under storage/win_loss_packs.",
             "demo": "Final demo summary plus release gate status and publish pack path.",
             "readme": "README documents Release Candidate and Publish Pack workflow.",
             "api_docs": "API docs list /release/quality-gate and /release/publish-pack.",
@@ -239,6 +240,11 @@ class ReleaseService:
                 "artifact_root": str((self.settings.storage_dir / "objection_packs").resolve()),
                 "endpoints": ["/rfp/objection-handling", "/rfp/objection-handling-pack"],
             },
+            "win_loss_learning": {
+                "service_path": "app/services/win_loss_learning.py",
+                "artifact_root": str((self.settings.storage_dir / "win_loss_packs").resolve()),
+                "endpoints": ["/learning/win-loss", "/learning/win-loss-pack"],
+            },
             "api": {
                 "endpoint_count": len(paths),
                 "artifact_endpoint_count": smoke_matrix.readiness_summary.artifact_writing_endpoints,
@@ -268,6 +274,7 @@ class ReleaseService:
             "procurement_packs": "Procurement Q&A risk and approval workflow packs",
             "bid_packs": "Bid/No-Bid scenario simulator and ROI Impact packs",
             "objection_packs": "Competitive objection handling packs",
+            "win_loss_packs": "Win/Loss Learning Strategy packs",
             "portfolio_packs": "Portfolio interview packs",
             "release_packs": "GitHub publish packs",
             "ui_verification": "Dashboard Smoke and UI verification packs",

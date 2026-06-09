@@ -46,6 +46,8 @@ class LaunchChecklistService:
                 "POST /bid/roi-pack",
                 "POST /rfp/objection-handling",
                 "POST /rfp/objection-handling-pack",
+                "POST /learning/win-loss",
+                "POST /learning/win-loss-pack",
                 "GET /ops/ci-doctor",
                 "POST /ops/audit-pack",
                 "GET /api/contract-audit",
@@ -116,6 +118,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\objection_packs -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "learning/win-loss|Win/Loss Learning|win_loss_packs|rfp_outcomes" '
+                    "app dashboard docs README.md tests sample_data Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\win_loss_packs -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -291,6 +301,7 @@ class LaunchChecklistService:
             "procurement_packs": "storage/procurement_packs",
             "bid_packs": "storage/bid_packs",
             "objection_packs": "storage/objection_packs",
+            "win_loss_packs": "storage/win_loss_packs",
             "api_contracts": "storage/api_contracts",
             "portfolio_packs": "storage/portfolio_packs",
             "release_packs": "storage/release_packs",
@@ -757,6 +768,28 @@ class LaunchChecklistService:
                 200,
                 "Writes competitive objection responses, reviewer workflow, endpoint references, and proof commands.",
                 ["storage/objection_packs/*.md", "storage/objection_packs/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Win/Loss Learning",
+                "POST",
+                "/learning/win-loss",
+                "enterprise",
+                200,
+                (
+                    "Ingests fake post-RFP outcomes and returns winning evidence patterns, loss guardrails, "
+                    "retrieval recommendations, eval recommendations, and response guidance updates."
+                ),
+                body='{"outcomes_fixture_path":"sample_data/rfp_outcomes.json","top_k_patterns":6}',
+            ),
+            self._row(
+                "Win/Loss Strategy Pack",
+                "POST",
+                "/learning/win-loss-pack",
+                "artifact",
+                200,
+                "Writes Win/Loss Learning Strategy Pack Markdown and JSON.",
+                ["storage/win_loss_packs/*.md", "storage/win_loss_packs/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(
