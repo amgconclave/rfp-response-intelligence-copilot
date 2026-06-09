@@ -1,8 +1,27 @@
+from __future__ import annotations
+
 from typing import Any
 
 from pydantic import BaseModel, Field
 
-from app.models.domain import AuditEvent, Document, RfpRequirement, UsageMetric
+from app.models.domain import (
+    Answer,
+    AuditEvent,
+    Citation,
+    CustomerFitRequirement,
+    CustomerProfile,
+    Document,
+    DraftResponse,
+    EvidenceGap,
+    RequirementMatrixRow,
+    ResponseMemoryMatch,
+    ReviewFinding,
+    ReviewReport,
+    RfpRequirement,
+    StakeholderTask,
+    TokenUsage,
+    UsageMetric,
+)
 
 
 class DemoTokenResponse(BaseModel):
@@ -50,9 +69,399 @@ class DraftRequest(BaseModel):
     top_k: int = 5
 
 
-class EvaluateRequest(BaseModel):
-    dataset_path: str = "sample_data/eval_dataset.json"
-    top_k: int = 4
+class RequirementMatrixRequest(BaseModel):
+    rfp_document_id: str | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+
+
+class RequirementMatrixResponse(BaseModel):
+    matrix: list[RequirementMatrixRow]
+    trace_id: str
+
+
+class CustomerProfilesResponse(BaseModel):
+    profiles: list[CustomerProfile]
+
+
+class CustomerFitRequest(BaseModel):
+    customer_profile_id: str
+    rfp_document_id: str | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+    requirement_matrix: list[RequirementMatrixRow] | None = None
+
+
+class CustomerFitResponse(BaseModel):
+    customer_profile: CustomerProfile
+    fit_score: float
+    profile_risks: list[str] = Field(default_factory=list)
+    recommended_positioning: list[str] = Field(default_factory=list)
+    requirements_to_emphasize: list[CustomerFitRequirement] = Field(default_factory=list)
+    requirements_needing_review: list[CustomerFitRequirement] = Field(default_factory=list)
+    trace_id: str
+
+
+class ResponseMemorySearchRequest(BaseModel):
+    query: str
+    category: str | None = None
+    customer_profile_id: str | None = None
+    top_k: int = 5
+
+
+class ResponseMemorySearchResponse(BaseModel):
+    matches: list[ResponseMemoryMatch]
+    trace_id: str
+
+
+class ExportPackageRequest(BaseModel):
+    rfp_document_id: str | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+    draft_response: DraftResponse | None = None
+    customer_profile_id: str | None = None
+    include_response_memory: bool = False
+    write_artifact: bool = True
+
+
+class ExportPackageResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    package: dict[str, Any]
+    trace_id: str
+
+
+class ReviewAnswerRequest(BaseModel):
+    question: str
+    answer_text: str
+    citations: list[Citation] = Field(default_factory=list)
+    missing_evidence: list[str] = Field(default_factory=list)
+    token_usage: TokenUsage = Field(default_factory=TokenUsage)
+
+
+class ReviewAnswerResponse(ReviewReport):
+    pass
+
+
+class ReviewPackageRequest(BaseModel):
+    rfp_document_id: str | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+    requirement_matrix: list[RequirementMatrixRow] | None = None
+    draft_response: DraftResponse | None = None
+    answer_payloads: list[Answer] = Field(default_factory=list)
+    export_payload: dict[str, Any] | None = None
+    write_artifact: bool = False
+
+
+class ReviewPackageResponse(ReviewReport):
+    requirement_matrix: list[RequirementMatrixRow] = Field(default_factory=list)
+    export_package: dict[str, Any] | None = None
+    artifact_path: str | None = None
+
+
+class ActionPlanRequest(BaseModel):
+    rfp_document_id: str | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+    requirement_matrix: list[RequirementMatrixRow] | None = None
+    customer_profile_id: str | None = None
+    customer_profile: CustomerProfile | None = None
+    customer_fit: CustomerFitResponse | None = None
+    review_findings: list[ReviewFinding] = Field(default_factory=list)
+
+
+class ActionPlanResponse(BaseModel):
+    tasks: list[StakeholderTask]
+    summary: dict[str, Any]
+    trace_id: str
+
+
+class HandoffBoardRequest(ActionPlanRequest):
+    action_plan: list[StakeholderTask] | None = None
+    write_artifact: bool = True
+
+
+class HandoffBoardResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    board: dict[str, Any]
+    trace_id: str
+
+
+class DealReadinessScorecardRequest(BaseModel):
+    analysis: AnalyzeResponse | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+    matrix: list[RequirementMatrixRow] | None = None
+    requirement_matrix: list[RequirementMatrixRow] | None = None
+    review_findings: list[ReviewFinding] = Field(default_factory=list)
+    customer_fit: CustomerFitResponse | None = None
+    action_plan: list[StakeholderTask] = Field(default_factory=list)
+    eval_metrics: EvaluationMetrics | None = None
+
+
+class DealReadinessScorecardResponse(BaseModel):
+    readiness_score: int
+    readiness_level: str
+    blockers: list[str] = Field(default_factory=list)
+    evidence_coverage: float
+    review_risk_count: int
+    customer_fit_score: float | None = None
+    owner_bottlenecks: list[dict[str, Any]] = Field(default_factory=list)
+    recommended_next_actions: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class WinStrategyRequest(BaseModel):
+    rfp_document_id: str | None = None
+    analysis: AnalyzeResponse | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+    matrix: list[RequirementMatrixRow] | None = None
+    requirement_matrix: list[RequirementMatrixRow] | None = None
+    customer_profile_id: str | None = None
+    customer_fit: CustomerFitResponse | None = None
+    readiness_scorecard: DealReadinessScorecardResponse | None = None
+    response_memory_matches: list[ResponseMemoryMatch] = Field(default_factory=list)
+    action_plan: list[StakeholderTask] = Field(default_factory=list)
+    review_findings: list[ReviewFinding] = Field(default_factory=list)
+    competitor_context: list[str] = Field(default_factory=list)
+    pricing_notes: list[str] = Field(default_factory=list)
+
+
+class WinStrategyResponse(BaseModel):
+    win_score: int
+    win_level: str
+    competitor_risk_profile: dict[str, Any]
+    pricing_risk: dict[str, Any]
+    compliance_security_differentiators: list[dict[str, Any]] = Field(default_factory=list)
+    proof_points: list[dict[str, Any]] = Field(default_factory=list)
+    recommended_response_posture: str
+    red_flags: list[str] = Field(default_factory=list)
+    assumptions: list[str] = Field(default_factory=list)
+    next_actions_by_owner: list[dict[str, Any]] = Field(default_factory=list)
+    trace_id: str
+
+
+class PricingRiskMemoRequest(WinStrategyRequest):
+    win_strategy: WinStrategyResponse | None = None
+    write_artifact: bool = True
+
+
+class PricingRiskMemoResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    memo: dict[str, Any]
+    trace_id: str
+
+
+class ContractRiskClause(BaseModel):
+    clause_id: str
+    category: str
+    title: str
+    clause_text: str
+    risk_level: str
+    risk_score: int
+    detected_terms: list[str] = Field(default_factory=list)
+    rationale: str
+    suggested_redline: str
+    fallback_position: str
+    proof_points: list[dict[str, Any]] = Field(default_factory=list)
+    missing_evidence: list[str] = Field(default_factory=list)
+
+
+class ContractRiskRequest(BaseModel):
+    contract_document_id: str | None = None
+    fixture_path: str | None = None
+    text: str | None = None
+    customer_profile_id: str | None = None
+
+
+class ContractRiskResponse(BaseModel):
+    risk_score: int
+    status: str
+    risky_clauses: list[ContractRiskClause] = Field(default_factory=list)
+    category_counts: dict[str, int] = Field(default_factory=dict)
+    suggested_redlines: list[dict[str, Any]] = Field(default_factory=list)
+    fallback_positions: list[dict[str, Any]] = Field(default_factory=list)
+    cited_proof_points: list[dict[str, Any]] = Field(default_factory=list)
+    owner_actions: list[dict[str, Any]] = Field(default_factory=list)
+    assumptions: list[str] = Field(default_factory=list)
+    missing_evidence_warnings: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class NegotiationBriefRequest(ContractRiskRequest):
+    contract_risk: ContractRiskResponse | None = None
+    win_strategy: WinStrategyResponse | None = None
+    pricing_memo: PricingRiskMemoResponse | None = None
+    write_artifact: bool = True
+
+
+class NegotiationBriefResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    brief: dict[str, Any]
+    trace_id: str
+
+
+class EvidenceGapRequest(BaseModel):
+    rfp_document_id: str | None = None
+    analysis: AnalyzeResponse | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+    matrix: list[RequirementMatrixRow] | None = None
+    requirement_matrix: list[RequirementMatrixRow] | None = None
+    review_findings: list[ReviewFinding] = Field(default_factory=list)
+    red_team_summary: dict[str, Any] | None = None
+    readiness_scorecard: DealReadinessScorecardResponse | None = None
+    win_strategy: WinStrategyResponse | None = None
+    contract_risk: ContractRiskResponse | None = None
+    action_plan: list[StakeholderTask] = Field(default_factory=list)
+
+
+class EvidenceGapResponse(BaseModel):
+    gaps: list[EvidenceGap]
+    summary: dict[str, Any]
+    trace_id: str
+
+
+class SourceRequestPackRequest(EvidenceGapRequest):
+    evidence_gaps: list[EvidenceGap] | None = None
+    write_artifact: bool = True
+
+
+class SourceRequestPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    trace_id: str
+
+
+class TimelineMilestone(BaseModel):
+    milestone_id: str
+    sequence: int
+    title: str
+    owner_role: str
+    due_date: str
+    status: str
+    category: str
+    description: str
+    dependencies: list[str] = Field(default_factory=list)
+    related_requirement_ids: list[str] = Field(default_factory=list)
+    source_signals: list[str] = Field(default_factory=list)
+
+
+class TimelinePlanRequest(BaseModel):
+    rfp_document_id: str | None = None
+    analysis: AnalyzeResponse | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+    matrix: list[RequirementMatrixRow] | None = None
+    requirement_matrix: list[RequirementMatrixRow] | None = None
+    review_findings: list[ReviewFinding] = Field(default_factory=list)
+    action_plan: list[StakeholderTask] = Field(default_factory=list)
+    evidence_gaps: list[EvidenceGap] | None = None
+    contract_risk: ContractRiskResponse | None = None
+    win_strategy: WinStrategyResponse | None = None
+    readiness_scorecard: DealReadinessScorecardResponse | None = None
+    source_request_pack: dict[str, Any] | None = None
+    leadership_brief: dict[str, Any] | None = None
+    red_team_summary: dict[str, Any] | None = None
+
+
+class TimelinePlanResponse(BaseModel):
+    milestones: list[TimelineMilestone]
+    owner_assignments: list[dict[str, Any]] = Field(default_factory=list)
+    dependencies: list[dict[str, Any]] = Field(default_factory=list)
+    risk_buffers: list[dict[str, Any]] = Field(default_factory=list)
+    blocked_items: list[dict[str, Any]] = Field(default_factory=list)
+    readiness_gates: list[dict[str, Any]] = Field(default_factory=list)
+    escalation_triggers: list[dict[str, Any]] = Field(default_factory=list)
+    calendar_entries: list[dict[str, Any]] = Field(default_factory=list)
+    summary: dict[str, Any] = Field(default_factory=dict)
+    trace_id: str
+
+
+class SubmissionCalendarPackRequest(TimelinePlanRequest):
+    timeline_plan: TimelinePlanResponse | None = None
+    write_artifact: bool = True
+
+
+class SubmissionCalendarPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    trace_id: str
+
+
+class SubmissionDecisionRequest(BaseModel):
+    rfp_document_id: str | None = None
+    analysis: AnalyzeResponse | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+    matrix: list[RequirementMatrixRow] | None = None
+    requirement_matrix: list[RequirementMatrixRow] | None = None
+    draft_response: DraftResponse | None = None
+    answers: list[Answer] = Field(default_factory=list)
+    review_findings: list[ReviewFinding] = Field(default_factory=list)
+    review_passed: bool | None = None
+    action_plan: list[StakeholderTask] = Field(default_factory=list)
+    readiness_scorecard: DealReadinessScorecardResponse | None = None
+    eval_metrics: EvaluationMetrics | None = None
+    red_team_summary: dict[str, Any] | None = None
+    win_strategy: WinStrategyResponse | None = None
+    contract_risk: ContractRiskResponse | None = None
+    evidence_gaps: list[EvidenceGap] | None = None
+    source_request_pack: dict[str, Any] | None = None
+    timeline_plan: TimelinePlanResponse | None = None
+    leadership_brief: dict[str, Any] | None = None
+    metrics: dict[str, Any] | None = None
+    export_artifact_path: str | None = None
+    export_json_artifact_path: str | None = None
+    source_request_artifact_path: str | None = None
+    source_request_json_artifact_path: str | None = None
+    submission_calendar_artifact_path: str | None = None
+    submission_calendar_json_artifact_path: str | None = None
+    leadership_brief_artifact_path: str | None = None
+    leadership_brief_json_artifact_path: str | None = None
+
+
+class SubmissionDecisionResponse(BaseModel):
+    decision: str
+    score: int
+    blocking_issues: list[dict[str, Any]] = Field(default_factory=list)
+    exception_list: list[dict[str, Any]] = Field(default_factory=list)
+    approvals_required: list[dict[str, Any]] = Field(default_factory=list)
+    owner_actions: list[dict[str, Any]] = Field(default_factory=list)
+    artifact_links: dict[str, Any] = Field(default_factory=dict)
+    rationale: list[str] = Field(default_factory=list)
+    local_verification_commands: list[str] = Field(default_factory=list)
+    summary: dict[str, Any] = Field(default_factory=dict)
+    trace_id: str
+
+
+class ExecutiveSubmissionMemoRequest(SubmissionDecisionRequest):
+    submission_decision: SubmissionDecisionResponse | None = None
+    write_artifact: bool = True
+
+
+class ExecutiveSubmissionMemoResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    memo: dict[str, Any]
+    trace_id: str
+
+
+class ExecutiveRiskReportRequest(DealReadinessScorecardRequest):
+    red_team_summary: dict[str, Any] | None = None
+    write_artifact: bool = True
+
+
+class ExecutiveRiskReportResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    report: dict[str, Any]
+    trace_id: str
 
 
 class EvaluationMetrics(BaseModel):
@@ -66,6 +475,285 @@ class EvaluationMetrics(BaseModel):
     estimated_cost: float
     passed: bool
     details: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class SubmissionRegressionRequest(BaseModel):
+    rfp_fixture_path: str = "sample_data/acme_enterprise_rfp.md"
+    eval_dataset_path: str = "sample_data/eval_dataset.json"
+    red_team_dataset_path: str = "sample_data/red_team_questions.json"
+    customer_profile_id: str = "regulated_healthcare"
+    top_k: int = 4
+    write_artifacts: bool = True
+
+
+class SubmissionRegressionCheck(BaseModel):
+    name: str
+    passed: bool
+    evidence_count: int = 0
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+class SubmissionRegressionResponse(BaseModel):
+    passed: bool
+    checks: list[SubmissionRegressionCheck]
+    evidence_counts: dict[str, int | float | bool | str | None]
+    failed_checks: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    artifact_paths: dict[str, str | None] = Field(default_factory=dict)
+    eval_summary: EvaluationMetrics
+    red_team_summary: dict[str, Any]
+    interview_ready_summary: str
+    trace_id: str
+
+
+class DemoScriptRequest(BaseModel):
+    regression: SubmissionRegressionResponse | None = None
+    run_regression: bool = True
+    regression_request: SubmissionRegressionRequest = Field(default_factory=SubmissionRegressionRequest)
+    write_artifact: bool = True
+
+
+class DemoScriptResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    script: dict[str, Any]
+    trace_id: str
+
+
+class LeadershipBriefRequest(BaseModel):
+    rfp_document_id: str | None = None
+    analysis: AnalyzeResponse | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+    matrix: list[RequirementMatrixRow] | None = None
+    requirement_matrix: list[RequirementMatrixRow] | None = None
+    draft_response: DraftResponse | None = None
+    answers: list[Answer] = Field(default_factory=list)
+    export_payload: dict[str, Any] | None = None
+    export_artifact_path: str | None = None
+    export_json_artifact_path: str | None = None
+    review_findings: list[ReviewFinding] = Field(default_factory=list)
+    review_passed: bool | None = None
+    customer_profile_id: str | None = None
+    customer_fit: CustomerFitResponse | None = None
+    response_memory_matches: list[ResponseMemoryMatch] = Field(default_factory=list)
+    action_plan: list[StakeholderTask] = Field(default_factory=list)
+    handoff_board: dict[str, Any] | None = None
+    handoff_artifact_path: str | None = None
+    handoff_json_artifact_path: str | None = None
+    readiness_scorecard: DealReadinessScorecardResponse | None = None
+    executive_report: ExecutiveRiskReportResponse | None = None
+    executive_report_artifact_path: str | None = None
+    executive_report_json_artifact_path: str | None = None
+    eval_metrics: EvaluationMetrics | None = None
+    red_team_summary: dict[str, Any] | None = None
+    write_artifact: bool = True
+
+
+class LeadershipBriefResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    brief: dict[str, Any]
+    trace_id: str
+
+
+class EvaluateRequest(BaseModel):
+    dataset_path: str = "sample_data/eval_dataset.json"
+    top_k: int = 4
+
+
+class RagCoverageCheck(BaseModel):
+    name: str
+    status: str
+    passed: int
+    total: int
+    coverage: float
+    missing: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+class RagCorpusCoverageResponse(BaseModel):
+    title: str
+    status: str
+    score: int
+    corpus_metadata: dict[str, Any]
+    doc_category_coverage: RagCoverageCheck
+    eval_coverage: RagCoverageCheck
+    citation_source_coverage: RagCoverageCheck
+    red_team_coverage: RagCoverageCheck
+    missing_evidence_coverage: RagCoverageCheck
+    gaps: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    local_commands: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class RagEvalCoveragePackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class RagEvalCoveragePackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    coverage: RagCorpusCoverageResponse
+    trace_id: str
+
+
+class ComplianceRequirementLink(BaseModel):
+    requirement_id: str
+    requirement_text: str
+    category: str
+    priority: str
+    matrix_status: str | None = None
+    risk_level: str | None = None
+
+
+class ComplianceEvidenceSource(BaseModel):
+    document_id: str | None = None
+    chunk_id: str | None = None
+    filename: str
+    document_type: str
+    snippet: str
+    matched_terms: list[str] = Field(default_factory=list)
+    score: float
+
+
+class ComplianceControlMapping(BaseModel):
+    control_id: str
+    control_family: str
+    title: str
+    requirement_links: list[ComplianceRequirementLink] = Field(default_factory=list)
+    source_docs: list[ComplianceEvidenceSource] = Field(default_factory=list)
+    policy_sources: list[str] = Field(default_factory=list)
+    confidence: float
+    owner: str
+    status: str
+    missing_evidence_warnings: list[str] = Field(default_factory=list)
+    unsupported_claim_flags: list[str] = Field(default_factory=list)
+    reviewer_notes: list[str] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+
+
+class ComplianceEvidenceMatrixResponse(BaseModel):
+    title: str
+    control_mappings: list[ComplianceControlMapping]
+    coverage_summary: dict[str, Any]
+    unsupported_claims: list[dict[str, Any]] = Field(default_factory=list)
+    owner_followups: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ControlPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class ControlPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    matrix: ComplianceEvidenceMatrixResponse
+    trace_id: str
+
+
+class ProcurementQuestionRiskItem(BaseModel):
+    question_id: str
+    question_type: str
+    category: str
+    question: str
+    risk_level: str
+    required_reviewer_role: str
+    approval_status: str
+    evidence_support: str
+    unsupported_claim_flag: bool
+    citations: list[Citation] = Field(default_factory=list)
+    snippets: list[dict[str, Any]] = Field(default_factory=list)
+    approved_memory_matches: list[ResponseMemoryMatch] = Field(default_factory=list)
+    draft_answer: str
+    reviewer_checklist: list[str] = Field(default_factory=list)
+    escalation_owner: str
+    evidence_gaps: list[str] = Field(default_factory=list)
+    approval_rationale: str
+    review_findings: list[ReviewFinding] = Field(default_factory=list)
+
+
+class ProcurementQuestionRiskResponse(BaseModel):
+    title: str
+    questions: list[ProcurementQuestionRiskItem]
+    coverage_summary: dict[str, Any]
+    approval_summary: dict[str, Any]
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ProcurementApprovalPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class ProcurementApprovalPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    question_risk: ProcurementQuestionRiskResponse
+    trace_id: str
+
+
+class BidScenario(BaseModel):
+    scenario_id: str
+    name: str
+    decision_recommendation: str
+    deal_value: int
+    pursuit_effort_hours: int
+    pursuit_cost: int
+    win_probability: float
+    gross_margin: float
+    risk_adjusted_revenue: int
+    risk_adjusted_gross_profit: int
+    risk_adjusted_roi: float
+    roi_formula: str
+    blockers: list[dict[str, Any]] = Field(default_factory=list)
+    required_reviewers: list[str] = Field(default_factory=list)
+    evidence_readiness: dict[str, Any] = Field(default_factory=dict)
+    timeline_pressure: dict[str, Any] = Field(default_factory=dict)
+    coverage_summary: dict[str, Any] = Field(default_factory=dict)
+    customer_profile: dict[str, Any] = Field(default_factory=dict)
+    assumptions: list[str] = Field(default_factory=list)
+
+
+class BidScenarioAnalysisResponse(BaseModel):
+    title: str
+    scenarios: list[BidScenario]
+    recommended_scenario_id: str
+    coverage_summary: dict[str, Any]
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class BidRoiPackRequest(BaseModel):
+    scenario_analysis: BidScenarioAnalysisResponse | None = None
+    write_artifact: bool = True
+
+
+class BidRoiPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    scenario_analysis: BidScenarioAnalysisResponse
+    trace_id: str
 
 
 class UsageResponse(BaseModel):
@@ -82,3 +770,487 @@ class HealthResponse(BaseModel):
     provider_mode: str
     vector_store_mode: str
     version: str
+
+
+class RuntimeDemoPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class RuntimeDemoReadinessResponse(BaseModel):
+    title: str
+    status: str
+    provider_mode: str
+    vector_store_mode: str
+    local_run_commands: list[str] = Field(default_factory=list)
+    stop_commands: list[str] = Field(default_factory=list)
+    expected_ports: list[dict[str, Any]] = Field(default_factory=list)
+    env_requirements: list[dict[str, Any]] = Field(default_factory=list)
+    dependency_checks: list[dict[str, Any]] = Field(default_factory=list)
+    process_port_checks: list[dict[str, Any]] = Field(default_factory=list)
+    expected_health_urls: list[dict[str, Any]] = Field(default_factory=list)
+    rag_eval_red_team_commands: list[str] = Field(default_factory=list)
+    demo_flow_order: list[str] = Field(default_factory=list)
+    screenshot_checklist: list[dict[str, str]] = Field(default_factory=list)
+    troubleshooting: list[dict[str, str]] = Field(default_factory=list)
+    recruiter_engineer_explanation: dict[str, str] = Field(default_factory=dict)
+    known_limitations: list[str] = Field(default_factory=list)
+    storage_runtime_pack_dir: str
+    generated_at: str
+    trace_id: str
+
+
+class RuntimeDemoPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    readiness: RuntimeDemoReadinessResponse
+    trace_id: str
+
+
+class SmokeMatrixRow(BaseModel):
+    endpoint_name: str
+    method: str
+    path: str
+    category: str
+    expected_status: int
+    expected_result: str
+    sample_command: str
+    required_artifact_expectations: list[str] = Field(default_factory=list)
+    auth_notes: str
+
+
+class SmokeMatrixSummary(BaseModel):
+    total_endpoints: int
+    protected_endpoints: int
+    artifact_writing_endpoints: int
+    local_mock_ready: bool
+    readiness_level: str
+    recommended_sequence: list[str] = Field(default_factory=list)
+    required_local_commands: list[str] = Field(default_factory=list)
+    optional_provider_notes: str
+
+
+class SmokeMatrixResponse(BaseModel):
+    rows: list[SmokeMatrixRow]
+    readiness_summary: SmokeMatrixSummary
+    trace_id: str
+
+
+class LaunchChecklistRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class LaunchChecklistResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    checklist: dict[str, Any]
+    smoke_matrix: SmokeMatrixResponse
+    trace_id: str
+
+
+class DashboardSmokeCheck(BaseModel):
+    check_id: str
+    category: str
+    label: str
+    status: str
+    expected: str
+    evidence: str
+    source_path: str
+    notes: list[str] = Field(default_factory=list)
+
+
+class DashboardSmokeView(BaseModel):
+    label: str
+    status: str
+    dashboard_source_present: bool
+    endpoint_paths: list[str] = Field(default_factory=list)
+    generated_artifact_tab: bool = False
+    artifact_root: str | None = None
+
+
+class DashboardSmokeEndpointReference(BaseModel):
+    method: str
+    path: str
+    status: str
+    dashboard_referenced: bool
+    route_defined: bool
+    purpose: str
+    expected_artifacts: list[str] = Field(default_factory=list)
+
+
+class DashboardSmokeResponse(BaseModel):
+    title: str
+    status: str
+    summary: dict[str, Any]
+    expected_views: list[DashboardSmokeView]
+    endpoint_references: list[DashboardSmokeEndpointReference]
+    generated_artifact_tabs: list[dict[str, Any]] = Field(default_factory=list)
+    local_run_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    checks: list[DashboardSmokeCheck] = Field(default_factory=list)
+    trace_id: str
+
+
+class UIVerificationPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class UIVerificationPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    dashboard_smoke: DashboardSmokeResponse
+    trace_id: str
+
+
+class ReleaseQualityGateResponse(BaseModel):
+    title: str
+    status: str
+    score: int
+    blockers: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    verification_checklist: list[dict[str, Any]] = Field(default_factory=list)
+    coverage: dict[str, Any] = Field(default_factory=dict)
+    artifact_coverage: dict[str, Any] = Field(default_factory=dict)
+    runtime_notes: list[str] = Field(default_factory=list)
+    publish_readiness: dict[str, Any] = Field(default_factory=dict)
+    trace_id: str
+
+
+class CiDoctorCheck(BaseModel):
+    check_id: str
+    name: str
+    category: str
+    status: str
+    command: str | None = None
+    evidence_paths: list[str] = Field(default_factory=list)
+    missing_paths: list[str] = Field(default_factory=list)
+    details: dict[str, Any] = Field(default_factory=dict)
+    remediation: list[str] = Field(default_factory=list)
+
+
+class SecretScanFinding(BaseModel):
+    path: str
+    line: int
+    pattern_id: str
+    severity: str
+    redacted_match: str
+
+
+class SecretScanSummary(BaseModel):
+    files_scanned: int
+    skipped_dirs: list[str] = Field(default_factory=list)
+    finding_count: int
+    findings: list[SecretScanFinding] = Field(default_factory=list)
+    patterns: list[str] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)
+
+
+class DependencyInventory(BaseModel):
+    dependency_files: list[dict[str, Any]] = Field(default_factory=list)
+    runtime_dependencies: list[str] = Field(default_factory=list)
+    dev_dependencies: list[str] = Field(default_factory=list)
+    optional_extras: dict[str, list[str]] = Field(default_factory=dict)
+    notes: list[str] = Field(default_factory=list)
+
+
+class CiDoctorResponse(BaseModel):
+    title: str
+    status: str
+    score: int
+    checks: list[CiDoctorCheck]
+    summary: dict[str, Any]
+    dependency_inventory: DependencyInventory
+    secret_scan: SecretScanSummary
+    local_verification_commands: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class AuditPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class AuditPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    ci_doctor: CiDoctorResponse
+    trace_id: str
+
+
+class ApiContractEndpoint(BaseModel):
+    method: str
+    path: str
+    domain: str
+    operation_id: str | None = None
+    summary: str
+    expected_status: int
+    auth_required: bool
+    auth_notes: str
+    docs_api_covered: bool
+    readme_covered: bool
+    dashboard_referenced: bool
+    smoke_matrix_covered: bool
+    generates_artifact: bool
+    artifact_expectations: list[str] = Field(default_factory=list)
+    sample_curl: str
+    sample_powershell: str
+
+
+class ApiContractCheck(BaseModel):
+    name: str
+    status: str
+    passed: int
+    total: int
+    missing_paths: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+class ApiContractAuditResponse(BaseModel):
+    title: str
+    status: str
+    score: int
+    openapi_route_count: int
+    openapi_path_count: int
+    auth_protected_endpoint_count: int
+    public_endpoint_count: int
+    important_endpoint_count: int
+    endpoint_inventory: dict[str, list[ApiContractEndpoint]]
+    docs_api_coverage: ApiContractCheck
+    dashboard_smoke_alignment: ApiContractCheck
+    generated_artifact_endpoint_coverage: ApiContractCheck
+    demo_flow_endpoint_coverage: ApiContractCheck
+    rag_eval_red_team_endpoint_coverage: ApiContractCheck
+    missing_docs_warnings: list[str] = Field(default_factory=list)
+    deprecated_duplicate_route_warnings: list[str] = Field(default_factory=list)
+    local_only_limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ReviewerCollectionRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class ReviewerCollectionResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    collection: dict[str, Any]
+    contract_audit: ApiContractAuditResponse
+    trace_id: str
+
+
+class PublishPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class PublishPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    quality_gate: ReleaseQualityGateResponse
+    trace_id: str
+
+
+class GitPushPlanRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class GitReadinessResponse(BaseModel):
+    title: str
+    status: str
+    git_repo_detected: bool
+    repo_root: str | None = None
+    current_branch: str | None = None
+    working_tree_summary: dict[str, Any]
+    generated_artifact_directories: list[dict[str, Any]] = Field(default_factory=list)
+    changed_file_groups: dict[str, list[str]] = Field(default_factory=dict)
+    suspicious_large_generated_files: list[dict[str, Any]] = Field(default_factory=list)
+    github_actions: dict[str, Any]
+    readme_final_handoff: dict[str, Any]
+    env_example_present: bool
+    dirty_worktree_guidance: list[str] = Field(default_factory=list)
+    recommended_commit_groups: list[dict[str, Any]] = Field(default_factory=list)
+    local_review_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class GitPushPlanResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    readiness: GitReadinessResponse
+    trace_id: str
+
+
+class PortfolioEvidenceSkill(BaseModel):
+    skill_id: str
+    jd_skill: str
+    coverage_status: str
+    implemented_features: list[str] = Field(default_factory=list)
+    endpoints: list[str] = Field(default_factory=list)
+    services: list[str] = Field(default_factory=list)
+    tests_evals: list[str] = Field(default_factory=list)
+    artifacts: list[str] = Field(default_factory=list)
+    demo_commands: list[str] = Field(default_factory=list)
+    local_proof_paths: list[str] = Field(default_factory=list)
+    interview_notes: list[str] = Field(default_factory=list)
+
+
+class PortfolioEvidenceIndexResponse(BaseModel):
+    title: str
+    evidence_score: int
+    covered_skill_count: int
+    total_skill_count: int
+    skills: list[PortfolioEvidenceSkill]
+    required_capabilities: list[str] = Field(default_factory=list)
+    proof_commands: list[str] = Field(default_factory=list)
+    artifact_roots: dict[str, str] = Field(default_factory=dict)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class PortfolioInterviewPackRequest(BaseModel):
+    run_regression: bool = True
+    regression_request: SubmissionRegressionRequest = Field(default_factory=SubmissionRegressionRequest)
+    write_artifact: bool = True
+
+
+class PortfolioInterviewPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    evidence_index: PortfolioEvidenceIndexResponse
+    trace_id: str
+
+
+class ReviewerQuickstartResponse(BaseModel):
+    title: str
+    status: str
+    provider_mode: str
+    vector_store_mode: str
+    local_mock_default: bool
+    exact_local_setup_commands: list[str] = Field(default_factory=list)
+    one_command_demo: str
+    verification_commands: list[str] = Field(default_factory=list)
+    endpoint_walkthrough_order: list[dict[str, Any]] = Field(default_factory=list)
+    rag_rfp_workflow_walkthrough: list[dict[str, Any]] = Field(default_factory=list)
+    artifact_proof_map: dict[str, Any] = Field(default_factory=dict)
+    expected_outputs: dict[str, Any] = Field(default_factory=dict)
+    troubleshooting: list[dict[str, str]] = Field(default_factory=list)
+    role_specific_reviewer_notes: dict[str, list[str]] = Field(default_factory=dict)
+    proof_tour: list[str] = Field(default_factory=list)
+    github_readme_blurb: str
+    trace_id: str
+
+
+class ReviewerWalkthroughPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class ReviewerWalkthroughPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    quickstart: ReviewerQuickstartResponse
+    trace_id: str
+
+
+class ArtifactFileSummary(BaseModel):
+    path: str
+    name: str
+    extension: str
+    size_bytes: int
+    last_modified: str
+
+
+class ArtifactInventoryItem(BaseModel):
+    key: str
+    directory: str
+    exists: bool
+    ignored_status: str
+    producer_endpoint: str
+    producer_command: str
+    reviewer_purpose: str
+    freshness_notes: list[str] = Field(default_factory=list)
+    file_count: int
+    latest_files: list[ArtifactFileSummary] = Field(default_factory=list)
+
+
+class ArtifactInventoryResponse(BaseModel):
+    title: str
+    storage_root: str
+    ignored_status: str
+    generated_at: str
+    total_directories: int
+    total_files: int
+    latest_artifact_count: int
+    directories: list[ArtifactInventoryItem]
+    local_commands: list[str] = Field(default_factory=list)
+    reviewer_proof_checklist: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ReadmeChecklistRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class ReadmeChecklistResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    checklist: dict[str, Any]
+    inventory: ArtifactInventoryResponse
+    trace_id: str
+
+
+class FinalAuditCheck(BaseModel):
+    check_id: str
+    name: str
+    category: str
+    status: str
+    evidence_paths: list[str] = Field(default_factory=list)
+    missing_paths: list[str] = Field(default_factory=list)
+    required_terms: list[str] = Field(default_factory=list)
+    missing_terms: list[str] = Field(default_factory=list)
+    details: dict[str, Any] = Field(default_factory=dict)
+    remediation: list[str] = Field(default_factory=list)
+
+
+class FinalAuditResponse(BaseModel):
+    title: str
+    status: str
+    score: int
+    checks: list[FinalAuditCheck]
+    summary: dict[str, Any]
+    endpoint_inventory: dict[str, Any]
+    artifact_inventory: dict[str, Any]
+    local_verification_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class FinalPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class FinalPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    final_audit: FinalAuditResponse
+    trace_id: str

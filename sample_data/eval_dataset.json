@@ -25,6 +25,42 @@
       "expected_evidence_documents": [],
       "expected_answer_themes": [],
       "expect_missing_evidence": true
+    },
+    {
+      "question": "What is the enterprise implementation timeline and go-live acceptance criteria?",
+      "expected_evidence_documents": ["implementation_guide.md"],
+      "expected_answer_themes": ["30 business days", "go-live", "standard eval", "red-team"]
+    },
+    {
+      "question": "Which privacy policy language covers data processing roles and subprocessors?",
+      "expected_evidence_documents": ["dpa_privacy_policy.md"],
+      "expected_answer_themes": ["controller", "processor", "subprocessors", "retention"]
+    },
+    {
+      "question": "What support response targets are available and what uptime guarantee is excluded?",
+      "expected_evidence_documents": ["sla_support_policy.md"],
+      "expected_answer_themes": ["Severity 1", "4 business hours", "no contractual uptime guarantee"]
+    },
+    {
+      "question": "What AI governance controls prevent unsupported model claims?",
+      "expected_evidence_documents": ["ai_governance_security.md"],
+      "expected_answer_themes": ["grounded generation", "missing evidence", "human review"]
+    },
+    {
+      "question": "What disaster recovery RTO and RPO targets are documented?",
+      "expected_evidence_documents": ["disaster_recovery_plan.md"],
+      "expected_answer_themes": ["24 hour RTO", "4 hour RPO", "rebuild"]
+    },
+    {
+      "question": "Which onboarding success metrics should customer success track?",
+      "expected_evidence_documents": ["customer_success_onboarding.md"],
+      "expected_answer_themes": ["citation coverage", "eval pass rate", "source request closure"]
+    },
+    {
+      "question": "Can we claim zero data loss with active-active failover for every customer?",
+      "expected_evidence_documents": [],
+      "expected_answer_themes": [],
+      "expect_missing_evidence": true
     }
   ]
 }

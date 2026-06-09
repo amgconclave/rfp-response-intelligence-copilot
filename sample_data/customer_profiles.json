@@ -1,0 +1,76 @@
+{
+  "profiles": [
+    {
+      "id": "regulated_healthcare",
+      "name": "Northstar Health Network",
+      "industry": "healthcare",
+      "region": "United States",
+      "security_priorities": [
+        "PHI protection",
+        "SSO and MFA",
+        "encryption at rest",
+        "audit logging",
+        "vendor risk management"
+      ],
+      "compliance_frameworks": [
+        "HIPAA",
+        "SOC 2 Type II",
+        "HITECH"
+      ],
+      "buyer_personas": [
+        "Chief Information Security Officer",
+        "VP Clinical Operations",
+        "Procurement Lead"
+      ],
+      "risk_tolerance": "low"
+    },
+    {
+      "id": "fintech",
+      "name": "Harborline Payments",
+      "industry": "fintech",
+      "region": "North America and Europe",
+      "security_priorities": [
+        "transaction data isolation",
+        "identity federation",
+        "incident response",
+        "data retention controls",
+        "subprocessor transparency"
+      ],
+      "compliance_frameworks": [
+        "SOC 2 Type II",
+        "PCI DSS",
+        "GDPR"
+      ],
+      "buyer_personas": [
+        "Chief Risk Officer",
+        "Head of Platform Engineering",
+        "Legal Counsel"
+      ],
+      "risk_tolerance": "medium"
+    },
+    {
+      "id": "public_sector",
+      "name": "Riverton Digital Services Agency",
+      "industry": "public sector",
+      "region": "United States",
+      "security_priorities": [
+        "data residency",
+        "accessibility",
+        "auditability",
+        "least privilege access",
+        "implementation governance"
+      ],
+      "compliance_frameworks": [
+        "NIST 800-53",
+        "StateRAMP",
+        "SOC 2 Type II"
+      ],
+      "buyer_personas": [
+        "Agency CIO",
+        "Program Manager",
+        "Contracting Officer"
+      ],
+      "risk_tolerance": "low"
+    }
+  ]
+}

@@ -7,20 +7,119 @@ from app.core.config import Settings, get_settings
 from app.core.security import require_api_key
 from app.core.telemetry import get_trace_id
 from app.models.api import (
+    ActionPlanRequest,
+    ActionPlanResponse,
     AnalyzeRequest,
     AnalyzeResponse,
+    ApiContractAuditResponse,
+    ArtifactInventoryResponse,
+    AuditPackRequest,
+    AuditPackResponse,
     AuditResponse,
+    BidRoiPackRequest,
+    BidRoiPackResponse,
+    BidScenarioAnalysisResponse,
+    CiDoctorResponse,
+    ComplianceEvidenceMatrixResponse,
+    ContractRiskRequest,
+    ContractRiskResponse,
+    ControlPackRequest,
+    ControlPackResponse,
+    CustomerFitRequest,
+    CustomerFitResponse,
+    CustomerProfilesResponse,
+    DashboardSmokeResponse,
+    DealReadinessScorecardRequest,
+    DealReadinessScorecardResponse,
+    DemoScriptRequest,
+    DemoScriptResponse,
     DemoTokenResponse,
     DraftRequest,
     EvaluateRequest,
     EvaluationMetrics,
+    EvidenceGapRequest,
+    EvidenceGapResponse,
+    ExecutiveRiskReportRequest,
+    ExecutiveRiskReportResponse,
+    ExecutiveSubmissionMemoRequest,
+    ExecutiveSubmissionMemoResponse,
+    ExportPackageRequest,
+    ExportPackageResponse,
+    FinalAuditResponse,
+    FinalPackRequest,
+    FinalPackResponse,
+    GitPushPlanRequest,
+    GitPushPlanResponse,
+    GitReadinessResponse,
+    HandoffBoardRequest,
+    HandoffBoardResponse,
     HealthResponse,
     IngestRequest,
     IngestResponse,
+    LaunchChecklistRequest,
+    LaunchChecklistResponse,
+    LeadershipBriefRequest,
+    LeadershipBriefResponse,
+    NegotiationBriefRequest,
+    NegotiationBriefResponse,
+    PortfolioEvidenceIndexResponse,
+    PortfolioInterviewPackRequest,
+    PortfolioInterviewPackResponse,
+    PricingRiskMemoRequest,
+    PricingRiskMemoResponse,
+    ProcurementApprovalPackRequest,
+    ProcurementApprovalPackResponse,
+    ProcurementQuestionRiskResponse,
+    PublishPackRequest,
+    PublishPackResponse,
     QueryRequest,
+    RagCorpusCoverageResponse,
+    RagEvalCoveragePackRequest,
+    RagEvalCoveragePackResponse,
+    ReadmeChecklistRequest,
+    ReadmeChecklistResponse,
+    ReleaseQualityGateResponse,
+    RequirementMatrixRequest,
+    RequirementMatrixResponse,
+    ResponseMemorySearchRequest,
+    ResponseMemorySearchResponse,
+    ReviewAnswerRequest,
+    ReviewAnswerResponse,
+    ReviewerCollectionRequest,
+    ReviewerCollectionResponse,
+    ReviewerQuickstartResponse,
+    ReviewerWalkthroughPackRequest,
+    ReviewerWalkthroughPackResponse,
+    ReviewPackageRequest,
+    ReviewPackageResponse,
+    RuntimeDemoPackRequest,
+    RuntimeDemoPackResponse,
+    RuntimeDemoReadinessResponse,
+    SmokeMatrixResponse,
+    SourceRequestPackRequest,
+    SourceRequestPackResponse,
+    SubmissionCalendarPackRequest,
+    SubmissionCalendarPackResponse,
+    SubmissionDecisionRequest,
+    SubmissionDecisionResponse,
+    SubmissionRegressionRequest,
+    SubmissionRegressionResponse,
+    TimelinePlanRequest,
+    TimelinePlanResponse,
+    UIVerificationPackRequest,
+    UIVerificationPackResponse,
     UsageResponse,
+    WinStrategyRequest,
+    WinStrategyResponse,
 )
-from app.models.domain import Answer, Document, DraftResponse
+from app.models.domain import (
+    Answer,
+    CustomerProfile,
+    Document,
+    DraftResponse,
+    RequirementMatrixRow,
+    ResponseMemoryMatch,
+)
 from app.services.container import ServiceContainer, get_container
 
 router = APIRouter()
@@ -160,6 +259,1742 @@ async def draft_response(
     return draft
 
 
+@router.post(
+    "/rfp/requirement-matrix",
+    response_model=RequirementMatrixResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def requirement_matrix(
+    payload: RequirementMatrixRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> RequirementMatrixResponse:
+    trace_id = get_trace_id(request)
+    analysis = _analysis_from_workbench_payload(payload, trace_id, container)
+    matrix = container.workbench.create_requirement_matrix(analysis)
+    container.audit.record(
+        trace_id,
+        "rfp.requirement_matrix_created",
+        "requirement_matrix",
+        metadata={"rows": len(matrix)},
+    )
+    return RequirementMatrixResponse(matrix=matrix, trace_id=trace_id)
+
+
+@router.get("/customers/profiles", response_model=CustomerProfilesResponse, dependencies=[Depends(require_api_key)])
+async def customer_profiles(container: ServiceContainer = Depends(get_container)) -> CustomerProfilesResponse:
+    return CustomerProfilesResponse(profiles=container.customer_intelligence.list_profiles())
+
+
+@router.post(
+    "/rfp/customer-fit",
+    response_model=CustomerFitResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def customer_fit(
+    payload: CustomerFitRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> CustomerFitResponse:
+    trace_id = get_trace_id(request)
+    analysis = None
+    if payload.analyzed_payload is not None or payload.rfp_document_id is not None:
+        analysis = _analysis_from_workbench_payload(payload, trace_id, container)
+    if analysis is None and not payload.requirement_matrix:
+        raise HTTPException(status_code=400, detail="Provide analyzed_payload, rfp_document_id, or requirement_matrix.")
+    try:
+        fit = container.customer_intelligence.customer_fit(
+            payload.customer_profile_id,
+            trace_id,
+            analysis=analysis,
+            requirement_matrix=payload.requirement_matrix,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    container.audit.record(
+        trace_id,
+        "rfp.customer_fit_created",
+        "customer_fit",
+        resource_id=payload.customer_profile_id,
+        metadata={"fit_score": fit.fit_score, "review_count": len(fit.requirements_needing_review)},
+    )
+    return fit
+
+
+@router.post(
+    "/rfp/response-memory/search",
+    response_model=ResponseMemorySearchResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def response_memory_search(
+    payload: ResponseMemorySearchRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ResponseMemorySearchResponse:
+    trace_id = get_trace_id(request)
+    try:
+        matches = container.customer_intelligence.search_response_memory(
+            payload.query,
+            trace_id,
+            category=payload.category,
+            customer_profile_id=payload.customer_profile_id,
+            top_k=payload.top_k,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    container.audit.record(
+        trace_id,
+        "rfp.response_memory_searched",
+        "response_memory",
+        resource_id=payload.customer_profile_id,
+        metadata={"matches": len(matches), "category": payload.category},
+    )
+    return ResponseMemorySearchResponse(matches=matches, trace_id=trace_id)
+
+
+@router.post(
+    "/rfp/export-package",
+    response_model=ExportPackageResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def export_package(
+    payload: ExportPackageRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ExportPackageResponse:
+    trace_id = get_trace_id(request)
+    analysis = _analysis_from_workbench_payload(payload, trace_id, container)
+    draft = payload.draft_response
+    if draft is None:
+        draft = await container.generation.draft_response(
+            trace_id=f"{trace_id}-draft",
+            requirement_ids=[requirement.id for requirement in analysis.requirements],
+            top_k=5,
+        )
+    customer_fit_result = None
+    memory_matches = []
+    if payload.customer_profile_id:
+        try:
+            customer_fit_result = container.customer_intelligence.customer_fit(
+                payload.customer_profile_id,
+                trace_id,
+                analysis=analysis,
+            )
+            if payload.include_response_memory:
+                memory_query = " ".join(requirement.text for requirement in analysis.requirements)
+                memory_matches = container.customer_intelligence.search_response_memory(
+                    memory_query,
+                    trace_id,
+                    customer_profile_id=payload.customer_profile_id,
+                    top_k=5,
+                )
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+    export = container.workbench.export_package(
+        analysis,
+        draft,
+        trace_id=trace_id,
+        write_artifact=payload.write_artifact,
+        customer_fit=customer_fit_result,
+        response_memory_matches=memory_matches,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.export_package_created",
+        "export_package",
+        resource_id=export.artifact_path,
+        metadata={
+            "artifact_path": export.artifact_path,
+            "requirements": len(export.package["requirement_matrix"]),
+        },
+    )
+    return export
+
+
+@router.post(
+    "/rfp/review-answer",
+    response_model=ReviewAnswerResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def review_answer(
+    payload: ReviewAnswerRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewAnswerResponse:
+    trace_id = get_trace_id(request)
+    report = container.review_board.review_answer(
+        payload.question,
+        payload.answer_text,
+        payload.citations,
+        payload.missing_evidence,
+        payload.token_usage,
+        trace_id,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.answer_reviewed",
+        "review_report",
+        metadata={"passed": report.passed, "findings": len(report.findings)},
+    )
+    return ReviewAnswerResponse(**report.model_dump())
+
+
+@router.post(
+    "/rfp/review-package",
+    response_model=ReviewPackageResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def review_package(
+    payload: ReviewPackageRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewPackageResponse:
+    trace_id = get_trace_id(request)
+    has_review_input = any(
+        [
+            payload.rfp_document_id,
+            payload.analyzed_payload,
+            payload.requirement_matrix,
+            payload.draft_response,
+            payload.answer_payloads,
+            payload.export_payload,
+        ]
+    )
+    if not has_review_input:
+        raise HTTPException(status_code=400, detail="Provide analysis, matrix, draft, answer, export, or RFP document.")
+
+    analysis = None
+    matrix = payload.requirement_matrix
+    draft = payload.draft_response
+    export_payload = payload.export_payload
+    if payload.analyzed_payload is not None or payload.rfp_document_id is not None:
+        analysis = _analysis_from_workbench_payload(payload, trace_id, container)
+        if matrix is None:
+            matrix = container.workbench.create_requirement_matrix(analysis)
+        if draft is None:
+            draft = await container.generation.draft_response(
+                trace_id=f"{trace_id}-draft",
+                requirement_ids=[requirement.id for requirement in analysis.requirements],
+                top_k=5,
+            )
+        if export_payload is None:
+            export = container.workbench.export_package(
+                analysis,
+                draft,
+                trace_id=trace_id,
+                write_artifact=payload.write_artifact,
+            )
+            export_payload = export.package
+            artifact_path = export.artifact_path
+        else:
+            artifact_path = None
+    else:
+        artifact_path = None
+
+    if matrix is None and export_payload is not None:
+        matrix = container.review_board.matrix_from_export(export_payload)
+
+    report = container.review_board.review_package(
+        trace_id=trace_id,
+        requirement_matrix=matrix,
+        draft_response=draft,
+        answer_payloads=payload.answer_payloads,
+        export_payload=export_payload,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.package_reviewed",
+        "review_report",
+        resource_id=artifact_path,
+        metadata={"passed": report.passed, "findings": len(report.findings)},
+    )
+    return ReviewPackageResponse(
+        **report.model_dump(),
+        requirement_matrix=matrix or [],
+        export_package=export_payload,
+        artifact_path=artifact_path,
+    )
+
+
+@router.post(
+    "/rfp/action-plan",
+    response_model=ActionPlanResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def action_plan(
+    payload: ActionPlanRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ActionPlanResponse:
+    trace_id = get_trace_id(request)
+    analysis, matrix, customer_profile, customer_fit = _action_plan_inputs(payload, trace_id, container)
+    tasks, summary = container.action_plan.create_action_plan(
+        trace_id=trace_id,
+        analysis=analysis,
+        requirement_matrix=matrix,
+        customer_profile=customer_profile,
+        customer_fit=customer_fit,
+        review_findings=payload.review_findings,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.action_plan_created",
+        "action_plan",
+        metadata={"tasks": len(tasks), "blocked_tasks": summary["blocked_tasks"]},
+    )
+    return ActionPlanResponse(tasks=tasks, summary=summary, trace_id=trace_id)
+
+
+@router.post(
+    "/rfp/handoff-board",
+    response_model=HandoffBoardResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def handoff_board(
+    payload: HandoffBoardRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> HandoffBoardResponse:
+    trace_id = get_trace_id(request)
+    analysis, matrix, customer_profile, customer_fit = _action_plan_inputs(payload, trace_id, container)
+    tasks = payload.action_plan
+    if tasks is None:
+        tasks, _ = container.action_plan.create_action_plan(
+            trace_id=trace_id,
+            analysis=analysis,
+            requirement_matrix=matrix,
+            customer_profile=customer_profile,
+            customer_fit=customer_fit,
+            review_findings=payload.review_findings,
+        )
+    handoff = container.action_plan.export_handoff_board(
+        trace_id=trace_id,
+        tasks=tasks,
+        analysis=analysis,
+        requirement_matrix=matrix,
+        customer_profile=customer_profile,
+        customer_fit=customer_fit,
+        review_findings=payload.review_findings,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.handoff_board_exported",
+        "handoff_board",
+        resource_id=handoff.artifact_path,
+        metadata={
+            "artifact_path": handoff.artifact_path,
+            "tasks": len(tasks),
+            "blocked_items": len(handoff.board["blocked_items"]),
+        },
+    )
+    return handoff
+
+
+@router.post(
+    "/rfp/readiness-scorecard",
+    response_model=DealReadinessScorecardResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def readiness_scorecard(
+    payload: DealReadinessScorecardRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> DealReadinessScorecardResponse:
+    trace_id = get_trace_id(request)
+    analysis, matrix = _readiness_inputs(payload, container)
+    scorecard = container.deal_readiness.create_scorecard(
+        trace_id=trace_id,
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=payload.review_findings,
+        customer_fit=payload.customer_fit,
+        action_plan=payload.action_plan,
+        eval_metrics=payload.eval_metrics,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.readiness_scorecard_created",
+        "readiness_scorecard",
+        metadata={
+            "readiness_score": scorecard.readiness_score,
+            "readiness_level": scorecard.readiness_level,
+            "blockers": len(scorecard.blockers),
+        },
+    )
+    return scorecard
+
+
+@router.post(
+    "/rfp/executive-risk-report",
+    response_model=ExecutiveRiskReportResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def executive_risk_report(
+    payload: ExecutiveRiskReportRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ExecutiveRiskReportResponse:
+    trace_id = get_trace_id(request)
+    analysis, matrix = _readiness_inputs(payload, container)
+    scorecard = container.deal_readiness.create_scorecard(
+        trace_id=trace_id,
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=payload.review_findings,
+        customer_fit=payload.customer_fit,
+        action_plan=payload.action_plan,
+        eval_metrics=payload.eval_metrics,
+    )
+    report = container.deal_readiness.export_executive_report(
+        trace_id=trace_id,
+        scorecard=scorecard,
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=payload.review_findings,
+        customer_fit=payload.customer_fit,
+        action_plan=payload.action_plan,
+        eval_metrics=payload.eval_metrics,
+        red_team_summary=payload.red_team_summary,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.executive_risk_report_exported",
+        "executive_risk_report",
+        resource_id=report.artifact_path,
+        metadata={
+            "artifact_path": report.artifact_path,
+            "readiness_score": scorecard.readiness_score,
+            "readiness_level": scorecard.readiness_level,
+        },
+    )
+    return report
+
+
+@router.post(
+    "/rfp/win-strategy",
+    response_model=WinStrategyResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def win_strategy(
+    payload: WinStrategyRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> WinStrategyResponse:
+    trace_id = get_trace_id(request)
+    analysis, matrix, customer_fit, readiness, memory_matches, action_plan_items = _win_strategy_inputs(
+        payload,
+        trace_id,
+        container,
+    )
+    strategy = container.win_strategy.create_win_strategy(
+        trace_id=trace_id,
+        analysis=analysis,
+        requirement_matrix=matrix,
+        customer_fit=customer_fit,
+        readiness_scorecard=readiness,
+        response_memory_matches=memory_matches,
+        action_plan=action_plan_items,
+        review_findings=payload.review_findings,
+        competitor_context=payload.competitor_context,
+        pricing_notes=payload.pricing_notes,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.win_strategy_created",
+        "win_strategy",
+        metadata={
+            "win_score": strategy.win_score,
+            "win_level": strategy.win_level,
+            "pricing_risk_level": strategy.pricing_risk["risk_level"],
+        },
+    )
+    return strategy
+
+
+@router.post(
+    "/rfp/pricing-risk-memo",
+    response_model=PricingRiskMemoResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def pricing_risk_memo(
+    payload: PricingRiskMemoRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> PricingRiskMemoResponse:
+    trace_id = get_trace_id(request)
+    analysis, matrix, customer_fit, readiness, memory_matches, action_plan_items = _win_strategy_inputs(
+        payload,
+        trace_id,
+        container,
+    )
+    strategy = payload.win_strategy or container.win_strategy.create_win_strategy(
+        trace_id=f"{trace_id}-win-strategy",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        customer_fit=customer_fit,
+        readiness_scorecard=readiness,
+        response_memory_matches=memory_matches,
+        action_plan=action_plan_items,
+        review_findings=payload.review_findings,
+        competitor_context=payload.competitor_context,
+        pricing_notes=payload.pricing_notes,
+    )
+    memo = container.win_strategy.export_pricing_risk_memo(
+        trace_id=trace_id,
+        win_strategy=strategy,
+        analysis=analysis,
+        requirement_matrix=matrix,
+        customer_fit=customer_fit,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.pricing_risk_memo_exported",
+        "pricing_risk_memo",
+        resource_id=memo.artifact_path,
+        metadata={
+            "artifact_path": memo.artifact_path,
+            "json_artifact_path": memo.json_artifact_path,
+            "win_score": strategy.win_score,
+            "pricing_risk_level": strategy.pricing_risk["risk_level"],
+        },
+    )
+    return memo
+
+
+@router.post(
+    "/rfp/contract-risk",
+    response_model=ContractRiskResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def contract_risk(
+    payload: ContractRiskRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ContractRiskResponse:
+    trace_id = get_trace_id(request)
+    text = _contract_text_from_payload(payload, container)
+    risk = container.contract_risk.analyze(text, trace_id, customer_profile_id=payload.customer_profile_id)
+    container.audit.record(
+        trace_id,
+        "rfp.contract_risk_analyzed",
+        "contract_risk",
+        metadata={
+            "risk_score": risk.risk_score,
+            "status": risk.status,
+            "risky_clauses": len(risk.risky_clauses),
+            "missing_evidence_warnings": len(risk.missing_evidence_warnings),
+        },
+    )
+    return risk
+
+
+@router.post(
+    "/rfp/negotiation-brief",
+    response_model=NegotiationBriefResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def negotiation_brief(
+    payload: NegotiationBriefRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> NegotiationBriefResponse:
+    trace_id = get_trace_id(request)
+    risk = payload.contract_risk
+    if risk is None:
+        text = _contract_text_from_payload(payload, container)
+        risk = container.contract_risk.analyze(
+            text,
+            f"{trace_id}-contract-risk",
+            customer_profile_id=payload.customer_profile_id,
+        )
+    brief = container.contract_risk.export_negotiation_brief(
+        trace_id=trace_id,
+        contract_risk=risk,
+        win_strategy=payload.win_strategy,
+        pricing_memo=payload.pricing_memo,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.negotiation_brief_exported",
+        "negotiation_brief",
+        resource_id=brief.artifact_path,
+        metadata={
+            "artifact_path": brief.artifact_path,
+            "json_artifact_path": brief.json_artifact_path,
+            "risk_score": risk.risk_score,
+            "status": risk.status,
+        },
+    )
+    return brief
+
+
+@router.post(
+    "/rfp/evidence-gaps",
+    response_model=EvidenceGapResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def evidence_gaps(
+    payload: EvidenceGapRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> EvidenceGapResponse:
+    trace_id = get_trace_id(request)
+    (
+        analysis,
+        matrix,
+        review_findings,
+        red_team_summary,
+        readiness,
+        strategy,
+        contract,
+        action_plan_items,
+    ) = _evidence_gap_inputs(payload, trace_id, container)
+    gaps, summary = container.evidence_gap.create_gap_plan(
+        trace_id=trace_id,
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=review_findings,
+        red_team_summary=red_team_summary,
+        readiness_scorecard=readiness,
+        win_strategy=strategy,
+        contract_risk=contract,
+        action_plan=action_plan_items,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.evidence_gaps_created",
+        "evidence_gap_plan",
+        metadata={
+            "gap_count": summary["gap_count"],
+            "high_severity_count": summary["high_severity_count"],
+        },
+    )
+    return EvidenceGapResponse(gaps=gaps, summary=summary, trace_id=trace_id)
+
+
+@router.post(
+    "/rfp/source-request-pack",
+    response_model=SourceRequestPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def source_request_pack(
+    payload: SourceRequestPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> SourceRequestPackResponse:
+    trace_id = get_trace_id(request)
+    (
+        analysis,
+        matrix,
+        review_findings,
+        red_team_summary,
+        readiness,
+        strategy,
+        contract,
+        action_plan_items,
+    ) = _evidence_gap_inputs(payload, trace_id, container)
+    gaps = payload.evidence_gaps
+    if gaps is None:
+        gaps, _ = container.evidence_gap.create_gap_plan(
+            trace_id=f"{trace_id}-gaps",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=review_findings,
+            red_team_summary=red_team_summary,
+            readiness_scorecard=readiness,
+            win_strategy=strategy,
+            contract_risk=contract,
+            action_plan=action_plan_items,
+        )
+    pack = container.evidence_gap.export_source_request_pack(
+        trace_id=trace_id,
+        gaps=gaps,
+        analysis=analysis,
+        red_team_summary=red_team_summary,
+        readiness_scorecard=readiness,
+        win_strategy=strategy,
+        contract_risk=contract,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.source_request_pack_exported",
+        "source_request_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "gap_count": pack.pack["summary"]["gap_count"],
+            "high_severity_count": pack.pack["summary"]["high_severity_count"],
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/rfp/timeline-plan",
+    response_model=TimelinePlanResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def timeline_plan(
+    payload: TimelinePlanRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> TimelinePlanResponse:
+    trace_id = get_trace_id(request)
+    (
+        analysis,
+        matrix,
+        review_findings,
+        red_team_summary,
+        readiness,
+        strategy,
+        contract,
+        action_plan_items,
+        gaps,
+        source_pack,
+        leadership,
+    ) = _timeline_inputs(payload, trace_id, container)
+    plan = container.timeline_orchestration.create_plan(
+        trace_id=trace_id,
+        analysis=analysis,
+        requirement_matrix=matrix,
+        action_plan=action_plan_items,
+        evidence_gaps=gaps,
+        contract_risk=contract,
+        win_strategy=strategy,
+        readiness_scorecard=readiness,
+        source_request_pack=source_pack,
+        leadership_brief=leadership,
+        review_findings=review_findings,
+        red_team_summary=red_team_summary,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.timeline_plan_created",
+        "timeline_plan",
+        metadata={
+            "milestone_count": plan.summary["milestone_count"],
+            "blocked_count": plan.summary["blocked_count"],
+            "calendar_entry_count": plan.summary["calendar_entry_count"],
+        },
+    )
+    return plan
+
+
+@router.post(
+    "/rfp/submission-calendar-pack",
+    response_model=SubmissionCalendarPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def submission_calendar_pack(
+    payload: SubmissionCalendarPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> SubmissionCalendarPackResponse:
+    trace_id = get_trace_id(request)
+    (
+        analysis,
+        matrix,
+        review_findings,
+        red_team_summary,
+        readiness,
+        strategy,
+        contract,
+        action_plan_items,
+        gaps,
+        source_pack,
+        leadership,
+    ) = _timeline_inputs(payload, trace_id, container)
+    plan = payload.timeline_plan
+    if plan is None:
+        plan = container.timeline_orchestration.create_plan(
+            trace_id=f"{trace_id}-timeline",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            action_plan=action_plan_items,
+            evidence_gaps=gaps,
+            contract_risk=contract,
+            win_strategy=strategy,
+            readiness_scorecard=readiness,
+            source_request_pack=source_pack,
+            leadership_brief=leadership,
+            review_findings=review_findings,
+            red_team_summary=red_team_summary,
+        )
+    pack = container.timeline_orchestration.export_submission_calendar_pack(
+        trace_id=trace_id,
+        plan=plan,
+        analysis=analysis,
+        source_request_pack=source_pack,
+        leadership_brief=leadership,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.submission_calendar_pack_exported",
+        "submission_calendar_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "milestone_count": pack.pack["summary"]["milestone_count"],
+            "blocked_count": pack.pack["summary"]["blocked_count"],
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/rfp/submission-decision",
+    response_model=SubmissionDecisionResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def submission_decision(
+    payload: SubmissionDecisionRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> SubmissionDecisionResponse:
+    trace_id = get_trace_id(request)
+    inputs = _submission_decision_inputs(payload, trace_id, container)
+    decision = container.submission_decision.create_decision(trace_id=trace_id, **inputs)
+    container.audit.record(
+        trace_id,
+        "rfp.submission_decision_created",
+        "submission_decision",
+        metadata={
+            "decision": decision.decision,
+            "score": decision.score,
+            "blocking_issues": len(decision.blocking_issues),
+            "exceptions": len(decision.exception_list),
+        },
+    )
+    return decision
+
+
+@router.post(
+    "/rfp/executive-submission-memo",
+    response_model=ExecutiveSubmissionMemoResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def executive_submission_memo(
+    payload: ExecutiveSubmissionMemoRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ExecutiveSubmissionMemoResponse:
+    trace_id = get_trace_id(request)
+    decision = payload.submission_decision
+    if decision is None:
+        inputs = _submission_decision_inputs(payload, trace_id, container)
+        decision = container.submission_decision.create_decision(trace_id=f"{trace_id}-decision", **inputs)
+    memo = container.submission_decision.export_memo(
+        trace_id=trace_id,
+        decision=decision,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.executive_submission_memo_exported",
+        "executive_submission_memo",
+        resource_id=memo.artifact_path,
+        metadata={
+            "artifact_path": memo.artifact_path,
+            "json_artifact_path": memo.json_artifact_path,
+            "decision": decision.decision,
+            "score": decision.score,
+        },
+    )
+    return memo
+
+
+@router.post(
+    "/rfp/leadership-brief",
+    response_model=LeadershipBriefResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def leadership_brief(
+    payload: LeadershipBriefRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> LeadershipBriefResponse:
+    trace_id = get_trace_id(request)
+    analysis = payload.analysis or payload.analyzed_payload
+    if analysis is None and payload.rfp_document_id is not None:
+        analysis = _analysis_from_workbench_payload(payload, trace_id, container)
+
+    matrix = payload.matrix or payload.requirement_matrix
+    if matrix is None and analysis is not None:
+        matrix = container.workbench.create_requirement_matrix(analysis)
+
+    if not any(
+        [
+            analysis,
+            matrix,
+            payload.draft_response,
+            payload.answers,
+            payload.export_payload,
+            payload.review_findings,
+            payload.customer_fit,
+            payload.action_plan,
+            payload.handoff_board,
+            payload.readiness_scorecard,
+            payload.executive_report,
+            payload.eval_metrics,
+            payload.red_team_summary,
+        ]
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Provide an RFP, analysis, matrix, or workflow artifact to summarize.",
+        )
+
+    draft = payload.draft_response
+    if draft is None and analysis is not None:
+        draft = await container.generation.draft_response(
+            trace_id=f"{trace_id}-draft",
+            requirement_ids=[requirement.id for requirement in analysis.requirements],
+            top_k=5,
+        )
+
+    customer_fit_result = payload.customer_fit
+    memory_matches = list(payload.response_memory_matches)
+    if payload.customer_profile_id and customer_fit_result is None and (analysis is not None or matrix):
+        try:
+            customer_fit_result = container.customer_intelligence.customer_fit(
+                payload.customer_profile_id,
+                trace_id=f"{trace_id}-customer-fit",
+                analysis=analysis,
+                requirement_matrix=matrix,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+    if payload.customer_profile_id and not memory_matches and analysis is not None:
+        memory_query = " ".join(requirement.text for requirement in analysis.requirements)
+        memory_matches = container.customer_intelligence.search_response_memory(
+            memory_query,
+            trace_id=f"{trace_id}-response-memory",
+            customer_profile_id=payload.customer_profile_id,
+            top_k=5,
+        )
+
+    export_payload = payload.export_payload
+    export_artifact_path = payload.export_artifact_path
+    export_json_artifact_path = payload.export_json_artifact_path
+    if export_payload is None and analysis is not None and draft is not None:
+        export = container.workbench.export_package(
+            analysis,
+            draft,
+            trace_id=f"{trace_id}-export",
+            write_artifact=payload.write_artifact,
+            customer_fit=customer_fit_result,
+            response_memory_matches=memory_matches,
+        )
+        export_payload = export.package
+        export_artifact_path = export.artifact_path
+        export_json_artifact_path = export.json_artifact_path
+
+    review_findings = list(payload.review_findings)
+    review_passed = payload.review_passed
+    if review_passed is None and not review_findings and (matrix or draft is not None or export_payload is not None):
+        review = container.review_board.review_package(
+            trace_id=f"{trace_id}-review",
+            requirement_matrix=matrix,
+            draft_response=draft,
+            answer_payloads=payload.answers,
+            export_payload=export_payload,
+        )
+        review_findings = review.findings
+        review_passed = review.passed
+
+    action_plan_items = list(payload.action_plan)
+    if not action_plan_items and (matrix or analysis is not None):
+        action_plan_items, _ = container.action_plan.create_action_plan(
+            trace_id=f"{trace_id}-action-plan",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            customer_fit=customer_fit_result,
+            review_findings=review_findings,
+        )
+
+    handoff_board_payload = payload.handoff_board
+    handoff_artifact_path = payload.handoff_artifact_path
+    handoff_json_artifact_path = payload.handoff_json_artifact_path
+    if handoff_board_payload is None and action_plan_items:
+        handoff = container.action_plan.export_handoff_board(
+            trace_id=f"{trace_id}-handoff",
+            tasks=action_plan_items,
+            analysis=analysis,
+            requirement_matrix=matrix,
+            customer_fit=customer_fit_result,
+            review_findings=review_findings,
+            write_artifact=payload.write_artifact,
+        )
+        handoff_board_payload = handoff.board
+        handoff_artifact_path = handoff.artifact_path
+        handoff_json_artifact_path = handoff.json_artifact_path
+
+    readiness = payload.readiness_scorecard
+    has_readiness_input = any(
+        [
+            analysis,
+            matrix,
+            review_findings,
+            customer_fit_result,
+            action_plan_items,
+            payload.eval_metrics,
+        ]
+    )
+    if readiness is None and has_readiness_input:
+        readiness = container.deal_readiness.create_scorecard(
+            trace_id=f"{trace_id}-readiness",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=review_findings,
+            customer_fit=customer_fit_result,
+            action_plan=action_plan_items,
+            eval_metrics=payload.eval_metrics,
+        )
+
+    executive_report_payload = payload.executive_report
+    executive_report_artifact_path = payload.executive_report_artifact_path
+    executive_report_json_artifact_path = payload.executive_report_json_artifact_path
+    if executive_report_payload is None and readiness is not None:
+        executive_report_payload = container.deal_readiness.export_executive_report(
+            trace_id=f"{trace_id}-executive-report",
+            scorecard=readiness,
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=review_findings,
+            customer_fit=customer_fit_result,
+            action_plan=action_plan_items,
+            eval_metrics=payload.eval_metrics,
+            red_team_summary=payload.red_team_summary,
+            write_artifact=payload.write_artifact,
+        )
+        executive_report_artifact_path = executive_report_payload.artifact_path
+        executive_report_json_artifact_path = executive_report_payload.json_artifact_path
+
+    brief = container.leadership_brief.export_brief(
+        trace_id=trace_id,
+        documents_ingested=len(container.repo.documents),
+        analysis=analysis,
+        requirement_matrix=matrix,
+        draft_response=draft,
+        answers=payload.answers,
+        export_payload=export_payload,
+        export_artifact_path=export_artifact_path,
+        export_json_artifact_path=export_json_artifact_path,
+        review_findings=review_findings,
+        review_passed=review_passed,
+        customer_fit=customer_fit_result,
+        response_memory_matches=memory_matches,
+        action_plan=action_plan_items,
+        handoff_board=handoff_board_payload,
+        handoff_artifact_path=handoff_artifact_path,
+        handoff_json_artifact_path=handoff_json_artifact_path,
+        readiness_scorecard=readiness,
+        executive_report=executive_report_payload,
+        executive_report_artifact_path=executive_report_artifact_path,
+        executive_report_json_artifact_path=executive_report_json_artifact_path,
+        eval_metrics=payload.eval_metrics,
+        red_team_summary=payload.red_team_summary,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.leadership_brief_exported",
+        "leadership_brief",
+        resource_id=brief.artifact_path,
+        metadata={
+            "artifact_path": brief.artifact_path,
+            "requirements": brief.brief["metrics"]["requirements"],
+            "readiness_score": brief.brief["metrics"]["readiness_score"],
+        },
+    )
+    return brief
+
+
+@router.post(
+    "/rfp/submission-regression",
+    response_model=SubmissionRegressionResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def submission_regression(
+    payload: SubmissionRegressionRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> SubmissionRegressionResponse:
+    trace_id = get_trace_id(request)
+    result = await container.submission_regression.run(container, payload, trace_id)
+    container.audit.record(
+        trace_id,
+        "rfp.submission_regression_completed",
+        "submission_regression",
+        metadata={
+            "passed": result.passed,
+            "failed_checks": result.failed_checks,
+            "artifact_paths": result.artifact_paths,
+        },
+    )
+    return result
+
+
+@router.post(
+    "/rfp/demo-script",
+    response_model=DemoScriptResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def demo_script(
+    payload: DemoScriptRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> DemoScriptResponse:
+    trace_id = get_trace_id(request)
+    regression = payload.regression
+    if regression is None:
+        if not payload.run_regression:
+            raise HTTPException(status_code=400, detail="Provide regression or set run_regression=true.")
+        regression = await container.submission_regression.run(
+            container,
+            payload.regression_request,
+            f"{trace_id}-regression",
+        )
+    script = container.demo_script.generate(trace_id, regression, write_artifact=payload.write_artifact)
+    container.audit.record(
+        trace_id,
+        "rfp.demo_script_generated",
+        "demo_script",
+        resource_id=script.artifact_path,
+        metadata={
+            "artifact_path": script.artifact_path,
+            "json_artifact_path": script.json_artifact_path,
+            "regression_passed": regression.passed,
+        },
+    )
+    return script
+
+
+@router.get("/ops/smoke-matrix", response_model=SmokeMatrixResponse, dependencies=[Depends(require_api_key)])
+async def smoke_matrix(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> SmokeMatrixResponse:
+    trace_id = get_trace_id(request)
+    matrix = container.launch_checklist.smoke_matrix(trace_id)
+    container.audit.record(
+        trace_id,
+        "ops.smoke_matrix_viewed",
+        "smoke_matrix",
+        metadata={
+            "endpoints": matrix.readiness_summary.total_endpoints,
+            "artifact_endpoints": matrix.readiness_summary.artifact_writing_endpoints,
+            "readiness_level": matrix.readiness_summary.readiness_level,
+        },
+    )
+    return matrix
+
+
+@router.post("/ops/launch-checklist", response_model=LaunchChecklistResponse, dependencies=[Depends(require_api_key)])
+async def launch_checklist(
+    payload: LaunchChecklistRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> LaunchChecklistResponse:
+    trace_id = get_trace_id(request)
+    checklist = container.launch_checklist.launch_checklist(trace_id, write_artifact=payload.write_artifact)
+    container.audit.record(
+        trace_id,
+        "ops.launch_checklist_generated",
+        "launch_checklist",
+        resource_id=checklist.artifact_path,
+        metadata={
+            "artifact_path": checklist.artifact_path,
+            "json_artifact_path": checklist.json_artifact_path,
+            "endpoints": checklist.smoke_matrix.readiness_summary.total_endpoints,
+        },
+    )
+    return checklist
+
+
+@router.get(
+    "/runtime/demo-readiness",
+    response_model=RuntimeDemoReadinessResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def runtime_demo_readiness(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> RuntimeDemoReadinessResponse:
+    trace_id = get_trace_id(request)
+    readiness = container.runtime_demo.readiness(trace_id)
+    container.audit.record(
+        trace_id,
+        "runtime.demo_readiness_viewed",
+        "runtime_demo_readiness",
+        metadata={
+            "status": readiness.status,
+            "ports_listening": sum(check["listening"] for check in readiness.process_port_checks),
+            "dependency_count": len(readiness.dependency_checks),
+        },
+    )
+    return readiness
+
+
+@router.post(
+    "/runtime/demo-pack",
+    response_model=RuntimeDemoPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def runtime_demo_pack(
+    request: Request,
+    payload: RuntimeDemoPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> RuntimeDemoPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or RuntimeDemoPackRequest()
+    pack = container.runtime_demo.demo_pack(trace_id, write_artifact=request_payload.write_artifact)
+    container.audit.record(
+        trace_id,
+        "runtime.demo_pack_generated",
+        "runtime_demo_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "readiness_status": pack.readiness.status,
+        },
+    )
+    return pack
+
+
+@router.get("/ops/ci-doctor", response_model=CiDoctorResponse, dependencies=[Depends(require_api_key)])
+async def ci_doctor(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> CiDoctorResponse:
+    trace_id = get_trace_id(request)
+    doctor = container.ci_doctor.ci_doctor(trace_id)
+    container.audit.record(
+        trace_id,
+        "ops.ci_doctor_viewed",
+        "ci_doctor",
+        metadata={
+            "status": doctor.status,
+            "score": doctor.score,
+            "checks": len(doctor.checks),
+            "secret_findings": doctor.secret_scan.finding_count,
+        },
+    )
+    return doctor
+
+
+@router.post("/ops/audit-pack", response_model=AuditPackResponse, dependencies=[Depends(require_api_key)])
+async def audit_pack(
+    request: Request,
+    payload: AuditPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> AuditPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or AuditPackRequest()
+    doctor = container.ci_doctor.ci_doctor(f"{trace_id}-doctor")
+    pack = container.ci_doctor.audit_pack(
+        trace_id,
+        write_artifact=request_payload.write_artifact,
+        doctor=doctor,
+    )
+    container.audit.record(
+        trace_id,
+        "ops.audit_pack_generated",
+        "audit_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "ci_doctor_status": doctor.status,
+            "ci_doctor_score": doctor.score,
+            "secret_findings": doctor.secret_scan.finding_count,
+        },
+    )
+    return pack
+
+
+@router.get("/api/contract-audit", response_model=ApiContractAuditResponse, dependencies=[Depends(require_api_key)])
+async def api_contract_audit(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ApiContractAuditResponse:
+    trace_id = get_trace_id(request)
+    smoke = container.launch_checklist.smoke_matrix(f"{trace_id}-smoke")
+    dashboard = container.ui_verification.dashboard_smoke(f"{trace_id}-dashboard-smoke")
+    inventory = container.artifact_inventory.inventory(f"{trace_id}-inventory")
+    audit = container.api_contracts.audit(
+        trace_id,
+        request.app.openapi(),
+        smoke,
+        dashboard,
+        inventory,
+    )
+    container.audit.record(
+        trace_id,
+        "api.contract_audit_viewed",
+        "api_contract",
+        metadata={
+            "openapi_route_count": audit.openapi_route_count,
+            "auth_protected": audit.auth_protected_endpoint_count,
+            "status": audit.status,
+        },
+    )
+    return audit
+
+
+@router.post(
+    "/api/reviewer-collection",
+    response_model=ReviewerCollectionResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def reviewer_collection(
+    request: Request,
+    payload: ReviewerCollectionRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewerCollectionResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ReviewerCollectionRequest()
+    smoke = container.launch_checklist.smoke_matrix(f"{trace_id}-smoke")
+    dashboard = container.ui_verification.dashboard_smoke(f"{trace_id}-dashboard-smoke")
+    inventory = container.artifact_inventory.inventory(f"{trace_id}-inventory")
+    audit = container.api_contracts.audit(
+        f"{trace_id}-contract-audit",
+        request.app.openapi(),
+        smoke,
+        dashboard,
+        inventory,
+    )
+    collection = container.api_contracts.reviewer_collection(
+        trace_id,
+        audit,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "api.reviewer_collection_generated",
+        "api_contract",
+        resource_id=collection.artifact_path,
+        metadata={
+            "artifact_path": collection.artifact_path,
+            "json_artifact_path": collection.json_artifact_path,
+            "openapi_route_count": audit.openapi_route_count,
+        },
+    )
+    return collection
+
+
+@router.get("/ui/dashboard-smoke", response_model=DashboardSmokeResponse, dependencies=[Depends(require_api_key)])
+async def dashboard_smoke(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> DashboardSmokeResponse:
+    trace_id = get_trace_id(request)
+    smoke = container.ui_verification.dashboard_smoke(trace_id)
+    container.audit.record(
+        trace_id,
+        "ui.dashboard_smoke_viewed",
+        "dashboard_smoke",
+        metadata={
+            "status": smoke.status,
+            "view_count": smoke.summary["view_count"],
+            "endpoint_count": smoke.summary["endpoint_count"],
+            "failed_checks": smoke.summary["failed_checks"],
+        },
+    )
+    return smoke
+
+
+@router.post(
+    "/ui/verification-pack",
+    response_model=UIVerificationPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def ui_verification_pack(
+    request: Request,
+    payload: UIVerificationPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> UIVerificationPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or UIVerificationPackRequest()
+    pack = container.ui_verification.verification_pack(
+        trace_id,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "ui.verification_pack_generated",
+        "ui_verification_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "dashboard_smoke_status": pack.dashboard_smoke.status,
+            "failed_checks": pack.dashboard_smoke.summary["failed_checks"],
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/artifacts/inventory",
+    response_model=ArtifactInventoryResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def artifact_inventory(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ArtifactInventoryResponse:
+    trace_id = get_trace_id(request)
+    inventory = container.artifact_inventory.inventory(trace_id)
+    container.audit.record(
+        trace_id,
+        "artifacts.inventory_viewed",
+        "artifact_inventory",
+        metadata={
+            "total_directories": inventory.total_directories,
+            "total_files": inventory.total_files,
+            "ignored_status": inventory.ignored_status,
+        },
+    )
+    return inventory
+
+
+@router.post(
+    "/artifacts/readme-checklist",
+    response_model=ReadmeChecklistResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def readme_checklist(
+    request: Request,
+    payload: ReadmeChecklistRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ReadmeChecklistResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ReadmeChecklistRequest()
+    checklist = container.artifact_inventory.readme_checklist(
+        trace_id,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "artifacts.readme_checklist_generated",
+        "readme_checklist",
+        resource_id=checklist.artifact_path,
+        metadata={
+            "artifact_path": checklist.artifact_path,
+            "json_artifact_path": checklist.json_artifact_path,
+            "inventory_directories": checklist.inventory.total_directories,
+            "inventory_files": checklist.inventory.total_files,
+        },
+    )
+    return checklist
+
+
+@router.get(
+    "/release/quality-gate",
+    response_model=ReleaseQualityGateResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def release_quality_gate(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReleaseQualityGateResponse:
+    trace_id = get_trace_id(request)
+    smoke = container.launch_checklist.smoke_matrix(f"{trace_id}-smoke")
+    gate = container.release.quality_gate(smoke, trace_id)
+    container.audit.record(
+        trace_id,
+        "release.quality_gate_viewed",
+        "release_quality_gate",
+        metadata={
+            "status": gate.status,
+            "score": gate.score,
+            "blockers": len(gate.blockers),
+            "warnings": len(gate.warnings),
+        },
+    )
+    return gate
+
+
+@router.post(
+    "/release/publish-pack",
+    response_model=PublishPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def release_publish_pack(
+    request: Request,
+    payload: PublishPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> PublishPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or PublishPackRequest()
+    smoke = container.launch_checklist.smoke_matrix(f"{trace_id}-smoke")
+    gate = container.release.quality_gate(smoke, f"{trace_id}-gate")
+    artifact_path, json_artifact_path, markdown, pack = container.release.publish_pack(
+        gate,
+        smoke,
+        trace_id,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "release.publish_pack_generated",
+        "release_publish_pack",
+        resource_id=artifact_path,
+        metadata={
+            "artifact_path": artifact_path,
+            "json_artifact_path": json_artifact_path,
+            "gate_status": gate.status,
+            "gate_score": gate.score,
+        },
+    )
+    return PublishPackResponse(
+        artifact_path=artifact_path,
+        json_artifact_path=json_artifact_path,
+        markdown=markdown,
+        pack=pack,
+        quality_gate=gate,
+        trace_id=trace_id,
+    )
+
+
+@router.get(
+    "/git/readiness",
+    response_model=GitReadinessResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def git_readiness(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> GitReadinessResponse:
+    trace_id = get_trace_id(request)
+    readiness = container.git_readiness.readiness(trace_id)
+    container.audit.record(
+        trace_id,
+        "git.readiness_viewed",
+        "git_readiness",
+        metadata={
+            "status": readiness.status,
+            "branch": readiness.current_branch,
+            "dirty": readiness.working_tree_summary["dirty"],
+            "changed": readiness.working_tree_summary["changed"],
+        },
+    )
+    return readiness
+
+
+@router.post(
+    "/git/push-plan",
+    response_model=GitPushPlanResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def git_push_plan(
+    request: Request,
+    payload: GitPushPlanRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> GitPushPlanResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or GitPushPlanRequest()
+    pack = container.git_readiness.push_plan(trace_id, write_artifact=request_payload.write_artifact)
+    container.audit.record(
+        trace_id,
+        "git.push_plan_generated",
+        "git_push_plan",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "readiness_status": pack.readiness.status,
+            "commit_groups": len(pack.pack["suggested_commit_grouping"]),
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/portfolio/evidence-index",
+    response_model=PortfolioEvidenceIndexResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def portfolio_evidence_index(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> PortfolioEvidenceIndexResponse:
+    trace_id = get_trace_id(request)
+    evidence = container.portfolio.evidence_index(trace_id)
+    container.audit.record(
+        trace_id,
+        "portfolio.evidence_index_viewed",
+        "portfolio_evidence_index",
+        metadata={
+            "evidence_score": evidence.evidence_score,
+            "covered_skill_count": evidence.covered_skill_count,
+            "total_skill_count": evidence.total_skill_count,
+        },
+    )
+    return evidence
+
+
+@router.post(
+    "/portfolio/interview-pack",
+    response_model=PortfolioInterviewPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def portfolio_interview_pack(
+    request: Request,
+    payload: PortfolioInterviewPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> PortfolioInterviewPackResponse:
+    trace_id = get_trace_id(request)
+    pack = await container.portfolio.generate_interview_pack(container, trace_id, payload)
+    container.audit.record(
+        trace_id,
+        "portfolio.interview_pack_generated",
+        "portfolio_interview_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "evidence_score": pack.evidence_index.evidence_score,
+            "covered_skill_count": pack.evidence_index.covered_skill_count,
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/reviewer/quickstart",
+    response_model=ReviewerQuickstartResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def reviewer_quickstart(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewerQuickstartResponse:
+    trace_id = get_trace_id(request)
+    quickstart = container.reviewer.quickstart(trace_id)
+    container.audit.record(
+        trace_id,
+        "reviewer.quickstart_viewed",
+        "reviewer_quickstart",
+        metadata={
+            "status": quickstart.status,
+            "endpoint_count": len(quickstart.endpoint_walkthrough_order),
+            "artifact_roots": len(quickstart.artifact_proof_map),
+        },
+    )
+    return quickstart
+
+
+@router.post(
+    "/reviewer/walkthrough-pack",
+    response_model=ReviewerWalkthroughPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def reviewer_walkthrough_pack(
+    request: Request,
+    payload: ReviewerWalkthroughPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewerWalkthroughPackResponse:
+    trace_id = get_trace_id(request)
+    pack = container.reviewer.walkthrough_pack(trace_id, payload)
+    container.audit.record(
+        trace_id,
+        "reviewer.walkthrough_pack_generated",
+        "reviewer_walkthrough_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "quickstart_status": pack.quickstart.status,
+            "endpoint_count": len(pack.quickstart.endpoint_walkthrough_order),
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/handoff/final-audit",
+    response_model=FinalAuditResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def final_handoff_audit(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> FinalAuditResponse:
+    trace_id = get_trace_id(request)
+    smoke = container.launch_checklist.smoke_matrix(f"{trace_id}-smoke")
+    inventory = container.artifact_inventory.inventory(f"{trace_id}-inventory")
+    dashboard_smoke = container.ui_verification.dashboard_smoke(f"{trace_id}-dashboard-smoke")
+    audit = container.final_handoff.final_audit(trace_id, smoke, inventory, dashboard_smoke)
+    container.audit.record(
+        trace_id,
+        "handoff.final_audit_viewed",
+        "final_audit",
+        metadata={
+            "status": audit.status,
+            "score": audit.score,
+            "failed_checks": audit.summary["failed_checks"],
+        },
+    )
+    return audit
+
+
+@router.post(
+    "/handoff/final-pack",
+    response_model=FinalPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def final_handoff_pack(
+    request: Request,
+    payload: FinalPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> FinalPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or FinalPackRequest()
+    smoke = container.launch_checklist.smoke_matrix(f"{trace_id}-smoke")
+    inventory = container.artifact_inventory.inventory(f"{trace_id}-inventory")
+    dashboard_smoke = container.ui_verification.dashboard_smoke(f"{trace_id}-dashboard-smoke")
+    audit = container.final_handoff.final_audit(f"{trace_id}-audit", smoke, inventory, dashboard_smoke)
+    artifact_path, json_artifact_path, markdown, pack = container.final_handoff.final_pack(
+        trace_id,
+        audit,
+        smoke,
+        inventory,
+        dashboard_smoke,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "handoff.final_pack_generated",
+        "final_handoff_pack",
+        resource_id=artifact_path,
+        metadata={
+            "artifact_path": artifact_path,
+            "json_artifact_path": json_artifact_path,
+            "final_audit_status": audit.status,
+            "final_audit_score": audit.score,
+        },
+    )
+    return FinalPackResponse(
+        artifact_path=artifact_path,
+        json_artifact_path=json_artifact_path,
+        markdown=markdown,
+        pack=pack,
+        final_audit=audit,
+        trace_id=trace_id,
+    )
+
+
 @router.post("/rfp/evaluate", response_model=EvaluationMetrics, dependencies=[Depends(require_api_key)])
 async def evaluate(
     payload: EvaluateRequest,
@@ -172,6 +2007,253 @@ async def evaluate(
     return result
 
 
+@router.get("/rag/corpus-coverage", response_model=RagCorpusCoverageResponse, dependencies=[Depends(require_api_key)])
+async def rag_corpus_coverage(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> RagCorpusCoverageResponse:
+    trace_id = get_trace_id(request)
+    coverage = container.corpus_coverage.corpus_coverage(trace_id)
+    container.audit.record(
+        trace_id,
+        "rag.corpus_coverage_viewed",
+        "rag_corpus_coverage",
+        metadata={
+            "status": coverage.status,
+            "score": coverage.score,
+            "sample_document_count": coverage.corpus_metadata["sample_document_count"],
+            "gaps": len(coverage.gaps),
+        },
+    )
+    return coverage
+
+
+@router.post(
+    "/rag/eval-coverage-pack",
+    response_model=RagEvalCoveragePackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def rag_eval_coverage_pack(
+    request: Request,
+    payload: RagEvalCoveragePackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> RagEvalCoveragePackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or RagEvalCoveragePackRequest()
+    pack = container.corpus_coverage.eval_coverage_pack(
+        trace_id,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rag.eval_coverage_pack_generated",
+        "rag_eval_coverage_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "coverage_status": pack.coverage.status,
+            "coverage_score": pack.coverage.score,
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/compliance/evidence-matrix",
+    response_model=ComplianceEvidenceMatrixResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def compliance_evidence_matrix(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ComplianceEvidenceMatrixResponse:
+    trace_id = get_trace_id(request)
+    analysis, matrix, review_findings = await _compliance_inputs(trace_id, container)
+    result = container.compliance.evidence_matrix(
+        trace_id,
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=review_findings,
+    )
+    container.audit.record(
+        trace_id,
+        "compliance.evidence_matrix_viewed",
+        "compliance_evidence_matrix",
+        metadata={
+            "control_families": result.coverage_summary["control_family_count"],
+            "coverage_ratio": result.coverage_summary["coverage_ratio"],
+            "unsupported_claims": result.coverage_summary["unsupported_claim_count"],
+        },
+    )
+    return result
+
+
+@router.post(
+    "/compliance/control-pack",
+    response_model=ControlPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def compliance_control_pack(
+    request: Request,
+    payload: ControlPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ControlPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ControlPackRequest()
+    analysis, matrix, review_findings = await _compliance_inputs(trace_id, container)
+    evidence_matrix = container.compliance.evidence_matrix(
+        f"{trace_id}-matrix",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=review_findings,
+    )
+    pack = container.compliance.control_pack(
+        trace_id,
+        evidence_matrix,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "compliance.control_pack_generated",
+        "compliance_control_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "coverage_ratio": pack.matrix.coverage_summary["coverage_ratio"],
+            "unsupported_claims": pack.matrix.coverage_summary["unsupported_claim_count"],
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/procurement/question-risk",
+    response_model=ProcurementQuestionRiskResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def procurement_question_risk(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProcurementQuestionRiskResponse:
+    trace_id = get_trace_id(request)
+    analysis, matrix, review_findings = await _procurement_inputs(trace_id, container)
+    result = await container.procurement.question_risk(
+        trace_id,
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=review_findings,
+    )
+    container.audit.record(
+        trace_id,
+        "procurement.question_risk_viewed",
+        "procurement_question_risk",
+        metadata={
+            "questions": result.coverage_summary["question_count"],
+            "coverage_ratio": result.coverage_summary["coverage_ratio"],
+            "blocked": result.approval_summary["blocked_count"],
+            "approvals_required": result.approval_summary["approvals_required_count"],
+        },
+    )
+    return result
+
+
+@router.post(
+    "/procurement/approval-pack",
+    response_model=ProcurementApprovalPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def procurement_approval_pack(
+    request: Request,
+    payload: ProcurementApprovalPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProcurementApprovalPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProcurementApprovalPackRequest()
+    analysis, matrix, review_findings = await _procurement_inputs(trace_id, container)
+    question_risk = await container.procurement.question_risk(
+        f"{trace_id}-question-risk",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=review_findings,
+    )
+    pack = container.procurement.approval_pack(
+        trace_id,
+        question_risk,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "procurement.approval_pack_generated",
+        "procurement_approval_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "blocked": pack.question_risk.approval_summary["blocked_count"],
+            "approvals_required": pack.question_risk.approval_summary["approvals_required_count"],
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/bid/scenario-analysis",
+    response_model=BidScenarioAnalysisResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def bid_scenario_analysis(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> BidScenarioAnalysisResponse:
+    trace_id = get_trace_id(request)
+    inputs = await _bid_inputs(trace_id, container)
+    result = container.bid_simulator.scenario_analysis(trace_id=trace_id, **inputs)
+    container.audit.record(
+        trace_id,
+        "bid.scenario_analysis_viewed",
+        "bid_scenario_analysis",
+        metadata={
+            "scenarios": len(result.scenarios),
+            "recommended_scenario_id": result.recommended_scenario_id,
+            "best_roi": result.coverage_summary["best_risk_adjusted_roi"],
+        },
+    )
+    return result
+
+
+@router.post("/bid/roi-pack", response_model=BidRoiPackResponse, dependencies=[Depends(require_api_key)])
+async def bid_roi_pack(
+    payload: BidRoiPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> BidRoiPackResponse:
+    trace_id = get_trace_id(request)
+    analysis = payload.scenario_analysis
+    if analysis is None:
+        inputs = await _bid_inputs(f"{trace_id}-analysis", container)
+        analysis = container.bid_simulator.scenario_analysis(trace_id=f"{trace_id}-analysis", **inputs)
+    pack = container.bid_simulator.export_roi_pack(
+        trace_id=trace_id,
+        scenario_analysis=analysis,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "bid.roi_pack_generated",
+        "bid_roi_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "scenarios": len(analysis.scenarios),
+            "recommended_scenario_id": analysis.recommended_scenario_id,
+        },
+    )
+    return pack
+
+
 @router.get("/metrics/usage", response_model=UsageResponse, dependencies=[Depends(require_api_key)])
 async def usage(container: ServiceContainer = Depends(get_container)) -> UsageResponse:
     return UsageResponse(metrics=container.metrics.list_metrics(), totals=container.metrics.totals())
@@ -180,3 +2262,795 @@ async def usage(container: ServiceContainer = Depends(get_container)) -> UsageRe
 @router.get("/audit/events", response_model=AuditResponse, dependencies=[Depends(require_api_key)])
 async def audit_events(container: ServiceContainer = Depends(get_container)) -> AuditResponse:
     return AuditResponse(events=container.audit.list_events())
+
+
+async def _compliance_inputs(
+    trace_id: str,
+    container: ServiceContainer,
+) -> tuple[AnalyzeResponse, list[RequirementMatrixRow], list]:
+    sample_docs = [
+        ("sample_data/acme_enterprise_rfp.md", "rfp"),
+        ("sample_data/security_policy.md", "security"),
+        ("sample_data/compliance_policy.md", "compliance"),
+        ("sample_data/dpa_privacy_policy.md", "privacy"),
+        ("sample_data/sla_support_policy.md", "support"),
+        ("sample_data/ai_governance_security.md", "security"),
+        ("sample_data/disaster_recovery_plan.md", "disaster_recovery"),
+        ("sample_data/customer_contract_terms.md", "contract"),
+    ]
+    loaded = {document.filename for document in container.repo.documents.values()}
+    for fixture_path, document_type in sample_docs:
+        filename = Path(fixture_path).name
+        if filename not in loaded:
+            await container.ingestion.ingest_path(fixture_path, document_type=document_type, source="sample_data")
+            loaded.add(filename)
+    rfp_doc = next(
+        (
+            document
+            for document in container.repo.documents.values()
+            if document.filename == "acme_enterprise_rfp.md"
+        ),
+        None,
+    )
+    if rfp_doc is not None:
+        rfp_text = container.ingestion.get_text(rfp_doc.id)
+    else:
+        rfp_text = (container.settings.sample_data_dir / "acme_enterprise_rfp.md").read_text(encoding="utf-8")
+    analysis = container.analysis.analyze(rfp_text, f"{trace_id}-analysis")
+    matrix = container.workbench.create_requirement_matrix(analysis)
+    review = container.review_board.review_package(
+        trace_id=f"{trace_id}-review",
+        requirement_matrix=matrix,
+    )
+    return analysis, matrix, review.findings
+
+
+async def _procurement_inputs(
+    trace_id: str,
+    container: ServiceContainer,
+) -> tuple[AnalyzeResponse, list[RequirementMatrixRow], list]:
+    sample_docs = [
+        ("sample_data/acme_enterprise_rfp.md", "rfp"),
+        ("sample_data/security_policy.md", "security"),
+        ("sample_data/compliance_policy.md", "compliance"),
+        ("sample_data/pricing_notes.md", "pricing"),
+        ("sample_data/implementation_guide.md", "implementation"),
+        ("sample_data/dpa_privacy_policy.md", "privacy"),
+        ("sample_data/sla_support_policy.md", "support"),
+        ("sample_data/ai_governance_security.md", "security"),
+        ("sample_data/disaster_recovery_plan.md", "disaster_recovery"),
+        ("sample_data/customer_success_onboarding.md", "customer_success"),
+        ("sample_data/customer_contract_terms.md", "contract"),
+    ]
+    loaded = {document.filename for document in container.repo.documents.values()}
+    for fixture_path, document_type in sample_docs:
+        filename = Path(fixture_path).name
+        if filename not in loaded:
+            await container.ingestion.ingest_path(fixture_path, document_type=document_type, source="sample_data")
+            loaded.add(filename)
+    rfp_doc = next(
+        (
+            document
+            for document in container.repo.documents.values()
+            if document.filename == "acme_enterprise_rfp.md"
+        ),
+        None,
+    )
+    if rfp_doc is not None:
+        rfp_text = container.ingestion.get_text(rfp_doc.id)
+    else:
+        rfp_text = (container.settings.sample_data_dir / "acme_enterprise_rfp.md").read_text(encoding="utf-8")
+    analysis = container.analysis.analyze(rfp_text, f"{trace_id}-analysis")
+    matrix = container.workbench.create_requirement_matrix(analysis)
+    review = container.review_board.review_package(
+        trace_id=f"{trace_id}-review",
+        requirement_matrix=matrix,
+    )
+    return analysis, matrix, review.findings
+
+
+async def _bid_inputs(trace_id: str, container: ServiceContainer) -> dict[str, object]:
+    analysis, matrix, review_findings = await _procurement_inputs(trace_id, container)
+    customer_fit = container.customer_intelligence.customer_fit(
+        "regulated_healthcare",
+        f"{trace_id}-customer-fit",
+        analysis=analysis,
+        requirement_matrix=matrix,
+    )
+    memory_matches = container.customer_intelligence.search_response_memory(
+        "SSO encryption SOC 2 procurement pricing implementation",
+        f"{trace_id}-memory",
+        customer_profile_id="regulated_healthcare",
+        top_k=5,
+    )
+    action_plan_items, _ = container.action_plan.create_action_plan(
+        trace_id=f"{trace_id}-action-plan",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        customer_fit=customer_fit,
+        review_findings=review_findings,
+    )
+    readiness = container.deal_readiness.create_scorecard(
+        trace_id=f"{trace_id}-readiness",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=review_findings,
+        customer_fit=customer_fit,
+        action_plan=action_plan_items,
+    )
+    win_strategy = container.win_strategy.create_win_strategy(
+        trace_id=f"{trace_id}-win-strategy",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        customer_fit=customer_fit,
+        readiness_scorecard=readiness,
+        response_memory_matches=memory_matches,
+        action_plan=action_plan_items,
+        review_findings=review_findings,
+        competitor_context=[
+            "Incumbent competitor may bundle workflow tooling and push price-match pressure.",
+        ],
+    )
+    contract_path = container.settings.sample_data_dir / "customer_contract_terms.md"
+    contract_risk = container.contract_risk.analyze(
+        contract_path.read_text(encoding="utf-8"),
+        f"{trace_id}-contract-risk",
+        customer_profile_id="regulated_healthcare",
+    )
+    evidence_gaps, _ = container.evidence_gap.create_gap_plan(
+        trace_id=f"{trace_id}-evidence-gaps",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=review_findings,
+        readiness_scorecard=readiness,
+        win_strategy=win_strategy,
+        contract_risk=contract_risk,
+        action_plan=action_plan_items,
+    )
+    source_pack = container.evidence_gap.export_source_request_pack(
+        trace_id=f"{trace_id}-source-pack",
+        gaps=evidence_gaps,
+        analysis=analysis,
+        readiness_scorecard=readiness,
+        win_strategy=win_strategy,
+        contract_risk=contract_risk,
+        write_artifact=False,
+    )
+    timeline_plan = container.timeline_orchestration.create_plan(
+        trace_id=f"{trace_id}-timeline",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        action_plan=action_plan_items,
+        evidence_gaps=evidence_gaps,
+        contract_risk=contract_risk,
+        win_strategy=win_strategy,
+        readiness_scorecard=readiness,
+        source_request_pack=source_pack.pack,
+        review_findings=review_findings,
+    )
+    draft = await container.generation.draft_response(
+        trace_id=f"{trace_id}-draft",
+        requirement_ids=[requirement.id for requirement in analysis.requirements],
+        top_k=5,
+    )
+    submission_decision = container.submission_decision.create_decision(
+        trace_id=f"{trace_id}-submission-decision",
+        requirement_matrix=matrix,
+        draft_response=draft,
+        review_findings=review_findings,
+        review_passed=not review_findings,
+        action_plan=action_plan_items,
+        readiness_scorecard=readiness,
+        win_strategy=win_strategy,
+        contract_risk=contract_risk,
+        evidence_gaps=evidence_gaps,
+        source_request_pack=source_pack.pack,
+        timeline_plan=timeline_plan,
+    )
+    procurement_risk = await container.procurement.question_risk(
+        f"{trace_id}-procurement-risk",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=review_findings,
+    )
+    return {
+        "requirement_matrix": matrix,
+        "customer_profiles": container.customer_intelligence.list_profiles(),
+        "readiness_scorecard": readiness,
+        "win_strategy": win_strategy,
+        "submission_decision": submission_decision,
+        "evidence_gaps": evidence_gaps,
+        "contract_risk": contract_risk,
+        "timeline_plan": timeline_plan,
+        "procurement_risk": procurement_risk,
+    }
+
+
+def _submission_decision_inputs(
+    payload: SubmissionDecisionRequest | ExecutiveSubmissionMemoRequest,
+    trace_id: str,
+    container: ServiceContainer,
+) -> dict:
+    has_supplied_input = any(
+        [
+            payload.rfp_document_id,
+            payload.analysis,
+            payload.analyzed_payload,
+            payload.matrix,
+            payload.requirement_matrix,
+            payload.draft_response,
+            payload.answers,
+            payload.review_findings,
+            payload.action_plan,
+            payload.readiness_scorecard,
+            payload.eval_metrics,
+            payload.red_team_summary,
+            payload.win_strategy,
+            payload.contract_risk,
+            payload.evidence_gaps,
+            payload.source_request_pack,
+            payload.timeline_plan,
+        ]
+    )
+    analysis = payload.analysis or payload.analyzed_payload
+    if analysis is None and payload.rfp_document_id is not None:
+        analysis = _analysis_from_document_id(payload.rfp_document_id, trace_id, container)
+    if analysis is None and not has_supplied_input:
+        sample_path = container.settings.sample_data_dir / "acme_enterprise_rfp.md"
+        if sample_path.exists():
+            analysis = container.analysis.analyze(sample_path.read_text(encoding="utf-8"), f"{trace_id}-sample")
+
+    matrix = payload.matrix or payload.requirement_matrix
+    if matrix is None and analysis is not None:
+        matrix = container.workbench.create_requirement_matrix(analysis)
+    matrix = matrix or []
+
+    draft = payload.draft_response
+    if draft is None and analysis is not None:
+        draft = _draft_from_repo_or_sample(container, analysis, trace_id)
+
+    review_findings = list(payload.review_findings)
+    review_passed = payload.review_passed
+    if not review_findings and matrix:
+        review = container.review_board.review_package(
+            trace_id=f"{trace_id}-review",
+            requirement_matrix=matrix,
+            draft_response=draft,
+            answer_payloads=payload.answers,
+        )
+        review_findings = review.findings
+        review_passed = review.passed
+
+    action_plan_items = list(payload.action_plan)
+    if not action_plan_items and matrix:
+        action_plan_items, _ = container.action_plan.create_action_plan(
+            trace_id=f"{trace_id}-action-plan",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=review_findings,
+        )
+
+    readiness = payload.readiness_scorecard
+    if readiness is None and (analysis is not None or matrix or review_findings or action_plan_items):
+        readiness = container.deal_readiness.create_scorecard(
+            trace_id=f"{trace_id}-readiness",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=review_findings,
+            action_plan=action_plan_items,
+            eval_metrics=payload.eval_metrics,
+        )
+
+    strategy = payload.win_strategy
+    if strategy is None and (analysis is not None or matrix):
+        strategy = container.win_strategy.create_win_strategy(
+            trace_id=f"{trace_id}-win-strategy",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            readiness_scorecard=readiness,
+            action_plan=action_plan_items,
+            review_findings=review_findings,
+        )
+
+    contract = payload.contract_risk
+    if contract is None and not has_supplied_input:
+        contract_path = container.settings.sample_data_dir / "customer_contract_terms.md"
+        if contract_path.exists():
+            contract = container.contract_risk.analyze(
+                contract_path.read_text(encoding="utf-8"),
+                f"{trace_id}-contract-risk",
+            )
+
+    gaps = payload.evidence_gaps
+    if gaps is None:
+        gaps, _ = container.evidence_gap.create_gap_plan(
+            trace_id=f"{trace_id}-gaps",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=review_findings,
+            red_team_summary=payload.red_team_summary,
+            readiness_scorecard=readiness,
+            win_strategy=strategy,
+            contract_risk=contract,
+            action_plan=action_plan_items,
+        )
+
+    source_pack = payload.source_request_pack
+    if source_pack is None:
+        source_pack = container.evidence_gap.export_source_request_pack(
+            trace_id=f"{trace_id}-source-pack",
+            gaps=gaps,
+            analysis=analysis,
+            red_team_summary=payload.red_team_summary,
+            readiness_scorecard=readiness,
+            win_strategy=strategy,
+            contract_risk=contract,
+            write_artifact=False,
+        ).pack
+
+    timeline = payload.timeline_plan
+    if timeline is None:
+        timeline = container.timeline_orchestration.create_plan(
+            trace_id=f"{trace_id}-timeline",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            action_plan=action_plan_items,
+            evidence_gaps=gaps,
+            contract_risk=contract,
+            win_strategy=strategy,
+            readiness_scorecard=readiness,
+            source_request_pack=source_pack,
+            leadership_brief=payload.leadership_brief,
+            review_findings=review_findings,
+            red_team_summary=payload.red_team_summary,
+        )
+
+    artifact_links = {
+        "export_package": {
+            "artifact_path": payload.export_artifact_path,
+            "json_artifact_path": payload.export_json_artifact_path,
+        },
+        "source_request_pack": {
+            "artifact_path": payload.source_request_artifact_path,
+            "json_artifact_path": payload.source_request_json_artifact_path,
+        },
+        "submission_calendar": {
+            "artifact_path": payload.submission_calendar_artifact_path,
+            "json_artifact_path": payload.submission_calendar_json_artifact_path,
+        },
+        "leadership_brief": {
+            "artifact_path": payload.leadership_brief_artifact_path,
+            "json_artifact_path": payload.leadership_brief_json_artifact_path,
+        },
+    }
+    artifact_links = {
+        key: value
+        for key, value in artifact_links.items()
+        if any(path for path in value.values())
+    }
+    return {
+        "requirement_matrix": matrix,
+        "draft_response": draft,
+        "answers": payload.answers,
+        "review_findings": review_findings,
+        "review_passed": review_passed,
+        "action_plan": action_plan_items,
+        "readiness_scorecard": readiness,
+        "eval_metrics": payload.eval_metrics,
+        "red_team_summary": payload.red_team_summary,
+        "win_strategy": strategy,
+        "contract_risk": contract,
+        "evidence_gaps": gaps,
+        "source_request_pack": source_pack,
+        "timeline_plan": timeline,
+        "leadership_brief": payload.leadership_brief,
+        "metrics": payload.metrics or container.metrics.totals(),
+        "artifact_links": artifact_links,
+    }
+
+
+def _draft_from_repo_or_sample(
+    container: ServiceContainer,
+    analysis: AnalyzeResponse,
+    trace_id: str,
+) -> DraftResponse:
+    citations = []
+    for row in container.workbench.create_requirement_matrix(analysis):
+        for ref in row.evidence_refs:
+            for chunk in container.repo.chunks.values():
+                document = container.repo.documents.get(chunk.document_id)
+                if document and document.filename == ref:
+                    citations.append(
+                        {
+                            "document_id": document.id,
+                            "chunk_id": chunk.id,
+                            "filename": document.filename,
+                            "page": None,
+                            "snippet": chunk.text[:220],
+                            "score": 0.75,
+                        }
+                    )
+                    break
+    return DraftResponse(
+        sections=[
+            {
+                "title": "Executive Summary",
+                "body": "Local deterministic draft assembled for final submission decision review.",
+                "requirement_ids": [requirement.id for requirement in analysis.requirements[:4]],
+            },
+            {
+                "title": "Security, Compliance, and Commercial Posture",
+                "body": "Response posture is based on approved local evidence and explicit exception tracking.",
+                "requirement_ids": [requirement.id for requirement in analysis.requirements[4:]],
+            },
+        ],
+        citations=citations,
+        risks=analysis.risks,
+        assumptions=analysis.missing_information,
+        revision_notes=["Generated locally for submission decision fallback."],
+        trace_id=f"{trace_id}-draft-fallback",
+    )
+
+
+def _timeline_inputs(
+    payload: TimelinePlanRequest | SubmissionCalendarPackRequest,
+    trace_id: str,
+    container: ServiceContainer,
+):
+    (
+        analysis,
+        matrix,
+        review_findings,
+        red_team_summary,
+        readiness,
+        strategy,
+        contract,
+        action_plan_items,
+    ) = _evidence_gap_inputs(payload, trace_id, container)
+    gaps = payload.evidence_gaps
+    if gaps is None:
+        gaps, _ = container.evidence_gap.create_gap_plan(
+            trace_id=f"{trace_id}-gaps",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=review_findings,
+            red_team_summary=red_team_summary,
+            readiness_scorecard=readiness,
+            win_strategy=strategy,
+            contract_risk=contract,
+            action_plan=action_plan_items,
+        )
+    source_pack = payload.source_request_pack
+    if source_pack is None:
+        source_pack = container.evidence_gap.export_source_request_pack(
+            trace_id=f"{trace_id}-source-pack",
+            gaps=gaps,
+            analysis=analysis,
+            red_team_summary=red_team_summary,
+            readiness_scorecard=readiness,
+            win_strategy=strategy,
+            contract_risk=contract,
+            write_artifact=False,
+        ).pack
+    leadership = payload.leadership_brief
+    if leadership is None:
+        leadership = container.leadership_brief.export_brief(
+            trace_id=f"{trace_id}-leadership",
+            documents_ingested=len(container.repo.documents),
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=review_findings,
+            action_plan=action_plan_items,
+            readiness_scorecard=readiness,
+            red_team_summary=red_team_summary,
+            write_artifact=False,
+        ).brief
+    return (
+        analysis,
+        matrix,
+        review_findings,
+        red_team_summary,
+        readiness,
+        strategy,
+        contract,
+        action_plan_items,
+        gaps,
+        source_pack,
+        leadership,
+    )
+
+
+def _evidence_gap_inputs(
+    payload: EvidenceGapRequest | SourceRequestPackRequest,
+    trace_id: str,
+    container: ServiceContainer,
+) -> tuple[
+    AnalyzeResponse | None,
+    list[RequirementMatrixRow],
+    list,
+    dict | None,
+    DealReadinessScorecardResponse | None,
+    WinStrategyResponse | None,
+    ContractRiskResponse | None,
+    list,
+]:
+    has_supplied_input = any(
+        [
+            payload.rfp_document_id,
+            payload.analysis,
+            payload.analyzed_payload,
+            payload.matrix,
+            payload.requirement_matrix,
+            payload.review_findings,
+            payload.red_team_summary,
+            payload.readiness_scorecard,
+            payload.win_strategy,
+            payload.contract_risk,
+            payload.action_plan,
+        ]
+    )
+    analysis = payload.analysis or payload.analyzed_payload
+    if analysis is None and payload.rfp_document_id is not None:
+        analysis = _analysis_from_document_id(payload.rfp_document_id, trace_id, container)
+    if analysis is None and not has_supplied_input:
+        sample_path = container.settings.sample_data_dir / "acme_enterprise_rfp.md"
+        if sample_path.exists():
+            analysis = container.analysis.analyze(sample_path.read_text(encoding="utf-8"), f"{trace_id}-sample")
+
+    matrix = payload.matrix or payload.requirement_matrix
+    if matrix is None and analysis is not None:
+        matrix = container.workbench.create_requirement_matrix(analysis)
+    matrix = matrix or []
+
+    review_findings = list(payload.review_findings)
+    if not review_findings and matrix:
+        review = container.review_board.review_package(
+            trace_id=f"{trace_id}-review",
+            requirement_matrix=matrix,
+        )
+        review_findings = review.findings
+
+    action_plan_items = list(payload.action_plan)
+    if not action_plan_items and matrix:
+        action_plan_items, _ = container.action_plan.create_action_plan(
+            trace_id=f"{trace_id}-action-plan",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=review_findings,
+        )
+
+    readiness = payload.readiness_scorecard
+    if readiness is None and (analysis is not None or matrix or review_findings or action_plan_items):
+        readiness = container.deal_readiness.create_scorecard(
+            trace_id=f"{trace_id}-readiness",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=review_findings,
+            action_plan=action_plan_items,
+        )
+
+    strategy = payload.win_strategy
+    if strategy is None and (analysis is not None or matrix):
+        strategy = container.win_strategy.create_win_strategy(
+            trace_id=f"{trace_id}-win-strategy",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            readiness_scorecard=readiness,
+            action_plan=action_plan_items,
+            review_findings=review_findings,
+        )
+
+    contract = payload.contract_risk
+    if contract is None and not has_supplied_input:
+        contract_path = container.settings.sample_data_dir / "customer_contract_terms.md"
+        if contract_path.exists():
+            contract = container.contract_risk.analyze(
+                contract_path.read_text(encoding="utf-8"),
+                f"{trace_id}-contract-risk",
+            )
+
+    return (
+        analysis,
+        matrix,
+        review_findings,
+        payload.red_team_summary,
+        readiness,
+        strategy,
+        contract,
+        action_plan_items,
+    )
+
+
+def _analysis_from_workbench_payload(
+    payload: (
+        RequirementMatrixRequest
+        | ExportPackageRequest
+        | ReviewPackageRequest
+        | CustomerFitRequest
+        | ActionPlanRequest
+        | LeadershipBriefRequest
+    ),
+    trace_id: str,
+    container: ServiceContainer,
+) -> AnalyzeResponse:
+    if payload.analyzed_payload is not None:
+        return payload.analyzed_payload
+    if payload.rfp_document_id is None:
+        raise HTTPException(status_code=400, detail="Provide analyzed_payload or rfp_document_id.")
+    if payload.rfp_document_id not in container.repo.documents:
+        raise HTTPException(status_code=404, detail=f"RFP document not found: {payload.rfp_document_id}")
+    text = container.ingestion.get_text(payload.rfp_document_id)
+    return container.analysis.analyze(text, trace_id)
+
+
+def _contract_text_from_payload(payload: ContractRiskRequest, container: ServiceContainer) -> str:
+    if payload.text:
+        return payload.text
+    if payload.contract_document_id:
+        if payload.contract_document_id not in container.repo.documents:
+            raise HTTPException(status_code=404, detail=f"Contract document not found: {payload.contract_document_id}")
+        return container.ingestion.get_text(payload.contract_document_id)
+    if payload.fixture_path:
+        path = Path(payload.fixture_path)
+        if not path.is_absolute():
+            path = Path.cwd() / path
+        if not path.exists():
+            sample_path = container.settings.sample_data_dir / payload.fixture_path
+            if sample_path.exists():
+                path = sample_path
+        if not path.exists():
+            raise HTTPException(status_code=404, detail=f"Contract fixture not found: {payload.fixture_path}")
+        return path.read_text(encoding="utf-8")
+    raise HTTPException(status_code=400, detail="Provide text, contract_document_id, or fixture_path.")
+
+
+def _action_plan_inputs(
+    payload: ActionPlanRequest,
+    trace_id: str,
+    container: ServiceContainer,
+) -> tuple[AnalyzeResponse | None, list[RequirementMatrixRow], CustomerProfile | None, CustomerFitResponse | None]:
+    analysis = None
+    if payload.analyzed_payload is not None or payload.rfp_document_id is not None:
+        analysis = _analysis_from_workbench_payload(payload, trace_id, container)
+    matrix = payload.requirement_matrix
+    if matrix is None and analysis is not None:
+        matrix = container.workbench.create_requirement_matrix(analysis)
+    if matrix is None:
+        raise HTTPException(status_code=400, detail="Provide analyzed_payload, rfp_document_id, or requirement_matrix.")
+
+    customer_profile = payload.customer_profile
+    customer_fit = payload.customer_fit
+    if payload.customer_profile_id:
+        try:
+            customer_profile = container.customer_intelligence.get_profile(payload.customer_profile_id)
+            if customer_fit is None:
+                customer_fit = container.customer_intelligence.customer_fit(
+                    payload.customer_profile_id,
+                    trace_id,
+                    analysis=analysis,
+                    requirement_matrix=matrix,
+                )
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return analysis, matrix, customer_profile, customer_fit
+
+
+def _readiness_inputs(
+    payload: DealReadinessScorecardRequest,
+    container: ServiceContainer,
+) -> tuple[AnalyzeResponse | None, list[RequirementMatrixRow]]:
+    analysis = payload.analysis or payload.analyzed_payload
+    matrix = payload.matrix or payload.requirement_matrix
+    if matrix is None and analysis is not None:
+        matrix = container.workbench.create_requirement_matrix(analysis)
+    if not any(
+        [
+            analysis,
+            matrix,
+            payload.review_findings,
+            payload.customer_fit,
+            payload.action_plan,
+            payload.eval_metrics,
+        ]
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Provide analysis, matrix, review findings, customer fit, action plan, or eval metrics.",
+        )
+    return analysis, matrix or []
+
+
+def _win_strategy_inputs(
+    payload: WinStrategyRequest,
+    trace_id: str,
+    container: ServiceContainer,
+) -> tuple[
+    AnalyzeResponse | None,
+    list[RequirementMatrixRow],
+    CustomerFitResponse | None,
+    DealReadinessScorecardResponse | None,
+    list[ResponseMemoryMatch],
+    list,
+]:
+    analysis = payload.analysis or payload.analyzed_payload
+    if analysis is None and payload.rfp_document_id is not None:
+        analysis = _analysis_from_document_id(payload.rfp_document_id, trace_id, container)
+    if analysis is None and not (payload.matrix or payload.requirement_matrix):
+        sample_path = container.settings.sample_data_dir / "acme_enterprise_rfp.md"
+        if sample_path.exists():
+            analysis = container.analysis.analyze(sample_path.read_text(encoding="utf-8"), trace_id)
+
+    matrix = payload.matrix or payload.requirement_matrix
+    if matrix is None and analysis is not None:
+        matrix = container.workbench.create_requirement_matrix(analysis)
+    matrix = matrix or []
+
+    customer_fit = payload.customer_fit
+    profile_id = payload.customer_profile_id
+    if profile_id is None and (analysis is not None or matrix):
+        profile_id = "regulated_healthcare"
+    if customer_fit is None and profile_id and (analysis is not None or matrix):
+        try:
+            customer_fit = container.customer_intelligence.customer_fit(
+                profile_id,
+                f"{trace_id}-customer-fit",
+                analysis=analysis,
+                requirement_matrix=matrix,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    memory_matches = list(payload.response_memory_matches)
+    if not memory_matches and (analysis is not None or matrix):
+        memory_query = _win_strategy_memory_query(analysis, matrix)
+        memory_matches = container.customer_intelligence.search_response_memory(
+            memory_query,
+            f"{trace_id}-response-memory",
+            customer_profile_id=profile_id,
+            top_k=5,
+        )
+
+    action_plan_items = list(payload.action_plan)
+    if not action_plan_items and matrix:
+        action_plan_items, _ = container.action_plan.create_action_plan(
+            trace_id=f"{trace_id}-action-plan",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            customer_fit=customer_fit,
+            review_findings=payload.review_findings,
+        )
+
+    readiness = payload.readiness_scorecard
+    if readiness is None and (analysis is not None or matrix or customer_fit is not None or action_plan_items):
+        readiness = container.deal_readiness.create_scorecard(
+            trace_id=f"{trace_id}-readiness",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=payload.review_findings,
+            customer_fit=customer_fit,
+            action_plan=action_plan_items,
+        )
+    return analysis, matrix, customer_fit, readiness, memory_matches, action_plan_items
+
+
+def _analysis_from_document_id(
+    document_id: str,
+    trace_id: str,
+    container: ServiceContainer,
+) -> AnalyzeResponse:
+    if document_id not in container.repo.documents:
+        raise HTTPException(status_code=404, detail=f"RFP document not found: {document_id}")
+    text = container.ingestion.get_text(document_id)
+    return container.analysis.analyze(text, trace_id)
+
+
+def _win_strategy_memory_query(
+    analysis: AnalyzeResponse | None,
+    matrix: list[RequirementMatrixRow],
+) -> str:
+    parts = [row.requirement_text for row in matrix]
+    if analysis:
+        parts.extend(analysis.security_questions)
+        parts.extend(analysis.compliance_asks)
+        parts.extend(analysis.pricing_mentions)
+    return " ".join(parts) or "SSO encryption SOC 2 implementation pricing"

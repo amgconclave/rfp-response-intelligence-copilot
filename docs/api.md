@@ -14,6 +14,302 @@ Returns the local demo API key and header name.
 
 Returns service status, provider mode, vector store mode, and version.
 
+### `GET /ops/smoke-matrix`
+
+Returns the Local Launch Smoke Matrix for core, enterprise, artifact-writing, and ops APIs. The matrix includes endpoint names, methods, expected status/result, sample curl commands, artifact expectations, auth notes, and a readiness summary.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/ops/smoke-matrix" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The response includes `rows`, `readiness_summary`, and `trace_id`. `readiness_summary` includes total endpoints, protected endpoints, artifact-writing endpoints, local/mock readiness, recommended sequence, exact local verification commands, and optional provider notes.
+
+### `POST /ops/launch-checklist`
+
+Writes a Markdown and JSON Local Launch Checklist under `storage/launch_checklists/` by default. The checklist includes install/run commands, the API smoke matrix, the demo command, eval and red-team commands, generated artifact paths, troubleshooting, JD skills demonstrated, and five interviewer talking points.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The response includes `artifact_path`, `json_artifact_path`, `markdown`, structured `checklist`, embedded `smoke_matrix`, and `trace_id`.
+
+### `GET /runtime/demo-readiness`
+
+Returns local FastAPI and Streamlit runtime readiness for fresh-clone reviewers. It includes exact start commands, stop commands, expected ports, environment requirements, dependency checks, read-only localhost port checks, expected health/smoke URLs, RAG/eval/red-team commands, demo flow order, screenshot checklist placeholders, troubleshooting, recruiter/engineer explanation, known limitations, and trace ID. It does not kill processes or require OpenAI, Azure, live Qdrant, or any external service.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/runtime/demo-readiness" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /runtime/demo-pack`
+
+Writes Markdown and JSON Runtime Demo Server Pack artifacts under ignored `storage/runtime_packs/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes exact start commands, stop commands, health checks, demo flow order, RAG/eval/red-team verification order, screenshot checklist placeholders, troubleshooting, recruiter/engineer explanation, known limitations, embedded readiness JSON, Markdown, JSON, and trace ID.
+
+### `GET /ops/ci-doctor`
+
+Returns the Local CI Doctor readiness report. It checks the pytest command, ruff command, standard eval command, red-team command, demo command, GitHub Actions workflow presence, Docker Compose presence, `.env.example`, README required sections, docs presence, generated artifact ignores, dependency files, local/mock provider notes, and a redacted secret scan summary. It does not execute shell commands or call external services.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/ops/ci-doctor" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The response includes `status`, `score`, structured `checks`, `dependency_inventory`, `secret_scan`, exact `local_verification_commands`, `generated_at`, and `trace_id`.
+
+### `POST /ops/audit-pack`
+
+Writes Markdown and JSON Audit Pack artifacts under ignored `storage/audit_packs/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes CI Doctor results, dependency inventory, secret scan summary, local verification commands, publish-safety checklist, remediation notes, recruiter/interviewer explanation, limitations, artifact paths, Markdown, JSON, and trace ID.
+
+### `GET /api/contract-audit`
+
+Returns an OpenAPI-derived API Contract Snapshot. It includes OpenAPI route and path counts, auth-protected endpoint count, endpoint inventory grouped by domain, docs/API coverage for important endpoints, dashboard smoke alignment, generated artifact endpoint coverage, demo flow endpoint coverage, RAG/eval/red-team endpoint coverage, missing docs warnings, deprecated/duplicate route warnings, and local-only limitations.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/api/contract-audit" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The response uses `ApiContractAuditResponse` and includes `openapi_route_count`, `auth_protected_endpoint_count`, `endpoint_inventory`, `docs_api_coverage`, `dashboard_smoke_alignment`, `generated_artifact_endpoint_coverage`, `demo_flow_endpoint_coverage`, `rag_eval_red_team_endpoint_coverage`, warnings, limitations, and trace ID.
+
+### `GET /rag/corpus-coverage`
+
+Returns the RAG Corpus coverage view for the local fake enterprise corpus. It includes corpus metadata, document category coverage, eval coverage, citation/source coverage, red-team coverage, missing-evidence coverage, gaps, warnings, local proof commands, generated timestamp, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/rag/corpus-coverage" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /rag/eval-coverage-pack`
+
+Runs deterministic local corpus coverage checks and writes Markdown/JSON artifacts under ignored `storage/rag_coverage/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack covers the expanded implementation, DPA/privacy, SLA/support, AI governance/security, disaster recovery, and customer success/onboarding documents, plus eval coverage, red-team coverage, citation/source coverage, and missing-evidence coverage.
+
+### `GET /compliance/evidence-matrix`
+
+Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/compliance/evidence-matrix" \
+  -H "X-API-Key: local-demo-key"
+```
+
+Control families include access control/SSO, encryption/key management, privacy/DPA/subprocessors, audit logging, AI governance/model claims, SLA/support, disaster recovery/BCP, and data residency/export.
+
+### `POST /compliance/control-pack`
+
+Writes Markdown and JSON Control Mapping Pack artifacts under ignored `storage/compliance_packs/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes control coverage, source snippets, unsupported claims, gaps, owner actions, reviewer notes, exact local proof commands, limitations, embedded evidence matrix JSON, Markdown, JSON, and trace ID.
+
+### `GET /procurement/question-risk`
+
+Returns the Procurement Q&A question risk catalog. It simulates security architecture, privacy/DPA, SLA/support, disaster recovery, AI governance/model claims, pricing/commercial, implementation timeline, and out-of-scope/adversarial unsupported-claim buyer questions. Each item includes category, risk level, required reviewer role, approval status, evidence support, unsupported-claim flag, citations, snippets, approved response memory matches, reviewer checklist, escalation owner, evidence gaps, review findings, and coverage summary.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/procurement/question-risk" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /procurement/approval-pack`
+
+Writes Markdown and JSON Procurement Q&A Approval Workflow Pack artifacts under ignored `storage/procurement_packs/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes high-risk questions, approved/blocked draft answers, reviewer checklist, escalation owners, evidence gaps, exact local proof commands, limitations, embedded question risk JSON, Markdown, JSON, and trace ID.
+
+### `GET /bid/scenario-analysis`
+
+Returns the Bid/No-Bid Scenario Simulator with four deterministic executive scenarios: pursue, pursue with conditions, no-bid due to compliance/evidence risk, and no-bid due to commercial/timeline risk. Each scenario includes deal value, pursuit effort, pursuit cost, win probability, gross margin, risk-adjusted revenue, risk-adjusted gross profit, risk-adjusted ROI, blockers, required reviewers, evidence readiness, timeline pressure, decision recommendation, customer profile, assumptions, and coverage summary.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/bid/scenario-analysis" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /bid/roi-pack`
+
+Writes Markdown and JSON ROI Impact Pack artifacts under ignored `storage/bid_packs/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes an executive decision memo, scenario comparison table, ROI math, blockers, follow-up owners, proof commands, limitations, embedded scenario analysis JSON, Markdown, JSON, and trace ID.
+
+### `POST /api/reviewer-collection`
+
+Writes a Markdown and JSON Reviewer Collection Pack under ignored `storage/api_contracts/` by default. The collection includes endpoint inventory grouped by domain, sample curl and PowerShell commands with `X-API-Key`, demo-token flow, expected status codes, auth notes, generated artifact endpoints, RAG/eval/red-team verification order, recruiter and engineer explanation, local-only limitations, embedded API Contract Snapshot, Markdown, JSON, and trace ID.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+Use this pair when the API is already running:
+
+```bash
+curl -X GET "http://127.0.0.1:8000/api/contract-audit" -H "X-API-Key: local-demo-key"
+curl -X POST "http://127.0.0.1:8000/api/reviewer-collection" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
+```
+
+### `GET /ui/dashboard-smoke`
+
+Returns Dashboard Smoke source-level checks for the Streamlit dashboard without launching a browser. It verifies expected tab/view labels, endpoint references, generated artifact tabs, local run commands, and limitations.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/ui/dashboard-smoke" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The response includes `status`, `summary`, `expected_views`, `endpoint_references`, `generated_artifact_tabs`, `local_run_commands`, `limitations`, `checks`, and `trace_id`.
+
+### `POST /ui/verification-pack`
+
+Writes Markdown and JSON UI Verification Pack artifacts under ignored `storage/ui_verification/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The UI Verification Pack includes dashboard smoke results, the Streamlit run command, API run command, reviewer checklist, screenshot placeholders, troubleshooting, limitations, Markdown, JSON, and trace ID.
+
+### `GET /artifacts/inventory`
+
+Returns the Artifact Inventory for generated local demo artifacts. Each row includes artifact directory, latest files, producer endpoint, producer command, ignored status, reviewer purpose, freshness notes, and file counts.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/artifacts/inventory" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The response includes `storage_root`, `ignored_status`, `total_directories`, `total_files`, `directories`, `local_commands`, `reviewer_proof_checklist`, and `trace_id`.
+
+### `POST /artifacts/readme-checklist`
+
+Writes Markdown and JSON README Checklist artifacts under ignored `storage/artifact_indexes/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The README Checklist Pack includes Artifact Inventory, README badge suggestions, README checklist suggestions, local commands, reviewer proof checklist, cleanup/regeneration notes, Markdown, JSON, and trace ID.
+
+### `GET /release/quality-gate`
+
+Returns the Release Candidate Quality Gate for GitHub publishing. The gate is deterministic and local-only: it checks repository files, docs, tests, eval/red-team/demo commands, CI presence, API smoke coverage, artifact coverage, runtime mode, and publish readiness without calling paid OpenAI, Azure, or Qdrant services.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/release/quality-gate" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The response includes `status`, `score`, `blockers`, `warnings`, `verification_checklist`, `coverage`, `artifact_coverage`, `runtime_notes`, `publish_readiness`, and `trace_id`. Coverage includes CI, docs, tests, standard eval, red-team, demo, API endpoint count, release endpoint presence, artifact endpoint count, and local-only runtime notes.
+
+### `POST /release/publish-pack`
+
+Writes Markdown and JSON GitHub Publish Pack artifacts under ignored `storage/release_packs/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes release summary, setup/demo commands, verification commands, expected outputs, endpoint inventory, artifact inventory, screenshot/manual verification placeholders, GitHub repo checklist, commit/push readiness notes, recruiter review notes, known limitations, embedded quality gate details, Markdown, JSON, and trace ID.
+
+### `GET /reviewer/quickstart`
+
+Returns the Reviewer Quickstart runbook for a GitHub reviewer. It is local/mock by default and includes exact setup commands, one-command demo, verification commands, endpoint walkthrough order, RAG/RFP workflow walkthrough, artifact proof map, expected outputs, troubleshooting, role-specific reviewer notes, proof tour, GitHub README blurb, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/reviewer/quickstart" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The response includes `status`, `provider_mode`, `vector_store_mode`, `exact_local_setup_commands`, `one_command_demo`, `verification_commands`, `endpoint_walkthrough_order`, `rag_rfp_workflow_walkthrough`, `artifact_proof_map`, `expected_outputs`, `troubleshooting`, `role_specific_reviewer_notes`, `proof_tour`, `github_readme_blurb`, and `trace_id`.
+
+### `POST /reviewer/walkthrough-pack`
+
+Writes Markdown and JSON Walkthrough Pack artifacts under ignored `storage/reviewer_packs/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The Walkthrough Pack includes a recruiter-friendly story, engineer deep-dive path, command checklist, API/RAG proof tour, endpoint order, RAG/RFP workflow walkthrough, artifacts to inspect, expected outputs, limitations, role-specific reviewer notes, GitHub README blurb, storage snapshot, Markdown, JSON, and trace ID.
+
+### `GET /handoff/final-audit`
+
+Returns the README Consistency final audit. The audit checks README endpoint mentions, docs/API coverage, architecture/evaluation coverage, demo output claims, required scripts, Dashboard Smoke script presence, generated artifact directory docs, RAG/eval/red-team/local mock limitation clarity, and Azure optional notes.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/handoff/final-audit" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The response uses `FinalAuditResponse` and includes `status`, `score`, structured `checks`, `summary`, `endpoint_inventory`, `artifact_inventory`, exact `local_verification_commands`, `limitations`, `generated_at`, and `trace_id`.
+
+### `POST /handoff/final-pack`
+
+Writes Markdown and JSON Final Handoff artifacts under ignored `storage/final_handoff/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The response uses `FinalPackResponse` and includes `artifact_path`, `json_artifact_path`, `markdown`, structured `pack`, embedded `final_audit`, and `trace_id`. The pack includes final audit results, exact clone/run commands, end-to-end verification order, endpoint inventory summary, artifact inventory summary, dashboard smoke summary, RAG/eval proof summary, recruiter-facing final README blurb, limitations, Markdown, and JSON.
+
 ### `POST /documents/ingest`
 
 Ingests a local fixture path.
@@ -68,6 +364,491 @@ Generates response sections grounded in retrieved citations.
 }
 ```
 
+### `POST /rfp/requirement-matrix`
+
+Builds a deterministic local workbench matrix from an analyzed RFP payload or an ingested RFP document ID. Each row includes `requirement_id`, `category`, `requirement_text`, `priority`, `owner_role`, `status`, `risk_level`, `evidence_refs`, `suggested_response`, and `missing_evidence`.
+
+```json
+{
+  "analyzed_payload": {
+    "requirements": [],
+    "deadlines": [],
+    "trace_id": "analysis-trace"
+  }
+}
+```
+
+Statuses are `not_started`, `evidence_found`, `needs_review`, and `blocked`.
+
+### `GET /customers/profiles`
+
+Lists local fake customer profiles used for customer-specific fit and response memory demos.
+
+```json
+{
+  "profiles": [
+    {
+      "id": "regulated_healthcare",
+      "industry": "healthcare",
+      "region": "United States",
+      "security_priorities": ["PHI protection", "SSO and MFA"],
+      "compliance_frameworks": ["HIPAA", "SOC 2 Type II"],
+      "buyer_personas": ["Chief Information Security Officer"],
+      "risk_tolerance": "low"
+    }
+  ]
+}
+```
+
+### `POST /rfp/customer-fit`
+
+Maps analyzed requirements or requirement matrix rows to one selected customer profile. The response includes `fit_score`, `profile_risks`, `recommended_positioning`, `requirements_to_emphasize`, and `requirements_needing_review`.
+
+```json
+{
+  "customer_profile_id": "regulated_healthcare",
+  "analyzed_payload": {},
+  "requirement_matrix": []
+}
+```
+
+### `POST /rfp/response-memory/search`
+
+Searches local approved response snippets from `sample_data/approved_responses.json`. Results include reusable text, tags, citations, applicable profile IDs, and confidence.
+
+```json
+{
+  "query": "SSO encryption SOC 2 controls",
+  "category": "security",
+  "customer_profile_id": "regulated_healthcare",
+  "top_k": 5
+}
+```
+
+### `POST /rfp/export-package`
+
+Creates an interview-ready response package from an analyzed RFP payload or ingested RFP document ID plus an optional draft response. By default, artifacts are written under `storage/exports/` and the response also includes Markdown and structured JSON.
+
+```json
+{
+  "analyzed_payload": {},
+  "draft_response": {},
+  "customer_profile_id": "regulated_healthcare",
+  "include_response_memory": true,
+  "write_artifact": true
+}
+```
+
+The package includes executive summary, requirement matrix, optional customer fit, optional approved response memory matches, drafted sections, citations, risks, missing evidence, and eval/usage summary.
+
+### `POST /rfp/review-answer`
+
+Reviews one answer for unsupported claims, weak citations, missing evidence, and cost/latency warnings.
+
+```json
+{
+  "question": "Can we guarantee FedRAMP High next month?",
+  "answer_text": "Yes, FedRAMP High is guaranteed.",
+  "citations": [],
+  "missing_evidence": [],
+  "token_usage": {
+    "input_tokens": 18,
+    "output_tokens": 8,
+    "estimated_cost": 0
+  }
+}
+```
+
+The response includes `findings`, `passed`, `summary`, and `trace_id`. Findings include `finding_id`, `severity`, `category`, `message`, `related_requirement_id`, `related_question`, `citation_refs`, and `recommendation`.
+
+Review categories are `unsupported_claim`, `weak_citation`, `missing_evidence`, `high_risk_requirement`, and `cost_latency_warning`.
+
+### `POST /rfp/review-package`
+
+Reviews a requirement matrix, draft response, answer payloads, and/or export package. If the request includes `analyzed_payload` or `rfp_document_id`, the API can create the requirement matrix and draft/export payload locally before review.
+
+```json
+{
+  "analyzed_payload": {},
+  "draft_response": {},
+  "write_artifact": false
+}
+```
+
+The response includes the review report, the reviewed requirement matrix, optional export package JSON, and optional artifact path.
+
+### `POST /rfp/action-plan`
+
+Creates deterministic stakeholder tasks from analyzed requirements, a requirement matrix, customer profile or customer fit, and review findings. Owner roles are `sales`, `solutions`, `security`, `legal`, `product`, and `engineering`.
+
+```json
+{
+  "analyzed_payload": {},
+  "requirement_matrix": [],
+  "customer_profile_id": "regulated_healthcare",
+  "customer_fit": {},
+  "review_findings": []
+}
+```
+
+Each task includes `task_id`, `owner_role`, `title`, `description`, `priority`, `due_hint`, `source_requirement_id`, `risk_level`, `status`, and `evidence_refs`. The summary includes task counts by owner, status, and priority.
+
+### `POST /rfp/handoff-board`
+
+Exports a cross-functional handoff board as Markdown and JSON under `storage/handoffs/` by default. The board includes the action plan, blocked items, high-risk requirements, customer-fit notes, missing evidence, review findings, and next meeting agenda.
+
+```json
+{
+  "analyzed_payload": {},
+  "requirement_matrix": [],
+  "customer_profile_id": "regulated_healthcare",
+  "review_findings": [],
+  "action_plan": [],
+  "write_artifact": true
+}
+```
+
+The response includes `artifact_path`, `json_artifact_path`, `markdown`, `board`, and `trace_id`.
+
+### `POST /rfp/readiness-scorecard`
+
+Creates a deterministic local deal readiness scorecard from any combination of analyzed RFP payload, requirement matrix, review findings, customer fit, stakeholder action plan, and optional standard eval metrics. If `analysis` is provided without `matrix`, the API creates a requirement matrix locally before scoring.
+
+```json
+{
+  "analysis": {},
+  "matrix": [],
+  "review_findings": [],
+  "customer_fit": {},
+  "action_plan": [],
+  "eval_metrics": {}
+}
+```
+
+The response includes `readiness_score` from 0 to 100, `readiness_level`, `blockers`, `evidence_coverage`, `review_risk_count`, `customer_fit_score`, `owner_bottlenecks`, `recommended_next_actions`, and `trace_id`.
+
+Scoring is deterministic. It starts at 100 and applies fixed penalties for blocked rows, high-risk rows, missing evidence, evidence coverage gaps, high-severity review findings, low customer fit, concentrated owner bottlenecks, failed evals, and low eval citation coverage.
+
+### `POST /rfp/executive-risk-report`
+
+Writes a leadership-ready Markdown/JSON risk report under `storage/reports/` by default. It accepts the same inputs as the readiness scorecard plus an optional `red_team_summary` object and `write_artifact` flag.
+
+```json
+{
+  "analysis": {},
+  "matrix": [],
+  "review_findings": [],
+  "customer_fit": {},
+  "action_plan": [],
+  "eval_metrics": {},
+  "red_team_summary": {
+    "passed": true,
+    "missing_evidence_detection_count": 3
+  },
+  "write_artifact": true
+}
+```
+
+The report includes readiness score and level, top blockers, evidence coverage, missing-evidence count, owner bottlenecks, customer fit, red-team summary, review-risk summary, action-plan summary, and `submission_recommendation`.
+
+The response includes `artifact_path`, `json_artifact_path`, `markdown`, `report`, and `trace_id`.
+
+### `POST /rfp/win-strategy`
+
+Creates a deterministic competitive win strategy simulation from local RFP analysis, requirement matrix rows, customer fit, readiness scorecard, response memory, action-plan tasks, review findings, competitor context, and pricing notes. If the request is `{}` in local demo mode, the endpoint analyzes the sample RFP and uses the default regulated healthcare profile.
+
+```json
+{
+  "analysis": {},
+  "matrix": [],
+  "customer_profile_id": "regulated_healthcare",
+  "readiness_scorecard": {},
+  "response_memory_matches": [],
+  "action_plan": [],
+  "review_findings": [],
+  "competitor_context": [
+    "Incumbent competitor may bundle workflow tooling and offer a discount."
+  ],
+  "pricing_notes": [
+    "Route volume discounts, custom packaging, and public-sector terms for approval."
+  ]
+}
+```
+
+The response includes `win_score`, `win_level`, `competitor_risk_profile`, `pricing_risk`, `compliance_security_differentiators`, cited `proof_points` with source snippets, `recommended_response_posture`, `red_flags`, `assumptions`, owner-specific `next_actions_by_owner`, and `trace_id`.
+
+### `POST /rfp/pricing-risk-memo`
+
+Writes a Markdown and JSON pricing risk memo under `storage/pricing_memos/` by default. The endpoint accepts the same inputs as `/rfp/win-strategy` plus an optional precomputed `win_strategy` response and `write_artifact` flag.
+
+```json
+{
+  "analysis": {},
+  "matrix": [],
+  "customer_profile_id": "regulated_healthcare",
+  "competitor_context": [
+    "Incumbent competitor is cheaper, bundled, and offering a 25% discount."
+  ],
+  "pricing_notes": [
+    "Any volume discount or custom enterprise tier needs approval."
+  ],
+  "write_artifact": true
+}
+```
+
+The memo includes pricing assumptions, discount/packaging risks, compliance blockers, competitor framing, cited proof points, leadership recommendation, exact local commands, JD skills demonstrated, and five interviewer talking points. The response includes `artifact_path`, `json_artifact_path`, `markdown`, `memo`, and `trace_id`.
+
+### `POST /rfp/contract-risk`
+
+Analyzes customer contract or procurement terms from pasted `text`, an ingested `contract_document_id`, or a local `fixture_path`. The deterministic analyzer flags liability, data processing, security obligations, SLA/service credits, audit rights, termination, indemnity, data residency, AI/data use, and pricing/payment risks.
+
+```json
+{
+  "fixture_path": "sample_data/customer_contract_terms.md",
+  "customer_profile_id": "regulated_healthcare"
+}
+```
+
+The response includes `risk_score`, `status`, risky clauses, category counts, suggested redlines, fallback positions, cited internal proof points with source snippets, owner actions, assumptions, missing-evidence warnings, and `trace_id`.
+
+### `POST /rfp/negotiation-brief`
+
+Writes a Markdown and JSON Contract Redline Risk Analyzer + Negotiation Brief under `storage/negotiation_briefs/` by default. The endpoint can accept a precomputed `contract_risk` response or compute one from `text`, `contract_document_id`, or `fixture_path`. Optional `win_strategy` and `pricing_memo` payloads are folded into the negotiation context when supplied.
+
+```json
+{
+  "fixture_path": "sample_data/customer_contract_terms.md",
+  "customer_profile_id": "regulated_healthcare",
+  "write_artifact": true
+}
+```
+
+The brief includes contract risk summary, win strategy/pricing context, clause-by-clause redlines, owner actions, cited proof points, assumptions, exact local commands, JD skills demonstrated, and five interviewer talking points. The response includes `artifact_path`, `json_artifact_path`, `markdown`, `brief`, and `trace_id`.
+
+### `POST /rfp/evidence-gaps`
+
+Returns a prioritized Evidence Gap Remediation Planner from any combination of RFP analysis, requirement matrix, review findings, red-team summary, readiness scorecard, win strategy, contract risk, and action-plan tasks. If called with `{}` in local demo mode, it analyzes the sample RFP and sample contract terms.
+
+```json
+{
+  "analysis": {},
+  "matrix": [],
+  "review_findings": [],
+  "red_team_summary": {
+    "passed": false,
+    "missing_evidence_detection_count": 2
+  },
+  "readiness_scorecard": {},
+  "win_strategy": {},
+  "contract_risk": {},
+  "action_plan": []
+}
+```
+
+Each gap includes `gap_id`, `priority_rank`, impacted RFP/contract sections, `missing_source_type`, `owner_team`, `severity`, `due_date_recommendation`, suggested SME/source request, related citations, red-team risks, source signals, and closure acceptance criteria.
+
+### `POST /rfp/source-request-pack`
+
+Writes Markdown and JSON under `storage/source_requests/` by default. The endpoint accepts the same inputs as `/rfp/evidence-gaps` plus optional precomputed `evidence_gaps` and `write_artifact`.
+
+```json
+{
+  "analysis": {},
+  "matrix": [],
+  "review_findings": [],
+  "contract_risk": {},
+  "evidence_gaps": [],
+  "write_artifact": true
+}
+```
+
+The source request pack includes source request emails/tasks, owner matrix, acceptance criteria, impacted response sections, red-team risks, readiness/win/contract context, exact local commands, JD skills demonstrated, and five interviewer talking points. The response includes `artifact_path`, `json_artifact_path`, `markdown`, `pack`, and `trace_id`.
+
+### `POST /rfp/timeline-plan`
+
+Creates a deterministic Proposal Timeline Orchestrator plan from RFP deadlines, requirement matrix rows, stakeholder tasks, evidence gaps, contract risk, win strategy, readiness scorecard, source request pack, leadership brief, review findings, and red-team summary. If called with `{}` in local demo mode, it analyzes the sample RFP and composes local signals without calling Google Calendar, Microsoft Graph, Azure, CRM, or external workflow tools.
+
+```json
+{
+  "analysis": {},
+  "matrix": [],
+  "action_plan": [],
+  "evidence_gaps": [],
+  "contract_risk": {},
+  "win_strategy": {},
+  "readiness_scorecard": {},
+  "source_request_pack": {},
+  "leadership_brief": {}
+}
+```
+
+The response includes ordered `milestones`, `owner_assignments`, dependency edges, `risk_buffers`, `blocked_items`, `readiness_gates`, `escalation_triggers`, local `calendar_entries`, summary counts, and trace ID.
+
+### `POST /rfp/submission-calendar-pack`
+
+Writes a Markdown and JSON Submission Calendar Pack under `storage/submission_calendars/` by default. The endpoint accepts the same inputs as `/rfp/timeline-plan` plus an optional precomputed `timeline_plan` and `write_artifact` flag.
+
+```json
+{
+  "analysis": {},
+  "matrix": [],
+  "timeline_plan": {},
+  "write_artifact": true
+}
+```
+
+The pack includes a milestone calendar, owner matrix, dependencies and risk buffers, blocked items, readiness gates, escalation triggers, local calendar-friendly entries, exact local commands, JD skills demonstrated, and five interviewer talking points. The response includes `artifact_path`, `json_artifact_path`, `markdown`, `pack`, and `trace_id`.
+
+### `POST /rfp/submission-decision`
+
+Creates the final deterministic Proposal Quality Gate for sales leadership. It consolidates readiness score, review-board findings, eval/red-team summaries, win strategy, contract risk, evidence gaps, source request pack, timeline plan, draft sections, citations, owner status, artifact links, and metrics. If called with `{}` in local demo mode, the endpoint analyzes the sample RFP and composes local fallback inputs.
+
+```json
+{
+  "analysis": {},
+  "matrix": [],
+  "draft_response": {},
+  "review_findings": [],
+  "readiness_scorecard": {},
+  "win_strategy": {},
+  "contract_risk": {},
+  "evidence_gaps": [],
+  "source_request_pack": {},
+  "timeline_plan": {}
+}
+```
+
+The response includes `decision` (`submit`, `submit_with_exceptions`, or `do_not_submit`), `score`, `blocking_issues`, `exception_list`, `approvals_required`, `owner_actions`, `artifact_links`, `rationale`, `local_verification_commands`, `summary`, and `trace_id`.
+
+### `POST /rfp/executive-submission-memo`
+
+Writes Markdown and JSON under `storage/submission_memos/` by default. It accepts the same inputs as `/rfp/submission-decision`, or a precomputed `submission_decision`, plus `write_artifact`.
+
+```json
+{
+  "submission_decision": {},
+  "write_artifact": true
+}
+```
+
+The memo includes go/no-go summary, risks/exceptions, evidence posture, owner sign-offs, timeline readiness, artifact links, local commands, JD skills demonstrated, and five interviewer talking points. The response includes `artifact_path`, `json_artifact_path`, `markdown`, `memo`, and `trace_id`.
+
+### `POST /rfp/leadership-brief`
+
+Writes a consolidated portfolio demo and RFP leadership brief under `storage/leadership_briefs/` by default. The endpoint can accept completed local artifacts or run missing deterministic steps from an RFP document, analysis, or matrix.
+
+```json
+{
+  "analysis": {},
+  "matrix": [],
+  "draft_response": {},
+  "export_payload": {},
+  "export_artifact_path": "storage/exports/rfp_export_demo.md",
+  "review_findings": [],
+  "review_passed": true,
+  "customer_profile_id": "regulated_healthcare",
+  "action_plan": [],
+  "handoff_board": {},
+  "readiness_scorecard": {},
+  "executive_report": {},
+  "red_team_summary": {
+    "passed": true
+  },
+  "write_artifact": true
+}
+```
+
+The brief includes `metrics` for docs ingested, requirements, evidence coverage, citation count, red-team pass, customer fit score, task counts, readiness score, and readiness level. It also includes `artifact_links` for RFP analysis, matrix, draft, export, review, red-team, customer fit, response memory, action plan, handoff, readiness, and executive report artifacts, plus a recommended next meeting agenda.
+
+The response includes `artifact_path`, `json_artifact_path`, `markdown`, `brief`, and `trace_id`.
+
+### `POST /rfp/submission-regression`
+
+Runs the deterministic local submission readiness regression gate. The service composes existing in-process services rather than shelling out: sample ingestion, RFP analysis, requirement matrix coverage, cited Q&A, missing-evidence behavior, draft generation, answer/package review, customer fit, response memory, action plan, handoff board, standard eval, red-team checks, readiness scorecard, executive risk report, leadership brief, submission decision memo, metrics, and audit signals.
+
+```json
+{
+  "rfp_fixture_path": "sample_data/acme_enterprise_rfp.md",
+  "eval_dataset_path": "sample_data/eval_dataset.json",
+  "red_team_dataset_path": "sample_data/red_team_questions.json",
+  "customer_profile_id": "regulated_healthcare",
+  "top_k": 4,
+  "write_artifacts": true
+}
+```
+
+The response includes:
+
+- `passed`: whether all named regression checks passed.
+- `checks`: named checks with `passed`, `evidence_count`, and deterministic details.
+- `evidence_counts`: document, requirement, matrix, citation, review, task, eval, red-team, readiness, metric, and audit counts.
+- `failed_checks`: names of any failed checks.
+- `warnings`: non-failing readiness caveats, such as detected missing-evidence risk.
+- `artifact_paths`: export, handoff, executive report, leadership brief, and submission memo Markdown/JSON paths.
+- `eval_summary`: the standard `EvaluationMetrics` object.
+- `red_team_summary`: deterministic red-team pass/fail and finding details.
+- `interview_ready_summary`: concise summary suitable for demo narration.
+
+### `POST /rfp/demo-script`
+
+Writes a Markdown and JSON interview/demo script under `storage/demo_scripts/`. If no regression payload is supplied, the endpoint runs a fresh submission regression first.
+
+```json
+{
+  "run_regression": true,
+  "regression_request": {
+    "top_k": 4,
+    "customer_profile_id": "regulated_healthcare",
+    "write_artifacts": true
+  },
+  "write_artifact": true
+}
+```
+
+To generate a script from an already returned regression response:
+
+```json
+{
+  "regression": {},
+  "run_regression": false,
+  "write_artifact": true
+}
+```
+
+The script includes business pain, architecture walk-through, exact local commands, endpoints exercised, sample outputs and metrics, JD skills demonstrated, five interviewer talking points, artifact paths, Markdown, JSON, and trace ID.
+
+### `GET /portfolio/evidence-index`
+
+Returns the structured Portfolio Evidence index. Each skill row maps a recruiter/interviewer JD skill to implemented features, endpoints, service files, tests/evals, generated artifacts, demo commands, and local proof paths.
+
+The response includes `evidence_score`, `covered_skill_count`, `total_skill_count`, `skills`, `proof_commands`, `artifact_roots`, `limitations`, and `trace_id`. It covers RAG/Qdrant/FAISS, document ingestion, citations and missing evidence, draft generation, eval/red-team, compliance mapping, Procurement Q&A approval workflow, requirement matrix, review board, action plan, handoff, readiness/risk, win/pricing/contract risk, source requests, timeline/submission calendar, go/no-go submission decision, launch checklist, observability, metrics, audit, API auth, and the portfolio pack itself.
+
+### `POST /portfolio/interview-pack`
+
+Writes a Markdown and JSON Interview Pack under `storage/portfolio_packs/`. By default it runs the local submission regression first so the pack includes current eval and red-team metrics.
+
+```json
+{
+  "run_regression": true,
+  "regression_request": {
+    "top_k": 4,
+    "write_artifacts": true
+  },
+  "write_artifact": true
+}
+```
+
+The pack includes a 3-minute demo script, 8-10 technical talking points, architecture walk-through, failure/missing-evidence story, local verification commands, metrics/eval summary, artifact inventory, resume/GitHub README bullets, Markdown, JSON, and trace ID.
+
+### Reviewer Quickstart Curl Pair
+
+Use this pair when the API is already running and a reviewer wants the fastest proof tour:
+
+```bash
+curl -X GET "http://127.0.0.1:8000/reviewer/quickstart" -H "X-API-Key: local-demo-key"
+curl -X POST "http://127.0.0.1:8000/reviewer/walkthrough-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
+```
+
 ### `POST /rfp/evaluate`
 
 Runs the eval dataset against the current corpus.
@@ -86,6 +867,14 @@ Returns recent usage metrics and totals.
 ### `GET /audit/events`
 
 Returns recent audit events.
+
+### `GET /git/readiness`
+
+Returns local GitHub Push Readiness and Branch Hygiene checks: repository detection, current branch, tracked/untracked/modified/ignored counts, generated artifact directories that should stay ignored, changed source/doc/test/dashboard groups, suspicious large/generated files, GitHub Actions workflow presence, README final handoff mention, `.env.example` presence, dirty-worktree guidance, recommended commit groups, commands, and limitations.
+
+### `POST /git/push-plan`
+
+Writes Markdown/JSON under ignored `storage/git_packs/` with non-destructive review commands, suggested commit grouping, do-not-commit generated artifact notes, pre-push verification checklist, repo limitations, and a recruiter/GitHub README publish blurb. It never stages, commits, pushes, resets, checks out, cleans, deletes, or calls GitHub APIs.
 
 ## Error Handling
 

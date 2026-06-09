@@ -58,6 +58,12 @@ def ingest_corpus(client: TestClient, auth_headers: dict[str, str]) -> None:
         ("sample_data/security_policy.md", "security"),
         ("sample_data/compliance_policy.md", "compliance"),
         ("sample_data/pricing_notes.md", "pricing"),
+        ("sample_data/implementation_guide.md", "implementation"),
+        ("sample_data/dpa_privacy_policy.md", "privacy"),
+        ("sample_data/sla_support_policy.md", "support"),
+        ("sample_data/ai_governance_security.md", "security"),
+        ("sample_data/disaster_recovery_plan.md", "disaster_recovery"),
+        ("sample_data/customer_success_onboarding.md", "customer_success"),
     ]
     for fixture_path, document_type in docs:
         response = client.post(

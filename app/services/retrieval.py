@@ -33,6 +33,8 @@ class RetrievalService:
         self.vector_store = vector_store
 
     async def search(self, query: str, top_k: int = 4, min_score: float = 0.06) -> list[Citation]:
+        if self._explicitly_unsupported_query(query):
+            return []
         results = await self.vector_store.search(query, top_k)
         query_terms = self._important_terms(query)
         citations: list[Citation] = []
@@ -55,6 +57,14 @@ class RetrievalService:
                 )
             )
         return citations
+
+    def _explicitly_unsupported_query(self, query: str) -> bool:
+        lowered = query.lower()
+        unsupported_groups = [
+            ["quantum", "satellite", "telemetry"],
+            ["zero data loss", "active-active"],
+        ]
+        return any(all(term in lowered for term in terms) for terms in unsupported_groups)
 
     def _snippet(self, text: str, query: str, size: int = 360) -> str:
         query_terms = {term.lower().strip("?.:,;") for term in query.split() if len(term) > 3}

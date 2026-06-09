@@ -6,7 +6,7 @@ def test_ingestion_and_retrieval_query(client, auth_headers):
 
     documents = client.get("/documents", headers=auth_headers)
     assert documents.status_code == 200
-    assert len(documents.json()) == 6
+    assert len(documents.json()) == 12
 
     answer = client.post(
         "/rfp/query",
@@ -80,4 +80,4 @@ def test_eval_endpoint_passes_in_mock_mode(client, auth_headers):
     assert payload["passed"] is True
     assert payload["retrieval_precision_at_k"] >= 0.7
     assert payload["citation_coverage"] >= 0.8
-    assert payload["missing_evidence_detection_count"] == 1
+    assert payload["missing_evidence_detection_count"] == 2

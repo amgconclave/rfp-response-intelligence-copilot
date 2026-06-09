@@ -58,6 +58,101 @@ class RfpRequirement(BaseModel):
     missing_info: list[str] = Field(default_factory=list)
 
 
+class RequirementMatrixRow(BaseModel):
+    requirement_id: str
+    category: str
+    requirement_text: str
+    priority: str
+    owner_role: str
+    status: str = "not_started"
+    risk_level: str = "medium"
+    evidence_refs: list[str] = Field(default_factory=list)
+    suggested_response: str
+    missing_evidence: list[str] = Field(default_factory=list)
+
+
+class CustomerProfile(BaseModel):
+    id: str
+    name: str
+    industry: str
+    region: str
+    security_priorities: list[str] = Field(default_factory=list)
+    compliance_frameworks: list[str] = Field(default_factory=list)
+    buyer_personas: list[str] = Field(default_factory=list)
+    risk_tolerance: str = "medium"
+
+
+class CustomerFitRequirement(BaseModel):
+    requirement_id: str
+    category: str
+    requirement_text: str
+    priority: str
+    reason: str
+
+
+class ApprovedResponseSnippet(BaseModel):
+    id: str
+    title: str
+    category: str
+    text: str
+    tags: list[str] = Field(default_factory=list)
+    citations: list[str] = Field(default_factory=list)
+    customer_profile_ids: list[str] = Field(default_factory=list)
+
+
+class ResponseMemoryMatch(ApprovedResponseSnippet):
+    confidence: float = 0.0
+
+
+class ReviewFinding(BaseModel):
+    finding_id: str = Field(default_factory=lambda: new_id("finding"))
+    severity: str
+    category: str
+    message: str
+    related_requirement_id: str | None = None
+    related_question: str | None = None
+    citation_refs: list[str] = Field(default_factory=list)
+    recommendation: str
+
+
+class ReviewReport(BaseModel):
+    findings: list[ReviewFinding] = Field(default_factory=list)
+    passed: bool
+    summary: dict[str, Any] = Field(default_factory=dict)
+    trace_id: str
+
+
+class StakeholderTask(BaseModel):
+    task_id: str = Field(default_factory=lambda: new_id("task"))
+    owner_role: str
+    title: str
+    description: str
+    priority: str
+    due_hint: str
+    source_requirement_id: str | None = None
+    risk_level: str
+    status: str
+    evidence_refs: list[str] = Field(default_factory=list)
+
+
+class EvidenceGap(BaseModel):
+    gap_id: str
+    title: str
+    priority_rank: int
+    severity: str
+    owner_team: str
+    missing_source_type: str
+    impacted_sections: list[str] = Field(default_factory=list)
+    requirement_ids: list[str] = Field(default_factory=list)
+    contract_clause_ids: list[str] = Field(default_factory=list)
+    due_date_recommendation: str
+    suggested_sme_or_source_request: str
+    related_citations: list[str] = Field(default_factory=list)
+    red_team_risks: list[str] = Field(default_factory=list)
+    closure_acceptance_criteria: list[str] = Field(default_factory=list)
+    source_signals: list[str] = Field(default_factory=list)
+
+
 class Answer(BaseModel):
     question: str
     answer_text: str

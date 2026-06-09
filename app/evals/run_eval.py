@@ -12,7 +12,11 @@ async def _prepare_sample_corpus(sample_dir: Path) -> None:
     get_container.cache_clear()
     container = get_container()
     for path in sorted(sample_dir.glob("*")):
-        if path.name == "eval_dataset.json" or path.suffix.lower() not in {".md", ".txt", ".pdf"}:
+        if path.name in {"customer_contract_terms.md", "eval_dataset.json"} or path.suffix.lower() not in {
+            ".md",
+            ".txt",
+            ".pdf",
+        }:
             continue
         document_type = "rfp" if "rfp" in path.name else "knowledge_base"
         await container.ingestion.ingest_path(

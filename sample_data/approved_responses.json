@@ -1,0 +1,58 @@
+{
+  "snippets": [
+    {
+      "id": "resp_sso_001",
+      "title": "SSO and MFA Controls",
+      "category": "security",
+      "text": "The platform supports SAML 2.0 and OIDC single sign-on, enforced MFA through the customer's identity provider, and role-based access controls for presales and response teams.",
+      "tags": ["sso", "mfa", "saml", "oidc", "rbac", "identity"],
+      "citations": ["security_policy.md: Identity and access management"],
+      "customer_profile_ids": ["regulated_healthcare", "fintech", "public_sector"]
+    },
+    {
+      "id": "resp_encryption_002",
+      "title": "Encryption and Key Management",
+      "category": "security",
+      "text": "Customer content is encrypted in transit with TLS and at rest with AES-256. Key management, rotation, and access are reviewed through the security policy before final submission.",
+      "tags": ["encryption", "tls", "aes-256", "key management", "data protection"],
+      "citations": ["security_policy.md: Data protection controls"],
+      "customer_profile_ids": ["regulated_healthcare", "fintech", "all"]
+    },
+    {
+      "id": "resp_soc2_003",
+      "title": "SOC 2 Evidence Pack",
+      "category": "compliance",
+      "text": "We provide SOC 2 Type II evidence under NDA, including control summaries, audit period information, and security questionnaire support from the compliance owner.",
+      "tags": ["soc 2", "audit", "nda", "compliance", "evidence"],
+      "citations": ["compliance_policy.md: Third-party assurance"],
+      "customer_profile_ids": ["regulated_healthcare", "fintech", "public_sector"]
+    },
+    {
+      "id": "resp_incident_004",
+      "title": "Incident Response Commitments",
+      "category": "security",
+      "text": "Security incidents follow a documented triage, escalation, notification, and post-incident review process. Customer-specific notification terms require legal and security approval.",
+      "tags": ["incident response", "notification", "triage", "legal review"],
+      "citations": ["security_policy.md: Incident response"],
+      "customer_profile_ids": ["regulated_healthcare", "fintech"]
+    },
+    {
+      "id": "resp_implementation_005",
+      "title": "Enterprise Implementation Plan",
+      "category": "implementation",
+      "text": "Implementation is delivered through discovery, workspace configuration, source-document ingestion, validation workshops, and a controlled rollout with named customer and vendor owners.",
+      "tags": ["implementation", "rollout", "workshops", "owners", "governance"],
+      "citations": ["prior_proposal.md: Implementation approach"],
+      "customer_profile_ids": ["public_sector", "regulated_healthcare", "all"]
+    },
+    {
+      "id": "resp_pricing_006",
+      "title": "Pricing Assumptions",
+      "category": "pricing",
+      "text": "Pricing is scoped by user tier, implementation services, and support expectations. Any volume discounts, public-sector terms, or payment-processing constraints require commercial approval.",
+      "tags": ["pricing", "commercial approval", "volume discount", "procurement"],
+      "citations": ["pricing_notes.md: Commercial assumptions"],
+      "customer_profile_ids": ["fintech", "public_sector", "all"]
+    }
+  ]
+}
