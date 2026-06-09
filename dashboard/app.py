@@ -99,6 +99,7 @@ tabs = st.tabs(
         "Evidence Freshness",
         "Evidence Conflicts",
         "Privacy Retention",
+        "Submission Exceptions",
     ]
 )
 
@@ -2462,4 +2463,90 @@ with tabs[38]:
             "Download Privacy Retention Markdown",
             pack["markdown"],
             file_name="privacy_retention_pack.md",
+        )
+
+
+with tabs[39]:
+    st.subheader("Submission Exceptions")
+    st.caption(
+        "Convert unresolved blockers, conditional exceptions, reviewer comments, and redlines into a local "
+        "approval register with expiry and evidence requirements."
+    )
+    exception_payload = {}
+    if st.session_state.get("submission_decision"):
+        exception_payload["submission_decision"] = st.session_state.submission_decision
+    if st.session_state.get("reviewer_collaboration"):
+        exception_payload["reviewer_collaboration"] = st.session_state.reviewer_collaboration
+    if st.session_state.get("analysis"):
+        exception_payload["analysis"] = st.session_state.analysis
+    if st.session_state.get("matrix"):
+        exception_payload["matrix"] = st.session_state.matrix
+    if st.session_state.get("draft"):
+        exception_payload["draft_response"] = st.session_state.draft
+    if st.session_state.get("review_report"):
+        exception_payload["review_findings"] = st.session_state.review_report["findings"]
+        exception_payload["review_passed"] = st.session_state.review_report["passed"]
+    if st.session_state.get("action_plan"):
+        exception_payload["action_plan"] = st.session_state.action_plan["tasks"]
+    if st.session_state.get("contract_risk"):
+        exception_payload["contract_risk"] = st.session_state.contract_risk
+    if st.session_state.get("evidence_gaps"):
+        exception_payload["evidence_gaps"] = st.session_state.evidence_gaps
+
+    cols = st.columns(2)
+    if cols[0].button("Build exception register"):
+        register = post_json("/rfp/exception-register", exception_payload)
+        st.session_state.exception_register = register
+    if cols[1].button("Export Exception Pack"):
+        pack_payload = {**exception_payload, "write_artifact": True}
+        if st.session_state.get("exception_register"):
+            pack_payload["exception_register"] = st.session_state.exception_register
+        pack = post_json("/rfp/exception-pack", pack_payload)
+        st.session_state.exception_pack = pack
+        st.session_state.exception_register = pack["exception_register"]
+        st.success(f"Submission Exception Pack generated under exception_registers: {pack['artifact_path']}")
+
+    register = st.session_state.get("exception_register")
+    if register:
+        summary = register["summary"]
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Status", register["register_status"])
+        metric_cols[1].metric("Exceptions", summary["exception_count"])
+        metric_cols[2].metric("Requires approval", summary["requires_approval_count"])
+        metric_cols[3].metric("Expiring soon", summary["expiring_soon_count"])
+        st.write("Exception register")
+        st.dataframe(
+            [
+                {
+                    "id": item["exception_id"],
+                    "source": item["source"],
+                    "type": item["waiver_type"],
+                    "severity": item["severity"],
+                    "owner": item["owner"],
+                    "approver": item["approver_role"],
+                    "status": item["status"],
+                    "expires": item["expires_at"],
+                    "title": item["title"],
+                }
+                for item in register["exceptions"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Approval queue")
+        st.dataframe(register["approval_queue"], use_container_width=True)
+        st.write("Endpoint references")
+        st.dataframe(register["endpoint_references"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(register["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(register["limitations"])
+
+    pack = st.session_state.get("exception_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Exception Register Markdown",
+            pack["markdown"],
+            file_name="submission_exception_register.md",
         )

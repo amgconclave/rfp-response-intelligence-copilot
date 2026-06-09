@@ -119,6 +119,10 @@ from app.models.api import (
     SubmissionCalendarPackResponse,
     SubmissionDecisionRequest,
     SubmissionDecisionResponse,
+    SubmissionExceptionPackRequest,
+    SubmissionExceptionPackResponse,
+    SubmissionExceptionRegisterRequest,
+    SubmissionExceptionRegisterResponse,
     SubmissionRegressionRequest,
     SubmissionRegressionResponse,
     TimelinePlanRequest,
@@ -1311,6 +1315,96 @@ async def executive_submission_memo(
         },
     )
     return memo
+
+
+@router.post(
+    "/rfp/exception-register",
+    response_model=SubmissionExceptionRegisterResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def submission_exception_register(
+    payload: SubmissionExceptionRegisterRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> SubmissionExceptionRegisterResponse:
+    trace_id = get_trace_id(request)
+    decision = payload.submission_decision
+    if decision is None:
+        inputs = _submission_decision_inputs(payload, trace_id, container)
+        decision = container.submission_decision.create_decision(trace_id=f"{trace_id}-decision", **inputs)
+    collaboration = payload.reviewer_collaboration
+    if collaboration is None:
+        collaboration_inputs = _reviewer_collaboration_inputs(payload, trace_id, container)
+        collaboration_inputs["submission_decision"] = decision
+        collaboration = container.reviewer_collaboration.create_board(
+            trace_id=f"{trace_id}-reviewer-collaboration",
+            **collaboration_inputs,
+        )
+    register = container.submission_exceptions.create_register(
+        trace_id=trace_id,
+        submission_decision=decision,
+        reviewer_collaboration=collaboration,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.exception_register_created",
+        "submission_exception_register",
+        metadata={
+            "exceptions": len(register.exceptions),
+            "status": register.register_status,
+            "requires_approval": register.summary["requires_approval_count"],
+        },
+    )
+    return register
+
+
+@router.post(
+    "/rfp/exception-pack",
+    response_model=SubmissionExceptionPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def submission_exception_pack(
+    payload: SubmissionExceptionPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> SubmissionExceptionPackResponse:
+    trace_id = get_trace_id(request)
+    register = payload.exception_register
+    if register is None:
+        decision = payload.submission_decision
+        if decision is None:
+            inputs = _submission_decision_inputs(payload, trace_id, container)
+            decision = container.submission_decision.create_decision(trace_id=f"{trace_id}-decision", **inputs)
+        collaboration = payload.reviewer_collaboration
+        if collaboration is None:
+            collaboration_inputs = _reviewer_collaboration_inputs(payload, trace_id, container)
+            collaboration_inputs["submission_decision"] = decision
+            collaboration = container.reviewer_collaboration.create_board(
+                trace_id=f"{trace_id}-reviewer-collaboration",
+                **collaboration_inputs,
+            )
+        register = container.submission_exceptions.create_register(
+            trace_id=f"{trace_id}-register",
+            submission_decision=decision,
+            reviewer_collaboration=collaboration,
+        )
+    pack = container.submission_exceptions.exception_pack(
+        trace_id=trace_id,
+        exception_register=register,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.exception_pack_created",
+        "submission_exception_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "exceptions": len(pack.exception_register.exceptions),
+        },
+    )
+    return pack
 
 
 @router.post(

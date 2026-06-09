@@ -369,6 +369,16 @@ async def main() -> None:
         reviewer_collaboration,
         write_artifact=True,
     )
+    exception_register = container.submission_exceptions.create_register(
+        trace_id="demo-exception-register",
+        submission_decision=submission_decision,
+        reviewer_collaboration=reviewer_collaboration,
+    )
+    exception_pack = container.submission_exceptions.exception_pack(
+        "demo-exception-pack",
+        exception_register,
+        write_artifact=True,
+    )
     bid_scenario_analysis = container.bid_simulator.scenario_analysis(
         trace_id="demo-bid-scenario-analysis",
         requirement_matrix=matrix,
@@ -592,6 +602,15 @@ async def main() -> None:
     print(f"Reviewer Collaboration Pack JSON: {reviewer_collaboration_pack.json_artifact_path}")
     print("Review boards directory: storage/review_boards")
     print(
+        "Submission exceptions: "
+        f"status={exception_register.register_status} "
+        f"exceptions={exception_register.summary['exception_count']} "
+        f"requires_approval={exception_register.summary['requires_approval_count']}"
+    )
+    print(f"Submission Exception Pack: {exception_pack.artifact_path}")
+    print(f"Submission Exception Pack JSON: {exception_pack.json_artifact_path}")
+    print("Exception registers directory: storage/exception_registers")
+    print(
         "Bid/No-Bid scenario analysis: "
         f"scenarios={len(bid_scenario_analysis.scenarios)} "
         f"recommended={bid_scenario_analysis.recommended_scenario_id} "
@@ -683,6 +702,9 @@ async def main() -> None:
         f"reviewer_collaboration={reviewer_collaboration.board_status}/"
         f"{len(reviewer_collaboration.assignments)} "
         f"review_boards={reviewer_collaboration_pack.artifact_path} "
+        f"exceptions={exception_register.register_status}/"
+        f"{exception_register.summary['exception_count']} "
+        f"exception_pack={exception_pack.artifact_path} "
         f"bid_scenarios={len(bid_scenario_analysis.scenarios)} "
         f"bid_packs={bid_roi_pack.artifact_path} "
         f"objection_handling={objection_handling.coverage_summary['coverage_ratio']} "

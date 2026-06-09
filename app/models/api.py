@@ -640,6 +640,57 @@ class ExecutiveSubmissionMemoResponse(BaseModel):
     trace_id: str
 
 
+class SubmissionExceptionItem(BaseModel):
+    exception_id: str
+    source: str
+    waiver_type: str
+    severity: str
+    owner: str
+    approver_role: str
+    status: str
+    expires_at: str
+    title: str
+    risk_acceptance: str
+    required_evidence: list[str] = Field(default_factory=list)
+    linked_requirement_ids: list[str] = Field(default_factory=list)
+    linked_artifacts: list[dict[str, Any]] = Field(default_factory=list)
+    source_signals: list[str] = Field(default_factory=list)
+    local_policy: str
+    escalation_path: list[str] = Field(default_factory=list)
+
+
+class SubmissionExceptionRegisterRequest(SubmissionDecisionRequest):
+    submission_decision: SubmissionDecisionResponse | None = None
+    reviewer_collaboration: ReviewerCollaborationResponse | None = None
+
+
+class SubmissionExceptionRegisterResponse(BaseModel):
+    title: str
+    register_status: str
+    exceptions: list[SubmissionExceptionItem]
+    summary: dict[str, Any]
+    approval_queue: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class SubmissionExceptionPackRequest(SubmissionExceptionRegisterRequest):
+    exception_register: SubmissionExceptionRegisterResponse | None = None
+    write_artifact: bool = True
+
+
+class SubmissionExceptionPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    exception_register: SubmissionExceptionRegisterResponse
+    trace_id: str
+
+
 class ExecutiveRiskReportRequest(DealReadinessScorecardRequest):
     red_team_summary: dict[str, Any] | None = None
     write_artifact: bool = True

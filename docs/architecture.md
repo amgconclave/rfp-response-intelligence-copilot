@@ -89,6 +89,7 @@ Generated files are not committed. They are reproducible outputs from local API 
 - `storage/compliance_packs/`
 - `storage/procurement_packs/`
 - `storage/review_boards/`
+- `storage/exception_registers/`
 - `storage/bid_packs/`
 - `storage/objection_packs/`
 - `storage/win_loss_packs/`

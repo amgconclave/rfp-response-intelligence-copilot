@@ -330,6 +330,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "review_boards",
             },
+            {
+                "label": "Submission Exceptions",
+                "endpoint_paths": ["/rfp/exception-register", "/rfp/exception-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "exception_registers",
+            },
             {"label": "Evaluation and Metrics", "endpoint_paths": ["/rfp/evaluate", "/metrics/usage"]},
             {"label": "Audit Events", "endpoint_paths": ["/audit/events"]},
             {
@@ -517,6 +523,17 @@ class UIVerificationService:
                 "path": "/rfp/reviewer-collaboration-pack",
                 "purpose": "Reviewer Collaboration generated pack.",
                 "expected_artifacts": ["storage/review_boards/*.md", "storage/review_boards/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/exception-register",
+                "purpose": "Submission Exceptions tab register view.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/exception-pack",
+                "purpose": "Submission Exceptions generated register pack.",
+                "expected_artifacts": ["storage/exception_registers/*.md", "storage/exception_registers/*.json"],
             },
             {"method": "GET", "path": "/api/contract-audit", "purpose": "API Contract tab audit snapshot."},
             {

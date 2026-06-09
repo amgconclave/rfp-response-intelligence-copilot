@@ -46,6 +46,8 @@ class LaunchChecklistService:
                 "POST /procurement/approval-pack",
                 "POST /rfp/reviewer-collaboration",
                 "POST /rfp/reviewer-collaboration-pack",
+                "POST /rfp/exception-register",
+                "POST /rfp/exception-pack",
                 "GET /bid/scenario-analysis",
                 "POST /bid/roi-pack",
                 "POST /rfp/objection-handling",
@@ -126,6 +128,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\review_boards -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "exception-register|exception-pack|Submission Exception|exception_registers" '
+                    "app dashboard docs README.md tests Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\exception_registers -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -340,6 +350,7 @@ class LaunchChecklistService:
             "compliance_packs": "storage/compliance_packs",
             "procurement_packs": "storage/procurement_packs",
             "review_boards": "storage/review_boards",
+            "exception_registers": "storage/exception_registers",
             "bid_packs": "storage/bid_packs",
             "objection_packs": "storage/objection_packs",
             "win_loss_packs": "storage/win_loss_packs",
@@ -502,6 +513,25 @@ class LaunchChecklistService:
                 200,
                 "Writes reviewer collaboration Markdown and JSON artifacts.",
                 ["storage/review_boards/*.md", "storage/review_boards/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Submission Exception Register",
+                "POST",
+                "/rfp/exception-register",
+                "enterprise",
+                200,
+                "Returns waiver records with approvers, expiry, evidence requirements, and approval queue.",
+                body="{}",
+            ),
+            self._row(
+                "Submission Exception Pack",
+                "POST",
+                "/rfp/exception-pack",
+                "artifact",
+                200,
+                "Writes submission exception register Markdown and JSON artifacts.",
+                ["storage/exception_registers/*.md", "storage/exception_registers/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

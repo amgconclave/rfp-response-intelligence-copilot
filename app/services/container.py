@@ -38,6 +38,7 @@ from app.services.reviewer_collaboration import ReviewerCollaborationService
 from app.services.rfp_analysis import RfpAnalysisService
 from app.services.runtime_demo import RuntimeDemoService
 from app.services.submission_decision import SubmissionDecisionService
+from app.services.submission_exceptions import SubmissionExceptionService
 from app.services.submission_regression import SubmissionRegressionService
 from app.services.timeline_orchestration import TimelineOrchestrationService
 from app.services.ui_verification import UIVerificationService
@@ -65,6 +66,7 @@ class ServiceContainer:
         self.evidence_gap = EvidenceGapService(settings)
         self.leadership_brief = LeadershipBriefService(settings)
         self.submission_decision = SubmissionDecisionService(settings)
+        self.submission_exceptions = SubmissionExceptionService(settings)
         self.submission_regression = SubmissionRegressionService(settings)
         self.demo_script = DemoScriptService(settings)
         self.api_contracts = ApiContractService(settings)

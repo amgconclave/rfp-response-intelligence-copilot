@@ -602,6 +602,31 @@ Writes the reviewer collaboration board as Markdown and JSON under `storage/revi
 
 The pack is intended for local review-board artifacts: owner assignments, approval status, decision comments, contract/draft redlines, proof commands, and known limitations.
 
+### `POST /rfp/exception-register`
+
+Creates a local submission exception register from a submission decision plus optional reviewer collaboration board. If called with `{}`, the endpoint derives sample RFP signals locally. Each exception has a waiver type, severity, owner, approver, expiry date, required evidence, linked requirements/artifacts, risk acceptance text, and escalation path.
+
+```json
+{
+  "submission_decision": {},
+  "reviewer_collaboration": {}
+}
+```
+
+The response includes `register_status`, `exceptions`, `summary`, `approval_queue`, endpoint references, proof commands, limitations, and `trace_id`.
+
+### `POST /rfp/exception-pack`
+
+Writes the submission exception register as Markdown and JSON under `storage/exception_registers/`.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack is intended for local approval review of unresolved blockers, conditional exceptions, reviewer comments, and redline waivers.
+
 ### `POST /rfp/action-plan`
 
 Creates deterministic stakeholder tasks from analyzed requirements, a requirement matrix, customer profile or customer fit, and review findings. Owner roles are `sales`, `solutions`, `security`, `legal`, `product`, and `engineering`.

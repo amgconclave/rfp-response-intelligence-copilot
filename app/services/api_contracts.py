@@ -272,6 +272,8 @@ class ApiContractService:
             "storage/procurement_packs": "procurement_packs",
             "/rfp/reviewer-collaboration-pack": "reviewer_collaboration_pack",
             "storage/review_boards": "review_boards",
+            "/rfp/exception-pack": "exception_pack",
+            "storage/exception_registers": "exception_registers",
             "/bid/roi-pack": "bid_roi_pack",
             "storage/bid_packs": "bid_packs",
             "/rfp/objection-handling-pack": "objection_pack",

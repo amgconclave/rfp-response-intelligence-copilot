@@ -273,6 +273,14 @@ class ArtifactInventoryService:
                 "Select-Object FullName,Length,LastWriteTime"
             ),
             (
+                'rg "exception-register|exception-pack|Submission Exception|exception_registers" '
+                "app dashboard docs README.md tests Makefile"
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\exception_registers -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
                 'rg "bid/scenario-analysis|bid/roi-pack|Bid/No-Bid|ROI Impact|bid_packs|'
                 'risk-adjusted ROI" app dashboard docs README.md tests scripts sample_data Makefile'
             ),
@@ -330,6 +338,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /rfp/reviewer-collaboration-pack to write the Reviewer Collaboration Pack "
                 "under storage/review_boards/."
+            ),
+            (
+                "Call POST /rfp/exception-pack to write the Submission Exception Register Pack "
+                "under storage/exception_registers/."
             ),
             (
                 "Call POST /bid/roi-pack to write the Bid/No-Bid ROI Impact Pack "
@@ -501,6 +513,12 @@ class ArtifactInventoryService:
                 "review_boards",
                 "POST /rfp/reviewer-collaboration-pack",
                 "Reviewer assignments, decision comments, approval statuses, and redline summary artifacts.",
+            ),
+            self._spec(
+                "exception_registers",
+                "exception_registers",
+                "POST /rfp/exception-pack",
+                "Submission exception register with waiver type, approver, expiry, and required evidence.",
             ),
             self._spec(
                 "bid_packs",
