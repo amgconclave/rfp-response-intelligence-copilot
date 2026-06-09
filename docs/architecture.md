@@ -43,6 +43,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `WinLossLearningService`: ingests fake post-RFP outcomes and turns winning evidence/loss patterns into retrieval, eval, and response guidance recommendations.
 - `ContractRiskService`: identifies risky customer terms and writes negotiation briefs.
 - `EvidenceGapService`: produces source request packs for unsupported claims.
+- `EvidenceConflictService`: detects cited source-precedence, scope, and ambiguity conflicts before draft approval.
 - `TimelineOrchestrationService`: creates proposal milestones and submission calendar packs.
 - `SubmissionDecisionService`: builds final go/no-go scores and executive memos.
 - `LeadershipBriefService`: consolidates portfolio-level readouts for recruiters and stakeholders.
@@ -91,6 +92,7 @@ Generated files are not committed. They are reproducible outputs from local API 
 - `storage/bid_packs/`
 - `storage/objection_packs/`
 - `storage/win_loss_packs/`
+- `storage/conflict_packs/`
 - `storage/portfolio_packs/`
 - `storage/reviewer_packs/`
 - `storage/api_contracts/`

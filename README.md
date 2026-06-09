@@ -209,6 +209,7 @@ flowchart LR
 - Pricing risk memos under `storage/pricing_memos/` with pricing assumptions, discount/packaging risks, compliance blockers, competitor framing, cited proof points, leadership recommendation, local commands, JD skills, and five interviewer talking points.
 - Competitive Objection Handling Pack via `POST /rfp/objection-handling` and `POST /rfp/objection-handling-pack`, writing Markdown/JSON under `storage/objection_packs/` with competitor, pricing, security, compliance, and implementation responses, citations, confidence, reviewer workflow, endpoint references, and limitations.
 - Win/Loss Learning Loop via `POST /learning/win-loss` and `POST /learning/win-loss-pack`, ingesting fake post-RFP outcomes from `sample_data/rfp_outcomes.json` and writing Markdown/JSON under `storage/win_loss_packs/` with winning evidence patterns, loss guardrails, retrieval boosts, eval/red-team recommendations, response guidance updates, owner actions, proof commands, and limitations.
+- Evidence Conflict Resolver via `GET /evidence/conflicts` and `POST /evidence/conflict-pack`, writing Markdown/JSON under `storage/conflict_packs/` with cited source-precedence conflicts, scope ambiguity, reviewer owners, endpoint impact, and resolution guidance.
 - Contract Redline Risk Analyzer via `POST /rfp/contract-risk` that detects liability, data processing, security obligations, SLA/service credits, audit rights, termination, indemnity, data residency, AI/data-use, and pricing/payment risk.
 - Negotiation briefs under `storage/negotiation_briefs/` with contract risk summary, win strategy/pricing context, clause-by-clause redlines, fallback positions, owner actions, cited proof points, local commands, JD skills, and five interviewer talking points.
 - Evidence Gap Remediation Planner via `POST /rfp/evidence-gaps` that ranks missing sources, SMEs, approvals, impacted RFP/contract sections, due recommendations, citations, and closure criteria.
@@ -334,6 +335,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /rfp/objection-handling-pack`: writes a Markdown/JSON Competitive Objection Handling Pack under `storage/objection_packs/`.
 - `POST /learning/win-loss`: ingests fake post-RFP outcomes and returns winning evidence patterns, losing risk patterns, retrieval recommendations, eval recommendations, response guidance updates, owner actions, proof commands, and limitations.
 - `POST /learning/win-loss-pack`: writes a Markdown/JSON Win/Loss Learning Strategy Pack under `storage/win_loss_packs/`.
+- `GET /evidence/conflicts`: returns cited source-precedence, scope, and ambiguity conflicts with reviewer owner, status, endpoint impact, and resolution guidance.
+- `POST /evidence/conflict-pack`: writes a Markdown/JSON Evidence Conflict Resolver Pack under `storage/conflict_packs/`.
 - `POST /rfp/contract-risk`: returns contract risk score/status, risky clauses, category counts, redlines, fallback positions, cited proof points, owner actions, assumptions, and missing-evidence warnings.
 - `POST /rfp/negotiation-brief`: writes a Markdown/JSON contract negotiation brief under `storage/negotiation_briefs/`.
 - `POST /rfp/evidence-gaps`: returns prioritized evidence gaps with impacted sections, missing source type, owner/team, severity, due recommendation, SME/source request, related citations, and closure criteria.
@@ -411,6 +414,7 @@ Run the API and dashboard, then capture:
 - Objection Handling Pack tab showing objection coverage, confidence, reviewer status, citations, missing evidence, endpoint references, proof commands, and generated `storage/objection_packs/` artifact path.
 - Reviewer Collaboration tab showing reviewer assignments, decision comments, approval status, redline summary, proof commands, and generated `storage/review_boards/` artifact path.
 - Win/Loss Learning tab showing outcome count, win rate, winning evidence patterns, losing risk patterns, retrieval/eval recommendations, response guidance updates, proof commands, limitations, and generated `storage/win_loss_packs/` artifact path.
+- Evidence Conflicts tab showing conflict counts, blocked/needs-review status, reviewer queue, cited claims, endpoint impact, and generated `storage/conflict_packs/` artifact path.
 - Contract Risk / Negotiation Brief tab showing contract risk score, risky clauses, owner actions, and negotiation brief export path.
 - Evidence Gaps / Source Requests tab showing prioritized gaps, owner matrix, and source request pack export path.
 - Timeline / Submission Calendar tab showing milestones, blocked items, readiness gates, escalations, and submission calendar export path.

@@ -136,6 +136,29 @@ Writes Markdown and JSON Evidence Freshness + Expiry Risk Pack artifacts under i
 
 The pack includes the source freshness matrix, renewal calendar, owner follow-ups, unsupported-claim flags, endpoint references, exact local proof commands, limitations, embedded freshness JSON, Markdown, JSON, and trace ID.
 
+### `GET /evidence/conflicts`
+
+Returns the Evidence Conflict Resolver report. It scans the local evidence corpus for source-precedence, scope, and ambiguity conflicts such as demo-only pricing versus enterprise scope, local-demo subprocessors versus optional cloud providers, DR targets versus absolute SLA language, and local API-key auth versus production SSO.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/evidence/conflicts" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The response includes cited claims, conflict severity, reviewer owner, blocked/needs-review status, resolution guidance, endpoint impact, reviewer queue, proof commands, limitations, and trace ID.
+
+### `POST /evidence/conflict-pack`
+
+Writes Markdown and JSON Evidence Conflict Resolver Pack artifacts under ignored `storage/conflict_packs/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes a conflict matrix, cited resolutions, reviewer queue, endpoint references, exact local proof commands, limitations, artifact paths, embedded conflict JSON, Markdown, JSON, and trace ID.
+
 ### `GET /compliance/evidence-matrix`
 
 Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.

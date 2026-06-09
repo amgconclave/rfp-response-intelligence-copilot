@@ -319,6 +319,12 @@ async def main() -> None:
         evidence_freshness,
         write_artifact=True,
     )
+    evidence_conflicts = container.evidence_conflicts.conflict_report("demo-evidence-conflicts")
+    evidence_conflict_pack = container.evidence_conflicts.conflict_pack(
+        "demo-evidence-conflict-pack",
+        evidence_conflicts,
+        write_artifact=True,
+    )
     compliance_matrix = container.compliance.evidence_matrix(
         "demo-compliance-evidence-matrix",
         analysis=analysis,
@@ -533,6 +539,15 @@ async def main() -> None:
     print(f"Evidence Freshness Pack JSON: {evidence_freshness_pack.json_artifact_path}")
     print("Freshness packs directory: storage/freshness_packs")
     print(
+        "Evidence conflicts: "
+        f"conflicts={evidence_conflicts.summary['conflict_count']} "
+        f"blocked={evidence_conflicts.summary['blocking_conflict_count']} "
+        f"needs_review={evidence_conflicts.summary['needs_review_count']}"
+    )
+    print(f"Evidence Conflict Resolver Pack: {evidence_conflict_pack.artifact_path}")
+    print(f"Evidence Conflict Resolver Pack JSON: {evidence_conflict_pack.json_artifact_path}")
+    print("Conflict packs directory: storage/conflict_packs")
+    print(
         "Compliance control coverage: "
         f"{compliance_matrix.coverage_summary['coverage_ratio']} "
         f"families={compliance_matrix.coverage_summary['control_family_count']} "
@@ -641,6 +656,8 @@ async def main() -> None:
         f"rag_coverage_pack={rag_coverage_pack.artifact_path} "
         f"freshness={evidence_freshness.summary['average_freshness_score']} "
         f"freshness_packs={evidence_freshness_pack.artifact_path} "
+        f"conflicts={evidence_conflicts.summary['conflict_count']} "
+        f"conflict_packs={evidence_conflict_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "
         f"compliance_packs={compliance_control_pack.artifact_path} "
         f"procurement question risk={procurement_question_risk.coverage_summary['coverage_ratio']} "

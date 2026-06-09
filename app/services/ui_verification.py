@@ -476,6 +476,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "freshness_packs",
             },
+            {
+                "label": "Evidence Conflicts",
+                "endpoint_paths": ["/evidence/conflicts", "/evidence/conflict-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "conflict_packs",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -621,6 +627,17 @@ class UIVerificationService:
                 "purpose": "Evidence Freshness generated expiry risk pack.",
                 "expected_artifacts": ["storage/freshness_packs/*.md", "storage/freshness_packs/*.json"],
             },
+            {
+                "method": "GET",
+                "path": "/evidence/conflicts",
+                "purpose": "Evidence Conflicts tab source-precedence and ambiguity resolver view.",
+            },
+            {
+                "method": "POST",
+                "path": "/evidence/conflict-pack",
+                "purpose": "Evidence Conflicts generated resolver pack.",
+                "expected_artifacts": ["storage/conflict_packs/*.md", "storage/conflict_packs/*.json"],
+            },
         ]
 
     def _local_run_commands(self) -> list[str]:
@@ -708,6 +725,14 @@ class UIVerificationService:
             ),
             (
                 'curl -X POST "http://127.0.0.1:8000/evidence/freshness-pack" '
+                '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
+            ),
+            (
+                'curl -X GET "http://127.0.0.1:8000/evidence/conflicts" '
+                '-H "X-API-Key: local-demo-key"'
+            ),
+            (
+                'curl -X POST "http://127.0.0.1:8000/evidence/conflict-pack" '
                 '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
             ),
         ]

@@ -179,6 +179,8 @@ class ApiContractService:
             "/learning/win-loss-pack",
             "/evidence/freshness",
             "/evidence/freshness-pack",
+            "/evidence/conflicts",
+            "/evidence/conflict-pack",
             "/ops/smoke-matrix",
             "/ops/launch-checklist",
             "/ui/dashboard-smoke",
@@ -527,6 +529,7 @@ class ApiContractService:
             "/learning/win-loss": '{"outcomes_fixture_path":"sample_data/rfp_outcomes.json","top_k_patterns":6}',
             "/learning/win-loss-pack": '{"write_artifact":true}',
             "/evidence/freshness-pack": '{"write_artifact":true}',
+            "/evidence/conflict-pack": '{"write_artifact":true}',
         }
         no_body_paths = {"/health", "/documents", "/metrics/usage", "/audit/events"}
         return bodies.get(path, "{}" if path not in no_body_paths else None)

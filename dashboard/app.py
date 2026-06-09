@@ -97,6 +97,7 @@ tabs = st.tabs(
         "Win/Loss Learning",
         "Reviewer Collaboration",
         "Evidence Freshness",
+        "Evidence Conflicts",
     ]
 )
 
@@ -2316,4 +2317,74 @@ with tabs[36]:
             "Download Evidence Freshness Markdown",
             pack["markdown"],
             file_name="evidence_freshness_pack.md",
+        )
+
+
+with tabs[37]:
+    st.subheader("Evidence Conflict Resolver")
+    st.caption(
+        "Find source-precedence, scope, and ambiguity conflicts before draft claims move to customer review."
+    )
+    cols = st.columns(2)
+    if cols[0].button("Load Conflict Report"):
+        st.session_state.evidence_conflicts = get_json("/evidence/conflicts")
+    if cols[1].button("Generate Conflict Pack"):
+        pack = post_json("/evidence/conflict-pack", {"write_artifact": True})
+        st.session_state.evidence_conflict_pack = pack
+        st.session_state.evidence_conflicts = pack["conflicts"]
+        st.success(f"Evidence Conflict Pack generated under conflict_packs: {pack['artifact_path']}")
+
+    conflicts = st.session_state.get("evidence_conflicts")
+    if conflicts:
+        summary = conflicts["summary"]
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Conflicts", summary["conflict_count"])
+        metric_cols[1].metric("Blocked", summary["blocking_conflict_count"])
+        metric_cols[2].metric("Needs review", summary["needs_review_count"])
+        metric_cols[3].metric("Claims", summary["claim_count"])
+        st.write("Conflict matrix")
+        st.dataframe(
+            [
+                {
+                    "conflict": item["conflict_id"],
+                    "topic": item["topic"],
+                    "severity": item["severity"],
+                    "status": item["status"],
+                    "owner": item["reviewer_owner"],
+                    "resolution": item["resolution_guidance"],
+                    "sources": ", ".join(citation["filename"] for citation in item["citations"]),
+                }
+                for item in conflicts["conflicts"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Reviewer queue")
+        st.dataframe(conflicts["reviewer_queue"], use_container_width=True)
+        st.write("Endpoint references")
+        st.dataframe(conflicts["endpoint_references"], use_container_width=True)
+        if conflicts["conflicts"]:
+            selected_conflict = st.selectbox(
+                "Inspect conflict",
+                [item["conflict_id"] for item in conflicts["conflicts"]],
+            )
+            selected = next(item for item in conflicts["conflicts"] if item["conflict_id"] == selected_conflict)
+            st.write("Cited resolution")
+            st.write(selected["cited_resolution"])
+            st.write("Primary claim")
+            st.json(selected["primary_claim"])
+            st.write("Related claims")
+            st.dataframe(selected["conflicting_claims"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(conflicts["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(conflicts["limitations"])
+
+    pack = st.session_state.get("evidence_conflict_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Evidence Conflict Markdown",
+            pack["markdown"],
+            file_name="evidence_conflict_pack.md",
         )

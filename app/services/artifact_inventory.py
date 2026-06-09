@@ -288,6 +288,14 @@ class ArtifactInventoryService:
                 "Get-ChildItem -Recurse -File storage\\freshness_packs -ErrorAction SilentlyContinue | "
                 "Select-Object FullName,Length,LastWriteTime"
             ),
+            (
+                'rg "evidence/conflicts|evidence/conflict-pack|Evidence Conflict|'
+                'conflict_packs|Conflict Resolver" app dashboard docs README.md tests sample_data Makefile'
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\conflict_packs -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
         ]
 
     def _reviewer_proof_checklist(self) -> list[str]:
@@ -330,6 +338,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /evidence/freshness-pack to write the Evidence Freshness Pack "
                 "under storage/freshness_packs/."
+            ),
+            (
+                "Call POST /evidence/conflict-pack to write the Evidence Conflict Resolver Pack "
+                "under storage/conflict_packs/."
             ),
             (
                 "Inspect storage/artifact_indexes plus at least one Markdown/JSON artifact from each "
@@ -499,6 +511,12 @@ class ArtifactInventoryService:
                 "freshness_packs",
                 "POST /evidence/freshness-pack",
                 "Evidence freshness, renewal, owner, endpoint, and unsupported-claim risk artifacts.",
+            ),
+            self._spec(
+                "conflict_packs",
+                "conflict_packs",
+                "POST /evidence/conflict-pack",
+                "Evidence conflict resolver artifacts with source precedence, ambiguity, and reviewer routing.",
             ),
             self._spec(
                 "audit_packs",

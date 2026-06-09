@@ -37,6 +37,9 @@ from app.models.api import (
     DraftRequest,
     EvaluateRequest,
     EvaluationMetrics,
+    EvidenceConflictPackRequest,
+    EvidenceConflictPackResponse,
+    EvidenceConflictResponse,
     EvidenceFreshnessPackRequest,
     EvidenceFreshnessPackResponse,
     EvidenceFreshnessResponse,
@@ -2310,6 +2313,66 @@ async def evidence_freshness_pack(
             "json_artifact_path": pack.json_artifact_path,
             "sources": pack.freshness.summary["source_count"],
             "expired": pack.freshness.summary["expired_count"],
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/evidence/conflicts",
+    response_model=EvidenceConflictResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def evidence_conflicts(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> EvidenceConflictResponse:
+    trace_id = get_trace_id(request)
+    await _freshness_inputs(container)
+    result = container.evidence_conflicts.conflict_report(trace_id)
+    container.audit.record(
+        trace_id,
+        "evidence.conflicts_viewed",
+        "evidence_conflicts",
+        metadata={
+            "claims": result.summary["claim_count"],
+            "conflicts": result.summary["conflict_count"],
+            "blocked": result.summary["blocking_conflict_count"],
+            "needs_review": result.summary["needs_review_count"],
+        },
+    )
+    return result
+
+
+@router.post(
+    "/evidence/conflict-pack",
+    response_model=EvidenceConflictPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def evidence_conflict_pack(
+    request: Request,
+    payload: EvidenceConflictPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> EvidenceConflictPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or EvidenceConflictPackRequest()
+    await _freshness_inputs(container)
+    conflicts = container.evidence_conflicts.conflict_report(f"{trace_id}-conflicts")
+    pack = container.evidence_conflicts.conflict_pack(
+        trace_id,
+        conflicts,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "evidence.conflict_pack_generated",
+        "evidence_conflict_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "conflicts": pack.conflicts.summary["conflict_count"],
+            "blocked": pack.conflicts.summary["blocking_conflict_count"],
         },
     )
     return pack

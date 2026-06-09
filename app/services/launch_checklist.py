@@ -52,6 +52,8 @@ class LaunchChecklistService:
                 "POST /learning/win-loss-pack",
                 "GET /evidence/freshness",
                 "POST /evidence/freshness-pack",
+                "GET /evidence/conflicts",
+                "POST /evidence/conflict-pack",
                 "GET /ops/ci-doctor",
                 "POST /ops/audit-pack",
                 "GET /api/contract-audit",
@@ -146,6 +148,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\freshness_packs -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "evidence/conflicts|evidence/conflict-pack|Evidence Conflict|'
+                    'conflict_packs|Conflict Resolver" app dashboard docs README.md tests Makefile'
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\conflict_packs -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -324,6 +334,7 @@ class LaunchChecklistService:
             "objection_packs": "storage/objection_packs",
             "win_loss_packs": "storage/win_loss_packs",
             "freshness_packs": "storage/freshness_packs",
+            "conflict_packs": "storage/conflict_packs",
             "api_contracts": "storage/api_contracts",
             "portfolio_packs": "storage/portfolio_packs",
             "release_packs": "storage/release_packs",
@@ -852,6 +863,27 @@ class LaunchChecklistService:
                 200,
                 "Writes Evidence Freshness and Expiry Risk Markdown and JSON.",
                 ["storage/freshness_packs/*.md", "storage/freshness_packs/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Evidence conflicts",
+                "GET",
+                "/evidence/conflicts",
+                "evidence",
+                200,
+                (
+                    "Returns source-precedence, scope, and ambiguity conflicts with citations, reviewer owners, "
+                    "endpoint impact, and resolution guidance."
+                ),
+            ),
+            self._row(
+                "Evidence Conflict Pack",
+                "POST",
+                "/evidence/conflict-pack",
+                "artifact",
+                200,
+                "Writes Evidence Conflict Resolver Markdown and JSON.",
+                ["storage/conflict_packs/*.md", "storage/conflict_packs/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

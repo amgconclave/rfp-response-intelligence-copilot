@@ -900,6 +900,58 @@ class EvidenceFreshnessPackResponse(BaseModel):
     trace_id: str
 
 
+class EvidenceConflictClaim(BaseModel):
+    claim_id: str
+    topic: str
+    claim_type: str
+    normalized_claim: str
+    stance: str
+    source_owner: str
+    authority_rank: int
+    citation: Citation
+    snippet: str
+
+
+class EvidenceConflictItem(BaseModel):
+    conflict_id: str
+    topic: str
+    severity: str
+    status: str
+    reviewer_owner: str
+    resolution_guidance: str
+    cited_resolution: str
+    primary_claim: EvidenceConflictClaim
+    conflicting_claims: list[EvidenceConflictClaim] = Field(default_factory=list)
+    citations: list[Citation] = Field(default_factory=list)
+    reviewer_actions: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class EvidenceConflictResponse(BaseModel):
+    title: str
+    conflicts: list[EvidenceConflictItem]
+    summary: dict[str, Any]
+    reviewer_queue: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class EvidenceConflictPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class EvidenceConflictPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    conflicts: EvidenceConflictResponse
+    trace_id: str
+
+
 class ProcurementQuestionRiskItem(BaseModel):
     question_id: str
     question_type: str
