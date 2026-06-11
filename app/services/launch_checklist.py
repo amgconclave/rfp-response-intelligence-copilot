@@ -36,6 +36,8 @@ class LaunchChecklistService:
                 "POST /ops/launch-checklist",
                 "GET /ops/cost-governance",
                 "POST /ops/cost-governance-pack",
+                "GET /ops/provider-resilience",
+                "POST /ops/provider-resilience-pack",
                 "GET /runtime/demo-readiness",
                 "POST /runtime/demo-pack",
                 "GET /rag/corpus-coverage",
@@ -125,6 +127,14 @@ class LaunchChecklistService:
                 (
                     'rg "ops/cost-governance|ops/cost-governance-pack|Cost Governance|'
                     'cost_governance|provider readiness" app dashboard docs README.md tests Makefile'
+                ),
+                (
+                    'rg "ops/provider-resilience|Provider Resilience|provider_resilience|'
+                    'provider.mock.local" app dashboard docs README.md tests Makefile'
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\provider_resilience -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
                     'rg "ops/verification-evidence|Verification Evidence|verification_evidence|'
@@ -982,6 +992,27 @@ class LaunchChecklistService:
                 200,
                 "Writes provider and budget governance Markdown and JSON.",
                 ["storage/cost_governance/*.md", "storage/cost_governance/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Provider resilience",
+                "GET",
+                "/ops/provider-resilience",
+                "ops",
+                200,
+                (
+                    "Returns provider route readiness, mock fallback decisions, dependency injection "
+                    "contract, state transitions, and eval scenarios."
+                ),
+            ),
+            self._row(
+                "Provider Resilience Pack",
+                "POST",
+                "/ops/provider-resilience-pack",
+                "artifact",
+                200,
+                "Writes provider resilience runbook Markdown and JSON.",
+                ["storage/provider_resilience/*.md", "storage/provider_resilience/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

@@ -73,6 +73,27 @@ Writes Markdown and JSON Cost Governance Pack artifacts under ignored `storage/c
 
 The response includes `artifact_path`, `json_artifact_path`, `markdown`, structured `pack`, embedded `governance`, and `trace_id`.
 
+### `GET /ops/provider-resilience`
+
+Returns the Provider Resilience Runbook for mock, OpenAI, and Azure OpenAI routes. It includes typed provider route readiness, missing environment variables, fallback route decisions, checkpointed state-machine states, traceable transitions, dependency-injection contract details, eval scenarios, operator runbook steps, trace spans, proof commands, limitations, and trace ID. It does not call external providers.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/ops/provider-resilience" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /ops/provider-resilience-pack`
+
+Writes Markdown and JSON Provider Resilience Runbook Pack artifacts under ignored `storage/provider_resilience/` by default. The pack documents the recommended provider route, mock fallback behavior, state transitions, dependency-injection contract, reviewer checklist, proof commands, and limitations.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The response includes `artifact_path`, `json_artifact_path`, `markdown`, structured `pack`, embedded `resilience`, and `trace_id`.
+
 ### `GET /runtime/demo-readiness`
 
 Returns local FastAPI and Streamlit runtime readiness for fresh-clone reviewers. It includes exact start commands, stop commands, expected ports, environment requirements, dependency checks, read-only localhost port checks, expected health/smoke URLs, RAG/eval/red-team commands, demo flow order, screenshot checklist placeholders, troubleshooting, recruiter/engineer explanation, known limitations, and trace ID. It does not kill processes or require OpenAI, Azure, live Qdrant, or any external service.

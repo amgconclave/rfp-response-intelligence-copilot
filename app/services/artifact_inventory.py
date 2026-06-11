@@ -215,6 +215,14 @@ class ArtifactInventoryService:
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
             (
+                'rg "ops/provider-resilience|Provider Resilience|provider_resilience|'
+                'provider.mock.local" app dashboard docs README.md tests Makefile'
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\provider_resilience -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
                 'rg "ops/verification-evidence|Verification Evidence|verification_evidence|'
                 'command evidence ledger" app dashboard docs README.md tests Makefile'
             ),
@@ -423,6 +431,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /ops/cost-governance-pack to write the Cost Governance Pack "
                 "under storage/cost_governance/."
+            ),
+            (
+                "Call POST /ops/provider-resilience-pack to write the Provider Resilience Runbook Pack "
+                "under storage/provider_resilience/."
             ),
             (
                 "Call POST /api/reviewer-collection to write the API Reviewer Collection Pack "
@@ -644,6 +656,15 @@ class ArtifactInventoryService:
                 "cost_governance",
                 "POST /ops/cost-governance-pack",
                 "Provider readiness, token budget forecast, and local cost governance artifacts.",
+            ),
+            self._spec(
+                "provider_resilience",
+                "provider_resilience",
+                "POST /ops/provider-resilience-pack",
+                (
+                    "Provider route readiness, fallback decisions, dependency injection contract, "
+                    "and traceable transition runbook."
+                ),
             ),
             self._spec(
                 "rag_coverage",

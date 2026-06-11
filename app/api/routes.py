@@ -131,6 +131,9 @@ from app.models.api import (
     ProposalSubmissionCertificationPackRequest,
     ProposalSubmissionCertificationPackResponse,
     ProposalSubmissionCertificationResponse,
+    ProviderResiliencePackRequest,
+    ProviderResiliencePackResponse,
+    ProviderResilienceResponse,
     PublishPackRequest,
     PublishPackResponse,
     QueryRequest,
@@ -2228,6 +2231,64 @@ async def cost_governance_pack(
             "json_artifact_path": pack.json_artifact_path,
             "status": pack.governance.governance_status,
             "daily_estimated_cost": pack.governance.budget_summary["daily_estimated_cost"],
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/ops/provider-resilience",
+    response_model=ProviderResilienceResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def provider_resilience(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProviderResilienceResponse:
+    trace_id = get_trace_id(request)
+    resilience = container.provider_resilience.resilience(trace_id)
+    container.audit.record(
+        trace_id,
+        "ops.provider_resilience_viewed",
+        "provider_resilience",
+        metadata={
+            "status": resilience.status,
+            "active_provider_mode": resilience.active_provider_mode,
+            "recommended_route_id": resilience.recommended_route_id,
+            "fallback_required": resilience.summary["fallback_required"],
+        },
+    )
+    return resilience
+
+
+@router.post(
+    "/ops/provider-resilience-pack",
+    response_model=ProviderResiliencePackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def provider_resilience_pack(
+    request: Request,
+    payload: ProviderResiliencePackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProviderResiliencePackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProviderResiliencePackRequest()
+    resilience = request_payload.resilience or container.provider_resilience.resilience(f"{trace_id}-resilience")
+    pack = container.provider_resilience.pack(
+        trace_id,
+        resilience=resilience,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "ops.provider_resilience_pack_generated",
+        "provider_resilience_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.resilience.status,
+            "recommended_route_id": pack.resilience.recommended_route_id,
         },
     )
     return pack

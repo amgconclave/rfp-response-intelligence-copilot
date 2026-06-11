@@ -3,7 +3,7 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8000
 DASHBOARD_PORT ?= 8501
 
-.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack model-risk model-risk-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack source-trust source-trust-pack buyer-intelligence buyer-intelligence-pack buyer-replay buyer-replay-pack buyer-contracts buyer-contracts-pack decision-provenance decision-provenance-pack submission-certification submission-certification-pack proposal-observability proposal-observability-pack verification-evidence verification-evidence-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack reviewer-signoff reviewer-signoff-pack exception-register exception-pack answer-reuse answer-reuse-pack answer-reuse-drift answer-reuse-drift-pack readiness-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
+.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack model-risk model-risk-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack source-trust source-trust-pack buyer-intelligence buyer-intelligence-pack buyer-replay buyer-replay-pack buyer-contracts buyer-contracts-pack decision-provenance decision-provenance-pack submission-certification submission-certification-pack proposal-observability proposal-observability-pack verification-evidence verification-evidence-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack reviewer-signoff reviewer-signoff-pack exception-register exception-pack answer-reuse answer-reuse-pack answer-reuse-drift answer-reuse-drift-pack readiness-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack provider-resilience provider-resilience-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
 
 install:
 	$(PYTHON) -m pip install -e .
@@ -171,6 +171,12 @@ cost-governance:
 
 cost-governance-pack:
 	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/ops/cost-governance-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
+
+provider-resilience:
+	$(PYTHON) -c "import httpx; r=httpx.get('http://127.0.0.1:8000/ops/provider-resilience', headers={'X-API-Key': 'local-demo-key'}, timeout=30).json(); print({'status': r['status'], 'active': r['active_provider_mode'], 'recommended': r['recommended_route_id'], 'fallback': r['summary']['fallback_required']})"
+
+provider-resilience-pack:
+	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/ops/provider-resilience-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
 
 proposal-observability:
 	$(PYTHON) -c "import httpx; o=httpx.get('http://127.0.0.1:8000/ops/proposal-observability', headers={'X-API-Key': 'local-demo-key'}, timeout=60).json(); print({'status': o['status'], 'spans': o['summary']['trace_span_count'], 'diagnostics': o['summary']['retrieval_diagnostic_count'], 'human_review': o['summary']['human_review_signal_count']})"

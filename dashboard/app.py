@@ -114,6 +114,7 @@ tabs = st.tabs(
         "Proposal Observability",
         "Submission Certification",
         "Verification Evidence",
+        "Provider Resilience",
     ]
 )
 
@@ -3819,4 +3820,55 @@ with tabs[53]:
             "Download Verification Evidence Markdown",
             pack["markdown"],
             file_name="verification_evidence_pack.md",
+        )
+
+
+with tabs[54]:
+    st.subheader("Provider Resilience")
+    st.caption(
+        "Inspect mock, OpenAI, and Azure OpenAI provider route readiness, fallback decisions, state transitions, "
+        "and local proof commands without calling external services."
+    )
+    action_cols = st.columns(2)
+    if action_cols[0].button("Analyze provider resilience"):
+        st.session_state.provider_resilience = get_json("/ops/provider-resilience")
+    if action_cols[1].button("Generate Provider Resilience Pack"):
+        pack = post_json("/ops/provider-resilience-pack", {"write_artifact": True})
+        st.session_state.provider_resilience_pack = pack
+        st.session_state.provider_resilience = pack["resilience"]
+        st.success(f"Provider Resilience Pack generated under provider_resilience: {pack['artifact_path']}")
+
+    resilience = st.session_state.get("provider_resilience")
+    if resilience:
+        summary = resilience["summary"]
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Status", resilience["status"])
+        metric_cols[1].metric("Active provider", resilience["active_provider_mode"])
+        metric_cols[2].metric("Recommended route", resilience["recommended_route_id"])
+        metric_cols[3].metric("Fallback", str(summary["fallback_required"]))
+        st.write("Provider routes")
+        st.dataframe(resilience["provider_routes"], use_container_width=True)
+        st.write("State machine")
+        st.dataframe(resilience["state_machine"], use_container_width=True)
+        st.write("Traceable transitions")
+        st.dataframe(resilience["transitions"], use_container_width=True)
+        st.write("Dependency injection contract")
+        st.json(resilience["dependency_injection_contract"])
+        st.write("Evaluator scenarios")
+        st.dataframe(resilience["evaluator_scenarios"], use_container_width=True)
+        st.write("Operator runbook")
+        st.dataframe(resilience["operator_runbook"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(resilience["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(resilience["limitations"])
+
+    pack = st.session_state.get("provider_resilience_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Provider Resilience Markdown",
+            pack["markdown"],
+            file_name="provider_resilience_pack.md",
         )

@@ -412,6 +412,12 @@ class UIVerificationService:
                 "artifact_root": "cost_governance",
             },
             {
+                "label": "Provider Resilience",
+                "endpoint_paths": ["/ops/provider-resilience", "/ops/provider-resilience-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "provider_resilience",
+            },
+            {
                 "label": "Proposal Observability",
                 "endpoint_paths": ["/ops/proposal-observability", "/ops/proposal-observability-pack"],
                 "generated_artifact_tab": True,
@@ -752,6 +758,20 @@ class UIVerificationService:
                 "path": "/ops/cost-governance-pack",
                 "purpose": "Cost Governance generated reviewer pack.",
                 "expected_artifacts": ["storage/cost_governance/*.md", "storage/cost_governance/*.json"],
+            },
+            {
+                "method": "GET",
+                "path": "/ops/provider-resilience",
+                "purpose": "Provider Resilience tab route readiness, fallback, and state-machine view.",
+            },
+            {
+                "method": "POST",
+                "path": "/ops/provider-resilience-pack",
+                "purpose": "Provider Resilience generated runbook pack.",
+                "expected_artifacts": [
+                    "storage/provider_resilience/*.md",
+                    "storage/provider_resilience/*.json",
+                ],
             },
             {
                 "method": "GET",
@@ -1098,6 +1118,14 @@ class UIVerificationService:
             ),
             (
                 'curl -X POST "http://127.0.0.1:8000/ops/cost-governance-pack" '
+                '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
+            ),
+            (
+                'curl -X GET "http://127.0.0.1:8000/ops/provider-resilience" '
+                '-H "X-API-Key: local-demo-key"'
+            ),
+            (
+                'curl -X POST "http://127.0.0.1:8000/ops/provider-resilience-pack" '
                 '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
             ),
             (

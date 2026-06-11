@@ -339,6 +339,8 @@ class ApiContractService:
             "storage/submission_certifications": "submission_certifications",
             "/ops/verification-evidence-pack": "verification_evidence_pack",
             "storage/verification_evidence": "verification_evidence",
+            "/ops/provider-resilience-pack": "provider_resilience_pack",
+            "storage/provider_resilience": "provider_resilience",
         }
         missing = [path for path, token in required.items() if token not in demo]
         return ApiContractCheck(

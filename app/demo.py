@@ -303,6 +303,12 @@ async def main() -> None:
         cost_governance,
         write_artifact=True,
     )
+    provider_resilience = container.provider_resilience.resilience("demo-provider-resilience")
+    provider_resilience_pack = container.provider_resilience.pack(
+        "demo-provider-resilience-pack",
+        provider_resilience,
+        write_artifact=True,
+    )
     portfolio_evidence = container.portfolio.evidence_index("demo-portfolio-evidence")
     interview_pack = await container.portfolio.generate_interview_pack(
         container,
@@ -758,6 +764,15 @@ async def main() -> None:
     print(f"Cost Governance Pack: {cost_governance_pack.artifact_path}")
     print(f"Cost Governance Pack JSON: {cost_governance_pack.json_artifact_path}")
     print(
+        "Provider resilience: "
+        f"status={provider_resilience.status} "
+        f"active={provider_resilience.active_provider_mode} "
+        f"recommended={provider_resilience.recommended_route_id} "
+        f"fallback={provider_resilience.summary['fallback_required']}"
+    )
+    print(f"Provider Resilience Pack: {provider_resilience_pack.artifact_path}")
+    print(f"Provider Resilience Pack JSON: {provider_resilience_pack.json_artifact_path}")
+    print(
         "Portfolio evidence score: "
         f"{portfolio_evidence.evidence_score} "
         f"covered={portfolio_evidence.covered_skill_count}/{portfolio_evidence.total_skill_count}"
@@ -1113,6 +1128,8 @@ async def main() -> None:
         f"cost_governance={cost_governance.governance_status}/"
         f"{cost_governance.budget_summary['daily_estimated_cost']} "
         f"cost_governance_pack={cost_governance_pack.artifact_path} "
+        f"provider_resilience={provider_resilience.status}/{provider_resilience.recommended_route_id} "
+        f"provider_resilience_pack={provider_resilience_pack.artifact_path} "
         f"evidence score={portfolio_evidence.evidence_score} "
         f"interview_pack={interview_pack.artifact_path} "
         f"reviewer_quickstart={reviewer_quickstart.status}/"

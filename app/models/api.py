@@ -2163,6 +2163,61 @@ class CostGovernancePackResponse(BaseModel):
     trace_id: str
 
 
+class ProviderResilienceRoute(BaseModel):
+    route_id: str
+    provider_mode: str
+    model: str
+    readiness_status: str
+    priority: int
+    required_env: list[str] = Field(default_factory=list)
+    missing_env: list[str] = Field(default_factory=list)
+    fallback_route_id: str | None = None
+    governance_notes: list[str] = Field(default_factory=list)
+
+
+class ProviderResilienceTransition(BaseModel):
+    transition_id: str
+    from_state: str
+    to_state: str
+    condition: str
+    decision: str
+    checkpoint_id: str
+    trace_note: str
+
+
+class ProviderResilienceResponse(BaseModel):
+    title: str
+    status: str
+    active_provider_mode: str
+    recommended_route_id: str
+    provider_routes: list[ProviderResilienceRoute]
+    state_machine: list[dict[str, Any]] = Field(default_factory=list)
+    transitions: list[ProviderResilienceTransition]
+    dependency_injection_contract: dict[str, Any] = Field(default_factory=dict)
+    evaluator_scenarios: list[dict[str, Any]] = Field(default_factory=list)
+    operator_runbook: list[dict[str, Any]] = Field(default_factory=list)
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    summary: dict[str, Any]
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ProviderResiliencePackRequest(BaseModel):
+    resilience: ProviderResilienceResponse | None = None
+    write_artifact: bool = True
+
+
+class ProviderResiliencePackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    resilience: ProviderResilienceResponse
+    trace_id: str
+
+
 class UsageResponse(BaseModel):
     metrics: list[UsageMetric]
     totals: dict[str, float | int]
