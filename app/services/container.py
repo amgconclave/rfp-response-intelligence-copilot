@@ -36,6 +36,7 @@ from app.services.portfolio import PortfolioService
 from app.services.privacy_retention import PrivacyRetentionGuardrailService
 from app.services.procurement import ProcurementQuestionRiskService
 from app.services.procurement_risk_desk import ProcurementRiskDeskService
+from app.services.proposal_agent_council import ProposalAgentCouncilService
 from app.services.release import ReleaseService
 from app.services.retrieval import RetrievalService
 from app.services.review_board import RfpReviewBoardService
@@ -66,6 +67,7 @@ class ServiceContainer:
         self.cost_governance = CostGovernanceService(settings, self.metrics)
         self.model_risk = ModelRiskRegisterService(self.repo, settings)
         self.buyer_intelligence = BuyerProposalIntelligenceService(settings)
+        self.proposal_agent_council = ProposalAgentCouncilService(settings)
         self.bid_simulator = BidScenarioSimulatorService(settings)
         self.customer_intelligence = CustomerIntelligenceService(settings)
         self.answer_reuse_library = AnswerReuseLibraryService(self.repo, settings)

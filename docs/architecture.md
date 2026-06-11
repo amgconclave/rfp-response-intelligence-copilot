@@ -47,6 +47,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `EvidenceConflictService`: detects cited source-precedence, scope, and ambiguity conflicts before draft approval.
 - `CitationLineageService`: verifies generated answer and draft citations against local repository document/chunk IDs, stale snippets, generated-claim flags, owners, and endpoint impact.
 - `SourceTrustGateService`: consolidates freshness, conflict, and citation-lineage signals into source trust scores, retrieval policies, and owner approval queues.
+- `ProposalAgentCouncilService`: turns buyer workflow, source trust, model risk, cost governance, and procurement risk signals into a deterministic multi-role proposal council with shared state, governed tool access, handoffs, token budget estimates, eval scenarios, and local transcript artifacts.
 - `TimelineOrchestrationService`: creates proposal milestones and submission calendar packs.
 - `SubmissionDecisionService`: builds final go/no-go scores and executive memos.
 - `LeadershipBriefService`: consolidates portfolio-level readouts for recruiters and stakeholders.
@@ -100,6 +101,7 @@ Generated files are not committed. They are reproducible outputs from local API 
 - `storage/conflict_packs/`
 - `storage/citation_lineage/`
 - `storage/source_trust/`
+- `storage/agent_council/`
 - `storage/portfolio_packs/`
 - `storage/reviewer_packs/`
 - `storage/api_contracts/`

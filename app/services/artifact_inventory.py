@@ -336,15 +336,23 @@ class ArtifactInventoryService:
                 "Get-ChildItem -Recurse -File storage\\citation_lineage -ErrorAction SilentlyContinue | "
                 "Select-Object FullName,Length,LastWriteTime"
             ),
-            (
-                'rg "proposal/buyer-intelligence|buyer-intelligence-replay|'
-                'Buyer-Grade Proposal Intelligence|Buyer Workflow Replay|'
-                'buyer_intelligence|storage/buyer_intelligence" app dashboard docs README.md tests Makefile'
-            ),
-            (
-                "Get-ChildItem -Recurse -File storage\\buyer_intelligence -ErrorAction SilentlyContinue | "
-                "Select-Object FullName,Length,LastWriteTime"
-            ),
+                (
+                    'rg "proposal/buyer-intelligence|buyer-intelligence-replay|'
+                    'Buyer-Grade Proposal Intelligence|Buyer Workflow Replay|'
+                    'buyer_intelligence|storage/buyer_intelligence" app dashboard docs README.md tests Makefile'
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\buyer_intelligence -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "proposal/agent-council|Proposal Agent Council|agent_council|storage/agent_council" '
+                    "app dashboard docs README.md tests Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\agent_council -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
         ]
 
     def _reviewer_proof_checklist(self) -> list[str]:
@@ -411,6 +419,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /proposal/buyer-intelligence-replay-pack to write the Buyer Workflow Replay Pack "
                 "under storage/buyer_intelligence/."
+            ),
+            (
+                "Call POST /proposal/agent-council-pack to write the Proposal Agent Council Pack "
+                "under storage/agent_council/."
             ),
             (
                 "Inspect storage/artifact_indexes plus at least one Markdown/JSON artifact from each "
@@ -651,6 +663,15 @@ class ArtifactInventoryService:
                 (
                     "Buyer-grade proposal workflow pack with durable checkpoints, HITL approval queue, "
                     "governance gates, provider routes, local state JSON, and replay transition packs."
+                ),
+            ),
+            self._spec(
+                "agent_council",
+                "agent_council",
+                "POST /proposal/agent-council-pack",
+                (
+                    "Proposal agent council artifacts with role-based transcript, shared state, tool governance, "
+                    "handoffs, and token budget ledger."
                 ),
             ),
             self._spec(

@@ -107,6 +107,7 @@ tabs = st.tabs(
         "Procurement Risk Desk",
         "Answer Reuse Library",
         "Buyer Intelligence Pack",
+        "Agent Council",
     ]
 )
 
@@ -3075,4 +3076,83 @@ with tabs[46]:
             "Download Buyer Workflow Replay Markdown",
             replay_pack["markdown"],
             file_name="buyer_workflow_replay_pack.md",
+        )
+
+
+with tabs[47]:
+    st.subheader("Agent Council")
+    st.caption(
+        "Review a deterministic multi-agent proposal council with shared state, governed tool access, "
+        "cross-functional handoffs, and local budget tracking."
+    )
+    action_cols = st.columns(2)
+    if action_cols[0].button("Load agent council"):
+        st.session_state.proposal_agent_council = get_json("/proposal/agent-council")
+    if action_cols[1].button("Generate Agent Council Pack"):
+        pack = post_json("/proposal/agent-council-pack", {"write_artifact": True})
+        st.session_state.proposal_agent_council_pack = pack
+        st.session_state.proposal_agent_council = pack["council"]
+        st.success(f"Agent Council Pack generated under agent_council: {pack['artifact_path']}")
+
+    council = st.session_state.get("proposal_agent_council")
+    if council:
+        summary = council["decision_summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", council["status"])
+        metric_cols[1].metric("Agents", len(council["agents"]))
+        metric_cols[2].metric("Turns", len(council["conversation"]))
+        metric_cols[3].metric("Open handoffs", summary["open_handoffs"])
+        metric_cols[4].metric("Tokens", council["budget_ledger"]["total_token_estimate"])
+        st.write("Agents")
+        st.dataframe(
+            [
+                {
+                    "agent": item["agent_id"],
+                    "role": item["role"],
+                    "budget": item["budget_tokens"],
+                    "allowed_tools": ", ".join(item["allowed_tools"]),
+                    "blocked_tools": ", ".join(item["blocked_tools"]),
+                }
+                for item in council["agents"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Conversation")
+        st.dataframe(
+            [
+                {
+                    "turn": item["turn"],
+                    "role": item["role"],
+                    "type": item["message_type"],
+                    "handoff_to": item["handoff_to"],
+                    "flags": ", ".join(item["governance_flags"]),
+                    "tokens": item["token_estimate"],
+                    "content": item["content"],
+                }
+                for item in council["conversation"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Handoffs")
+        st.dataframe(council["handoffs"], use_container_width=True)
+        st.write("Tool governance")
+        st.dataframe(council["tool_governance"], use_container_width=True)
+        st.write("Budget ledger")
+        st.json(council["budget_ledger"])
+        st.write("Eval scenarios")
+        st.dataframe(council["eval_scenarios"], use_container_width=True)
+        st.write("Proof commands")
+        st.code("\n".join(council["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(council["limitations"])
+
+    pack = st.session_state.get("proposal_agent_council_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.write("Transcript artifact path", pack["transcript_artifact_path"])
+        st.download_button(
+            "Download Agent Council Markdown",
+            pack["markdown"],
+            file_name="proposal_agent_council_pack.md",
         )

@@ -106,6 +106,9 @@ from app.models.api import (
     ProcurementRiskDeskPackRequest,
     ProcurementRiskDeskPackResponse,
     ProcurementRiskDeskResponse,
+    ProposalAgentCouncilPackRequest,
+    ProposalAgentCouncilPackResponse,
+    ProposalAgentCouncilResponse,
     ProposalReadinessScorePackRequest,
     ProposalReadinessScorePackResponse,
     PublishPackRequest,
@@ -2948,6 +2951,84 @@ async def buyer_intelligence_replay_pack(
             "json_artifact_path": pack.json_artifact_path,
             "status": pack.replay.status,
             "transitions": pack.replay.transition_count,
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/proposal/agent-council",
+    response_model=ProposalAgentCouncilResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_agent_council(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalAgentCouncilResponse:
+    trace_id = get_trace_id(request)
+    inputs = await _buyer_intelligence_inputs(trace_id, container)
+    workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+    council = container.proposal_agent_council.council(
+        trace_id=trace_id,
+        workflow=workflow,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.agent_council_viewed",
+        "proposal_agent_council",
+        metadata={
+            "status": council.status,
+            "agents": len(council.agents),
+            "turns": len(council.conversation),
+            "handoffs": len(council.handoffs),
+        },
+    )
+    return council
+
+
+@router.post(
+    "/proposal/agent-council-pack",
+    response_model=ProposalAgentCouncilPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_agent_council_pack(
+    request: Request,
+    payload: ProposalAgentCouncilPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalAgentCouncilPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProposalAgentCouncilPackRequest()
+    inputs = await _buyer_intelligence_inputs(trace_id, container)
+    workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+    council = container.proposal_agent_council.council(
+        trace_id=f"{trace_id}-council",
+        workflow=workflow,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    pack = container.proposal_agent_council.pack(
+        trace_id,
+        council,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.agent_council_pack_generated",
+        "proposal_agent_council_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "transcript_artifact_path": pack.transcript_artifact_path,
+            "status": pack.council.status,
+            "agents": len(pack.council.agents),
+            "turns": len(pack.council.conversation),
         },
     )
     return pack

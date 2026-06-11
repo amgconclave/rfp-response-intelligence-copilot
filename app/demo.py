@@ -439,6 +439,19 @@ async def main() -> None:
         buyer_workflow_replay,
         write_artifact=True,
     )
+    agent_council = container.proposal_agent_council.council(
+        trace_id="demo-agent-council",
+        workflow=buyer_intelligence,
+        cost_governance=cost_governance,
+        source_trust=source_trust,
+        model_risk=model_risk,
+        procurement_risk=procurement_question_risk,
+    )
+    agent_council_pack = container.proposal_agent_council.pack(
+        "demo-agent-council-pack",
+        agent_council,
+        write_artifact=True,
+    )
     procurement_risk_desk = await container.procurement_risk_desk.risk_desk(
         "demo-procurement-risk-desk",
         analysis=analysis,
@@ -720,6 +733,17 @@ async def main() -> None:
     print(f"Buyer Workflow Replay Pack JSON: {buyer_workflow_replay_pack.json_artifact_path}")
     print("Buyer intelligence directory: storage/buyer_intelligence")
     print(
+        "Proposal agent council: "
+        f"status={agent_council.status} "
+        f"agents={len(agent_council.agents)} "
+        f"handoffs={len(agent_council.handoffs)} "
+        f"tokens={agent_council.budget_ledger['total_token_estimate']}"
+    )
+    print(f"Proposal Agent Council Pack: {agent_council_pack.artifact_path}")
+    print(f"Proposal Agent Council Pack JSON: {agent_council_pack.json_artifact_path}")
+    print(f"Proposal Agent Council Transcript: {agent_council_pack.transcript_artifact_path}")
+    print("Agent council directory: storage/agent_council")
+    print(
         "Compliance control coverage: "
         f"{compliance_matrix.coverage_summary['coverage_ratio']} "
         f"families={compliance_matrix.coverage_summary['control_family_count']} "
@@ -881,6 +905,8 @@ async def main() -> None:
         f"buyer_intelligence_pack={buyer_intelligence_pack.artifact_path} "
         f"buyer_replay={buyer_workflow_replay.status}/{buyer_workflow_replay.transition_count} "
         f"buyer_replay_pack={buyer_workflow_replay_pack.artifact_path} "
+        f"agent_council={agent_council.status}/{len(agent_council.agents)} "
+        f"agent_council_pack={agent_council_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "
         f"compliance_packs={compliance_control_pack.artifact_path} "
         f"privacy_retention={privacy_retention.summary['high_risk_surface_count']}/"

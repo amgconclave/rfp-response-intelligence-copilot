@@ -547,6 +547,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "buyer_intelligence",
             },
+            {
+                "label": "Agent Council",
+                "endpoint_paths": ["/proposal/agent-council", "/proposal/agent-council-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "agent_council",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -823,6 +829,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/buyer_intelligence/*replay*.md",
                     "storage/buyer_intelligence/*replay*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/proposal/agent-council",
+                "purpose": "Agent Council tab role-based transcript, handoff, tool governance, and budget view.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/agent-council-pack",
+                "purpose": "Agent Council generated Markdown, JSON, and transcript artifacts.",
+                "expected_artifacts": [
+                    "storage/agent_council/*.md",
+                    "storage/agent_council/*.json",
                 ],
             },
         ]

@@ -39,6 +39,8 @@ The v0.2 API also exposes proof-oriented coverage endpoints:
 
 - `GET /rag/corpus-coverage`: summarizes corpus coverage by source, topic, and evidence readiness.
 - `POST /rag/eval-coverage-pack`: writes a RAG Eval Coverage Pack under `storage/rag_coverage/`.
+- `GET /proposal/agent-council`: returns local multi-role council eval scenarios for role coverage, turn order, tool governance, and handoff routing.
+- `POST /proposal/agent-council-pack`: writes the Proposal Agent Council Pack under `storage/agent_council/`.
 - `GET /handoff/final-audit`: returns the README Consistency final audit.
 - `POST /handoff/final-pack`: writes the Final Handoff Pack under `storage/final_handoff/`.
 
@@ -65,6 +67,7 @@ Expected final proof points include:
 - Standard eval prints `Pass/fail summary: PASS`.
 - Red-team eval prints `Pass/fail summary: PASS`.
 - Dashboard Smoke reports `pass`.
+- Proposal Agent Council eval scenarios all pass and the pack is written under `storage/agent_council/`.
 - Final audit status reports `pass`.
 - Final Handoff Pack is written under `storage/final_handoff/`.
 

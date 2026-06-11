@@ -1384,6 +1384,73 @@ class BuyerWorkflowReplayPackResponse(BaseModel):
     trace_id: str
 
 
+class ProposalCouncilAgent(BaseModel):
+    agent_id: str
+    role: str
+    mandate: str
+    allowed_tools: list[str] = Field(default_factory=list)
+    blocked_tools: list[str] = Field(default_factory=list)
+    approval_scope: list[str] = Field(default_factory=list)
+    budget_tokens: int
+
+
+class ProposalCouncilMessage(BaseModel):
+    message_id: str
+    turn: int
+    agent_id: str
+    role: str
+    message_type: str
+    content: str
+    cited_evidence: list[str] = Field(default_factory=list)
+    tool_calls: list[dict[str, Any]] = Field(default_factory=list)
+    handoff_to: str | None = None
+    governance_flags: list[str] = Field(default_factory=list)
+    token_estimate: int
+
+
+class ProposalCouncilHandoff(BaseModel):
+    handoff_id: str
+    from_agent_id: str
+    to_agent_id: str
+    reason: str
+    status: str
+    required_before: str
+    evidence_refs: list[str] = Field(default_factory=list)
+
+
+class ProposalAgentCouncilResponse(BaseModel):
+    title: str
+    council_id: str
+    status: str
+    generated_at: str
+    agents: list[ProposalCouncilAgent]
+    conversation: list[ProposalCouncilMessage]
+    shared_state: dict[str, Any]
+    handoffs: list[ProposalCouncilHandoff] = Field(default_factory=list)
+    tool_governance: list[dict[str, Any]] = Field(default_factory=list)
+    budget_ledger: dict[str, Any] = Field(default_factory=dict)
+    decision_summary: dict[str, Any] = Field(default_factory=dict)
+    eval_scenarios: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ProposalAgentCouncilPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class ProposalAgentCouncilPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    transcript_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    council: ProposalAgentCouncilResponse
+    trace_id: str
+
+
 class ProcurementQuestionRiskItem(BaseModel):
     question_id: str
     question_type: str

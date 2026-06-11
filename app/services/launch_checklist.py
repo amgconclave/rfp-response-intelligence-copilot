@@ -73,6 +73,8 @@ class LaunchChecklistService:
                 "POST /proposal/buyer-intelligence-pack",
                 "GET /proposal/buyer-intelligence-replay",
                 "POST /proposal/buyer-intelligence-replay-pack",
+                "GET /proposal/agent-council",
+                "POST /proposal/agent-council-pack",
                 "GET /ops/ci-doctor",
                 "POST /ops/audit-pack",
                 "GET /api/contract-audit",
@@ -241,6 +243,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\buyer_intelligence -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "proposal/agent-council|Proposal Agent Council|'
+                    'agent_council|storage/agent_council" app dashboard docs README.md tests Makefile'
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\agent_council -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -428,6 +438,7 @@ class LaunchChecklistService:
             "citation_lineage": "storage/citation_lineage",
             "source_trust": "storage/source_trust",
             "buyer_intelligence": "storage/buyer_intelligence",
+            "agent_council": "storage/agent_council",
             "api_contracts": "storage/api_contracts",
             "portfolio_packs": "storage/portfolio_packs",
             "release_packs": "storage/release_packs",
@@ -1196,6 +1207,27 @@ class LaunchChecklistService:
                 200,
                 "Writes buyer workflow replay Markdown and JSON artifacts.",
                 ["storage/buyer_intelligence/*replay*.md", "storage/buyer_intelligence/*replay*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Proposal Agent Council",
+                "GET",
+                "/proposal/agent-council",
+                "proposal",
+                200,
+                (
+                    "Returns a deterministic multi-agent proposal council with shared state, governed tool "
+                    "access, handoffs, token budget estimates, and eval scenarios."
+                ),
+            ),
+            self._row(
+                "Proposal Agent Council Pack",
+                "POST",
+                "/proposal/agent-council-pack",
+                "artifact",
+                200,
+                "Writes proposal agent council Markdown, JSON, and transcript JSON artifacts.",
+                ["storage/agent_council/*.md", "storage/agent_council/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

@@ -55,6 +55,7 @@ class PortfolioService:
                 "answer_reuse_library": str((self.settings.storage_dir / "answer_reuse_library").resolve()),
                 "win_loss_packs": str((self.settings.storage_dir / "win_loss_packs").resolve()),
                 "source_trust": str((self.settings.storage_dir / "source_trust").resolve()),
+                "agent_council": str((self.settings.storage_dir / "agent_council").resolve()),
             },
             limitations=[
                 "Local portfolio mode uses deterministic mock LLM behavior by default; paid OpenAI/Azure APIs are optional adapters.",
@@ -374,6 +375,22 @@ class PortfolioService:
                 ["docs/api.md", "README.md"],
             ),
             self._skill(
+                "proposal-agent-council",
+                "Multi-agent proposal council with shared state, governed tools, handoffs, and budget controls",
+                [
+                    "Sales, presales, compliance, procurement, and proposal-manager roles",
+                    "Deterministic council transcript with shared-state updates",
+                    "Tool allow/block policy and provider governance",
+                    "Cross-functional handoffs and token budget ledger",
+                ],
+                ["/proposal/agent-council", "/proposal/agent-council-pack"],
+                ["app/services/proposal_agent_council.py"],
+                ["tests/test_proposal_agent_council.py", "python scripts\\dashboard_smoke.py"],
+                ["storage/agent_council/*.md", "storage/agent_council/*.json"],
+                ["python -m app.demo"],
+                ["docs/api.md", "docs/architecture.md", "README.md"],
+            ),
+            self._skill(
                 "requirement-matrix-review",
                 "Requirement matrix and review-board workflow",
                 ["Requirement ownership, risk status, package review, groundedness review"],
@@ -543,6 +560,7 @@ class PortfolioService:
             "rg \"learning/win-loss|Win/Loss Learning|win_loss_packs|rfp_outcomes\" app dashboard docs README.md tests sample_data Makefile",
             "rg \"evidence/freshness|Evidence Freshness|freshness_packs|expiry risk|renewal\" app dashboard docs README.md tests sample_data Makefile",
             "rg \"evidence/source-trust|Source Trust|source_trust|storage/source_trust\" app dashboard docs README.md tests Makefile",
+            "rg \"proposal/agent-council|Proposal Agent Council|agent_council\" app dashboard docs README.md tests Makefile",
         ]
 
     def _pack_payload(

@@ -285,6 +285,29 @@ Writes Markdown and JSON replay artifacts under ignored `storage/buyer_intellige
 
 The pack includes the replay transition table, conditional routing decisions, checkpoint validation, eval scenarios, reviewer controls, local proof commands, limitations, embedded replay JSON, Markdown, JSON, and trace ID.
 
+### `GET /proposal/agent-council`
+
+Returns the Proposal Agent Council. It composes the buyer workflow, source trust, model risk, cost governance, and procurement question risk into deterministic sales, presales, compliance, procurement, and proposal-manager turns with shared state, governed tool access, handoffs, token budget estimates, eval scenarios, proof commands, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/proposal/agent-council" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The council is a local governance transcript and does not call autonomous agents or external model providers.
+
+### `POST /proposal/agent-council-pack`
+
+Writes Markdown, JSON, and transcript JSON artifacts under ignored `storage/agent_council/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes the role-based transcript, shared state, cross-functional handoffs, tool governance policy, budget ledger, eval scenarios, reviewer controls, proof commands, limitations, embedded council JSON, Markdown, JSON, transcript JSON, and trace ID.
+
 ### `GET /compliance/evidence-matrix`
 
 Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.
