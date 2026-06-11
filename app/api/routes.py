@@ -11,6 +11,10 @@ from app.models.api import (
     ActionPlanResponse,
     AnalyzeRequest,
     AnalyzeResponse,
+    AnswerReuseDriftPackRequest,
+    AnswerReuseDriftPackResponse,
+    AnswerReuseDriftRequest,
+    AnswerReuseDriftResponse,
     AnswerReuseLibraryPackRequest,
     AnswerReuseLibraryPackResponse,
     AnswerReuseLibraryRequest,
@@ -485,6 +489,73 @@ async def answer_reuse_library_pack(
             "artifact_path": pack.artifact_path,
             "snippets": pack.library.summary["snippet_count"],
             "approved": pack.library.summary["approved_count"],
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/rfp/answer-reuse-drift",
+    response_model=AnswerReuseDriftResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def answer_reuse_drift(
+    payload: AnswerReuseDriftRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> AnswerReuseDriftResponse:
+    trace_id = get_trace_id(request)
+    drift_report = container.answer_reuse_drift.drift_report(
+        trace_id,
+        category=payload.category,
+        customer_profile_id=payload.customer_profile_id,
+        include_expired=payload.include_expired,
+        min_source_overlap=payload.min_source_overlap,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.answer_reuse_drift_viewed",
+        "answer_reuse_drift",
+        resource_id=payload.customer_profile_id,
+        metadata={
+            "snippets": drift_report.summary["snippet_count"],
+            "owner_review": drift_report.summary["owner_review_count"],
+            "rewrite": drift_report.summary["rewrite_count"],
+        },
+    )
+    return drift_report
+
+
+@router.post(
+    "/rfp/answer-reuse-drift-pack",
+    response_model=AnswerReuseDriftPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def answer_reuse_drift_pack(
+    payload: AnswerReuseDriftPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> AnswerReuseDriftPackResponse:
+    trace_id = get_trace_id(request)
+    pack = container.answer_reuse_drift.pack(
+        trace_id,
+        drift_report=payload.drift_report,
+        category=payload.category,
+        customer_profile_id=payload.customer_profile_id,
+        include_expired=payload.include_expired,
+        min_source_overlap=payload.min_source_overlap,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.answer_reuse_drift_pack_created",
+        "answer_reuse_drift_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "snippets": pack.drift_report.summary["snippet_count"],
+            "owner_review": pack.drift_report.summary["owner_review_count"],
+            "rewrite": pack.drift_report.summary["rewrite_count"],
         },
     )
     return pack

@@ -67,6 +67,15 @@ async def main() -> None:
         answer_reuse_library,
         write_artifact=True,
     )
+    answer_reuse_drift = container.answer_reuse_drift.drift_report(
+        "demo-answer-reuse-drift",
+        customer_profile_id="regulated_healthcare",
+    )
+    answer_reuse_drift_pack = container.answer_reuse_drift.pack(
+        "demo-answer-reuse-drift-pack",
+        answer_reuse_drift,
+        write_artifact=True,
+    )
     export = container.workbench.export_package(
         analysis,
         draft,
@@ -610,6 +619,16 @@ async def main() -> None:
     print(f"Answer Reuse Library Pack: {answer_reuse_library_pack.artifact_path}")
     print(f"Answer Reuse Library Pack JSON: {answer_reuse_library_pack.json_artifact_path}")
     print("Answer reuse library directory: storage/answer_reuse_library")
+    print(
+        "Answer reuse drift: "
+        f"status={answer_reuse_drift.status} "
+        f"average_score={answer_reuse_drift.summary['average_drift_score']} "
+        f"owner_review={answer_reuse_drift.summary['owner_review_count']} "
+        f"rewrite={answer_reuse_drift.summary['rewrite_count']}"
+    )
+    print(f"Answer Reuse Drift Pack: {answer_reuse_drift_pack.artifact_path}")
+    print(f"Answer Reuse Drift Pack JSON: {answer_reuse_drift_pack.json_artifact_path}")
+    print("Answer reuse drift directory: storage/answer_reuse_drift")
     print(f"Answer confidence: {answer.confidence}")
     print(f"Citations: {', '.join(c.filename for c in answer.citations)}")
     print(f"Draft sections: {len(draft.sections)}")
@@ -939,6 +958,8 @@ async def main() -> None:
         f"fit={customer_fit.fit_score} tasks={len(action_plan)} "
         f"answer_reuse={answer_reuse_library.status}/{answer_reuse_library.summary['snippet_count']} "
         f"answer_reuse_library={answer_reuse_library_pack.artifact_path} "
+        f"answer_reuse_drift={answer_reuse_drift.status}/{answer_reuse_drift.summary['average_drift_score']} "
+        f"answer_reuse_drift_pack={answer_reuse_drift_pack.artifact_path} "
         f"readiness={scorecard.readiness_score}/{scorecard.readiness_level} "
         f"readiness_pack={readiness_pack.artifact_path} "
         f"win score={win_strategy.win_score}/{win_strategy.win_level} "

@@ -4,6 +4,7 @@ from app.core.config import Settings, get_settings
 from app.providers.factory import build_llm_provider
 from app.repositories.memory import repository
 from app.services.action_plan import StakeholderActionPlanService
+from app.services.answer_reuse_drift import AnswerReuseDriftService
 from app.services.answer_reuse_library import AnswerReuseLibraryService
 from app.services.api_contracts import ApiContractService
 from app.services.artifact_inventory import ArtifactInventoryService
@@ -76,6 +77,7 @@ class ServiceContainer:
         self.bid_simulator = BidScenarioSimulatorService(settings)
         self.customer_intelligence = CustomerIntelligenceService(settings)
         self.answer_reuse_library = AnswerReuseLibraryService(self.repo, settings)
+        self.answer_reuse_drift = AnswerReuseDriftService(settings, self.answer_reuse_library)
         self.compliance = ComplianceControlMappingService(self.repo, settings)
         self.contract_risk = ContractRiskService(self.repo, settings)
         self.corpus_coverage = CorpusCoverageService(self.repo, settings)

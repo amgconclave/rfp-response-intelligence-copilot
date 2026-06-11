@@ -2988,6 +2988,50 @@ with tabs[45]:
         st.session_state.answer_reuse_library = pack["library"]
         st.success(f"Answer Reuse Library Pack generated under answer_reuse_library: {pack['artifact_path']}")
 
+    st.subheader("Answer Reuse Drift")
+    st.caption("Check reusable snippets against cited sources before broad customer-facing reuse.")
+    drift_cols = st.columns(2)
+    min_source_overlap = st.slider("Minimum source overlap", 1, 10, 4, key="answer_reuse_drift_overlap")
+    drift_payload = {**payload, "min_source_overlap": min_source_overlap}
+    if drift_cols[0].button("Load reuse drift"):
+        st.session_state.answer_reuse_drift = post_json("/rfp/answer-reuse-drift", drift_payload)
+    if drift_cols[1].button("Generate Reuse Drift Pack"):
+        pack = post_json("/rfp/answer-reuse-drift-pack", {**drift_payload, "write_artifact": True})
+        st.session_state.answer_reuse_drift_pack = pack
+        st.session_state.answer_reuse_drift = pack["drift_report"]
+        st.success(f"Answer Reuse Drift Pack generated under answer_reuse_drift: {pack['artifact_path']}")
+
+    drift = st.session_state.get("answer_reuse_drift")
+    if drift:
+        summary = drift["summary"]
+        drift_metric_cols = st.columns(5)
+        drift_metric_cols[0].metric("Status", drift["status"])
+        drift_metric_cols[1].metric("Checked", summary["snippet_count"])
+        drift_metric_cols[2].metric("Average score", summary["average_drift_score"])
+        drift_metric_cols[3].metric("Owner review", summary["owner_review_count"])
+        drift_metric_cols[4].metric("Rewrite", summary["rewrite_count"])
+        st.write("Drift findings")
+        st.dataframe(
+            [
+                {
+                    "id": item["snippet_id"],
+                    "title": item["title"],
+                    "owner": item["owner"],
+                    "status": item["drift_status"],
+                    "score": item["drift_score"],
+                    "citation": item["citation_status"],
+                    "missing_terms": ", ".join(item["missing_terms"]),
+                    "stale_claim_terms": ", ".join(item["stale_claim_terms"]),
+                }
+                for item in drift["findings"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Drift owner queue")
+        st.dataframe(drift["owner_queue"], use_container_width=True)
+        st.write("Workflow")
+        st.json(drift["workflow"])
+
     library = st.session_state.get("answer_reuse_library")
     if library:
         summary = library["summary"]
@@ -3046,6 +3090,16 @@ with tabs[45]:
             "Download Answer Reuse Library Markdown",
             pack["markdown"],
             file_name="answer_reuse_library_pack.md",
+        )
+
+    drift_pack = st.session_state.get("answer_reuse_drift_pack")
+    if drift_pack:
+        st.write("Generated drift artifact path", drift_pack["artifact_path"])
+        st.write("Generated drift JSON path", drift_pack["json_artifact_path"])
+        st.download_button(
+            "Download Answer Reuse Drift Markdown",
+            drift_pack["markdown"],
+            file_name="answer_reuse_drift_pack.md",
         )
 
 

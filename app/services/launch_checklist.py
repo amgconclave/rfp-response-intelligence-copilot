@@ -61,6 +61,8 @@ class LaunchChecklistService:
                 "POST /rfp/objection-handling-pack",
                 "POST /rfp/answer-reuse-library",
                 "POST /rfp/answer-reuse-library-pack",
+                "POST /rfp/answer-reuse-drift",
+                "POST /rfp/answer-reuse-drift-pack",
                 "POST /learning/win-loss",
                 "POST /learning/win-loss-pack",
                 "POST /rag/retrieval-experiments",
@@ -191,6 +193,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\answer_reuse_library -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "answer-reuse-drift|Answer Reuse Drift|answer_reuse_drift|drift monitor" '
+                    "app dashboard docs README.md tests sample_data Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\answer_reuse_drift -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -453,6 +463,7 @@ class LaunchChecklistService:
             "review_boards": "storage/review_boards",
             "exception_registers": "storage/exception_registers",
             "answer_reuse_library": "storage/answer_reuse_library",
+            "answer_reuse_drift": "storage/answer_reuse_drift",
             "bid_packs": "storage/bid_packs",
             "objection_packs": "storage/objection_packs",
             "win_loss_packs": "storage/win_loss_packs",
@@ -593,6 +604,25 @@ class LaunchChecklistService:
                 200,
                 "Writes governed Answer Reuse Library Markdown and JSON artifacts.",
                 ["storage/answer_reuse_library/*.md", "storage/answer_reuse_library/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Answer reuse drift",
+                "POST",
+                "/rfp/answer-reuse-drift",
+                "enterprise",
+                200,
+                "Returns checkpointed reusable-answer drift findings with owner routing.",
+                body='{"customer_profile_id":"regulated_healthcare","min_source_overlap":4}',
+            ),
+            self._row(
+                "Answer reuse drift pack",
+                "POST",
+                "/rfp/answer-reuse-drift-pack",
+                "artifact",
+                200,
+                "Writes Answer Reuse Drift Markdown and JSON artifacts.",
+                ["storage/answer_reuse_drift/*.md", "storage/answer_reuse_drift/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

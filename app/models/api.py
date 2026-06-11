@@ -164,6 +164,68 @@ class AnswerReuseLibraryPackResponse(BaseModel):
     trace_id: str
 
 
+class AnswerReuseDriftRequest(AnswerReuseLibraryRequest):
+    min_source_overlap: int = 4
+
+
+class AnswerReuseDriftTransition(BaseModel):
+    sequence: int
+    from_state: str | None = None
+    to_state: str
+    decision: str
+    status: str
+    checkpoint_key: str
+    reason: str
+
+
+class AnswerReuseDriftFinding(BaseModel):
+    snippet_id: str
+    title: str
+    category: str
+    owner: str
+    drift_status: str
+    drift_score: int
+    reuse_decision: str
+    expiry_status: str
+    citation_status: str
+    source_overlap: int
+    source_files: list[str] = Field(default_factory=list)
+    missing_terms: list[str] = Field(default_factory=list)
+    stale_claim_terms: list[str] = Field(default_factory=list)
+    reviewer_action: str
+    workflow_state: str
+    transition_trace: list[AnswerReuseDriftTransition] = Field(default_factory=list)
+    evidence: dict[str, Any] = Field(default_factory=dict)
+
+
+class AnswerReuseDriftResponse(BaseModel):
+    title: str
+    status: str
+    findings: list[AnswerReuseDriftFinding]
+    summary: dict[str, Any]
+    owner_queue: list[dict[str, Any]] = Field(default_factory=list)
+    workflow: dict[str, Any] = Field(default_factory=dict)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class AnswerReuseDriftPackRequest(AnswerReuseDriftRequest):
+    drift_report: AnswerReuseDriftResponse | None = None
+    write_artifact: bool = True
+
+
+class AnswerReuseDriftPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    drift_report: AnswerReuseDriftResponse
+    trace_id: str
+
+
 class ExportPackageRequest(BaseModel):
     rfp_document_id: str | None = None
     analyzed_payload: AnalyzeResponse | None = None

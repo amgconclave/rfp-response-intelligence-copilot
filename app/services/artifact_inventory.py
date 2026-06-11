@@ -297,6 +297,14 @@ class ArtifactInventoryService:
                 "Select-Object FullName,Length,LastWriteTime"
             ),
             (
+                'rg "answer-reuse-drift|Answer Reuse Drift|answer_reuse_drift|drift monitor" '
+                "app dashboard docs README.md tests Makefile"
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\answer_reuse_drift -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
                 'rg "bid/scenario-analysis|bid/roi-pack|Bid/No-Bid|ROI Impact|bid_packs|'
                 'risk-adjusted ROI" app dashboard docs README.md tests scripts sample_data Makefile'
             ),
@@ -395,6 +403,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /rfp/exception-pack to write the Submission Exception Register Pack "
                 "under storage/exception_registers/."
+            ),
+            (
+                "Call POST /rfp/answer-reuse-drift-pack to write the Answer Reuse Drift Pack "
+                "under storage/answer_reuse_drift/."
             ),
             (
                 "Call POST /bid/roi-pack to write the Bid/No-Bid ROI Impact Pack "
@@ -629,6 +641,12 @@ class ArtifactInventoryService:
                 "answer_reuse_library",
                 "POST /rfp/answer-reuse-library-pack",
                 "Governed accepted-answer snippets with owners, expiry, citation lineage, and reuse decisions.",
+            ),
+            self._spec(
+                "answer_reuse_drift",
+                "answer_reuse_drift",
+                "POST /rfp/answer-reuse-drift-pack",
+                "Checkpointed reusable-answer drift monitor with owner routing and reuse gate decisions.",
             ),
             self._spec(
                 "bid_packs",

@@ -239,6 +239,7 @@ flowchart LR
 - Customer profile fit scoring for regulated healthcare, fintech, and public-sector sample buyers.
 - Local approved response memory search with reusable snippets, tags, citations, and confidence.
 - Governed Answer Reuse Library via `POST /rfp/answer-reuse-library` and `POST /rfp/answer-reuse-library-pack`, writing Markdown/JSON under `storage/answer_reuse_library/` with owner, expiry, approval status, reuse decision, citation lineage, owner queue, proof commands, and limitations.
+- Answer Reuse Drift Monitor via `POST /rfp/answer-reuse-drift` and `POST /rfp/answer-reuse-drift-pack`, writing Markdown/JSON under `storage/answer_reuse_drift/` with typed drift findings, source-overlap checks, stale claim terms, checkpointed workflow transitions, owner routing, reuse gates, proof commands, and limitations.
 - Local response export packs with executive summary, matrix, drafted sections, citations, risks, missing evidence, and usage summary.
 - Groundedness review board for unsupported claims, weak citations, missing evidence, high-risk requirements, and cost/latency warnings.
 - Reviewer Collaboration Workflow via `POST /rfp/reviewer-workflow` and `POST /rfp/reviewer-workflow-pack`, writing checkpointed Markdown/JSON under `storage/review_boards/` with state-machine gates, traceable transitions, approval path, replay notes, proof commands, and limitations.
@@ -369,6 +370,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /rfp/response-memory/search`: searches local approved response snippets by query, category, and customer profile.
 - `POST /rfp/answer-reuse-library`: returns governed accepted-answer snippets with owner, expiry, approval status, reuse decision, citation lineage, owner queue, proof commands, and limitations.
 - `POST /rfp/answer-reuse-library-pack`: writes a Markdown/JSON Answer Reuse Library Pack under `storage/answer_reuse_library/`.
+- `POST /rfp/answer-reuse-drift`: returns reusable-answer drift findings with owner routing, checkpointed transitions, and reuse gate decisions.
+- `POST /rfp/answer-reuse-drift-pack`: writes a Markdown/JSON Answer Reuse Drift Pack under `storage/answer_reuse_drift/`.
 - `POST /rfp/export-package`: writes a local Markdown/JSON response pack under `storage/exports/`.
 - `POST /rfp/review-answer`: reviews groundedness, citation quality, missing evidence, risk, and usage for one answer.
 - `POST /rfp/review-package`: reviews a requirement matrix plus draft/export package and can create the local matrix/draft/export payload when given analysis.
@@ -486,6 +489,7 @@ Run the API and dashboard, then capture:
 - Ask Questions tab showing a cited SSO/encryption answer.
 - Customer Fit / Response Memory tab showing a selected profile and reusable snippets.
 - Answer Reuse Library tab showing governed snippets, owners, expiry, reuse decisions, citation lineage, and generated `storage/answer_reuse_library/` artifact path.
+- Answer Reuse Drift panel showing drift status, source-overlap score, stale claim terms, checkpointed workflow state, owner queue, and generated `storage/answer_reuse_drift/` artifact path.
 - Action Plan / Handoff Board tab showing task ownership and a handoff export path.
 - Deal Readiness / Executive Report tab showing readiness score, blockers, owner bottlenecks, section completeness, reviewer bottlenecks, and generated `storage/readiness_packs/` artifact path.
 - Win Strategy / Pricing Memo tab showing win score, competitor/pricing risk, cited proof points, next owner actions, and memo export path.

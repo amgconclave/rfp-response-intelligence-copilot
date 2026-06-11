@@ -328,6 +328,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "answer_reuse_library",
             },
+            {
+                "label": "Answer Reuse Drift",
+                "endpoint_paths": ["/rfp/answer-reuse-drift", "/rfp/answer-reuse-drift-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "answer_reuse_drift",
+            },
             {"label": "Action Plan / Handoff Board", "endpoint_paths": ["/rfp/action-plan", "/rfp/handoff-board"]},
             {"label": "Review Board / Red Team", "endpoint_paths": ["/rfp/review-answer", "/rfp/review-package"]},
             {
@@ -644,6 +650,17 @@ class UIVerificationService:
                 "path": "/rfp/answer-reuse-library-pack",
                 "purpose": "Answer Reuse Library generated governance pack.",
                 "expected_artifacts": ["storage/answer_reuse_library/*.md", "storage/answer_reuse_library/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/answer-reuse-drift",
+                "purpose": "Answer Reuse Drift Monitor panel with checkpointed reuse gate findings.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/answer-reuse-drift-pack",
+                "purpose": "Answer Reuse Drift generated governance pack.",
+                "expected_artifacts": ["storage/answer_reuse_drift/*.md", "storage/answer_reuse_drift/*.json"],
             },
             {"method": "GET", "path": "/api/contract-audit", "purpose": "API Contract tab audit snapshot."},
             {

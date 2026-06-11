@@ -812,6 +812,32 @@ Writes a Markdown and JSON Answer Reuse Library Pack under `storage/answer_reuse
 }
 ```
 
+### `POST /rfp/answer-reuse-drift`
+
+Checks governed reusable snippets against their cited source text and returns drift findings with source overlap, stale claim terms, owner routing, checkpoint keys, and a replayable state-machine transition trace.
+
+```json
+{
+  "category": "security",
+  "customer_profile_id": "regulated_healthcare",
+  "include_expired": true,
+  "min_source_overlap": 4
+}
+```
+
+### `POST /rfp/answer-reuse-drift-pack`
+
+Writes a Markdown and JSON Answer Reuse Drift Pack under `storage/answer_reuse_drift/`. The pack documents reusable-answer drift status, owner queues, checkpointed workflow states, proof commands, and limitations.
+
+```json
+{
+  "category": "security",
+  "customer_profile_id": "regulated_healthcare",
+  "min_source_overlap": 4,
+  "write_artifact": true
+}
+```
+
 ### `POST /rfp/export-package`
 
 Creates an interview-ready response package from an analyzed RFP payload or ingested RFP document ID plus an optional draft response. By default, artifacts are written under `storage/exports/` and the response also includes Markdown and structured JSON.
