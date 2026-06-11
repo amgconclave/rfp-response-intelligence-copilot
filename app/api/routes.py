@@ -161,6 +161,10 @@ from app.models.api import (
     ReviewerCollectionRequest,
     ReviewerCollectionResponse,
     ReviewerQuickstartResponse,
+    ReviewerSignoffLedgerPackRequest,
+    ReviewerSignoffLedgerPackResponse,
+    ReviewerSignoffLedgerRequest,
+    ReviewerSignoffLedgerResponse,
     ReviewerWalkthroughPackRequest,
     ReviewerWalkthroughPackResponse,
     ReviewPackageRequest,
@@ -878,6 +882,98 @@ async def reviewer_workflow_pack(
             "artifact_path": pack.artifact_path,
             "workflow_status": pack.workflow.workflow_status,
             "checkpoints": len(pack.workflow.checkpoints),
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/rfp/reviewer-signoff-ledger",
+    response_model=ReviewerSignoffLedgerResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def reviewer_signoff_ledger(
+    payload: ReviewerSignoffLedgerRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewerSignoffLedgerResponse:
+    trace_id = get_trace_id(request)
+    collaboration = payload.collaboration
+    if collaboration is None:
+        inputs = _reviewer_collaboration_inputs(payload, trace_id, container)
+        collaboration = container.reviewer_collaboration.create_board(
+            trace_id=f"{trace_id}-collaboration",
+            **inputs,
+        )
+    workflow = payload.workflow or container.reviewer_workflow.build_workflow(
+        trace_id=f"{trace_id}-workflow",
+        collaboration=collaboration,
+    )
+    ledger = container.reviewer_signoff.ledger(
+        trace_id=trace_id,
+        collaboration=collaboration,
+        workflow=workflow,
+        signoff_overrides=payload.signoff_overrides,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.reviewer_signoff_ledger_created",
+        "reviewer_signoff_ledger",
+        metadata={
+            "ledger_status": ledger.ledger_status,
+            "records": len(ledger.records),
+            "blocked": ledger.summary["blocked_count"],
+            "pending": ledger.summary["pending_count"],
+        },
+    )
+    return ledger
+
+
+@router.post(
+    "/rfp/reviewer-signoff-pack",
+    response_model=ReviewerSignoffLedgerPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def reviewer_signoff_pack(
+    payload: ReviewerSignoffLedgerPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewerSignoffLedgerPackResponse:
+    trace_id = get_trace_id(request)
+    collaboration = payload.collaboration
+    if collaboration is None:
+        inputs = _reviewer_collaboration_inputs(payload, trace_id, container)
+        collaboration = container.reviewer_collaboration.create_board(
+            trace_id=f"{trace_id}-collaboration",
+            **inputs,
+        )
+    workflow = payload.workflow or container.reviewer_workflow.build_workflow(
+        trace_id=f"{trace_id}-workflow",
+        collaboration=collaboration,
+    )
+    ledger = payload.ledger or container.reviewer_signoff.ledger(
+        trace_id=f"{trace_id}-ledger",
+        collaboration=collaboration,
+        workflow=workflow,
+        signoff_overrides=payload.signoff_overrides,
+    )
+    pack = container.reviewer_signoff.pack(
+        trace_id=trace_id,
+        collaboration=collaboration,
+        workflow=workflow,
+        ledger=ledger,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.reviewer_signoff_pack_created",
+        "reviewer_signoff_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "ledger_status": pack.ledger.ledger_status,
+            "records": len(pack.ledger.records),
         },
     )
     return pack
@@ -5094,6 +5190,8 @@ def _reviewer_collaboration_inputs(
         | ReviewerCollaborationPackRequest
         | ReviewerCollaborationWorkflowRequest
         | ReviewerCollaborationWorkflowPackRequest
+        | ReviewerSignoffLedgerRequest
+        | ReviewerSignoffLedgerPackRequest
     ),
     trace_id: str,
     container: ServiceContainer,

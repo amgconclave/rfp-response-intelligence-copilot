@@ -293,6 +293,7 @@ class ReleaseService:
             "procurement_packs": "Procurement Q&A risk and approval workflow packs",
             "procurement_risk_desk": "Procurement risk desk owner routing packs",
             "review_boards": "Reviewer Collaboration assignment, comment, approval, and redline packs",
+            "reviewer_signoffs": "Reviewer signoff readiness ledger and human review queue packs",
             "exception_registers": "Submission exception register packs",
             "bid_packs": "Bid/No-Bid scenario simulator and ROI Impact packs",
             "objection_packs": "Competitive objection handling packs",
@@ -536,6 +537,9 @@ class ReleaseService:
                 "procurement_pack": "storage/procurement_packs contains Markdown and JSON approval workflow files.",
                 "reviewer_collaboration_pack": (
                     "storage/review_boards contains Markdown and JSON reviewer collaboration files."
+                ),
+                "reviewer_signoff_pack": (
+                    "storage/reviewer_signoffs contains Markdown and JSON reviewer signoff ledger files."
                 ),
                 "bid_roi_pack": "storage/bid_packs contains Markdown and JSON ROI Impact Pack files.",
                 "objection_pack": "storage/objection_packs contains Markdown and JSON objection handling files.",

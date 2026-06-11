@@ -343,6 +343,8 @@ class UIVerificationService:
                     "/rfp/reviewer-collaboration-pack",
                     "/rfp/reviewer-workflow",
                     "/rfp/reviewer-workflow-pack",
+                    "/rfp/reviewer-signoff-ledger",
+                    "/rfp/reviewer-signoff-pack",
                 ],
                 "generated_artifact_tab": True,
                 "artifact_root": "review_boards",
@@ -653,6 +655,17 @@ class UIVerificationService:
                 "path": "/rfp/reviewer-workflow-pack",
                 "purpose": "Reviewer Collaboration workflow generated pack.",
                 "expected_artifacts": ["storage/review_boards/*.md", "storage/review_boards/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/reviewer-signoff-ledger",
+                "purpose": "Reviewer Collaboration durable signoff ledger view.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/reviewer-signoff-pack",
+                "purpose": "Reviewer Collaboration generated signoff ledger pack.",
+                "expected_artifacts": ["storage/reviewer_signoffs/*.md", "storage/reviewer_signoffs/*.json"],
             },
             {
                 "method": "POST",

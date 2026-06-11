@@ -2194,7 +2194,7 @@ with tabs[34]:
     if st.session_state.get("win_strategy"):
         payload["win_strategy"] = st.session_state.win_strategy
 
-    cols = st.columns(4)
+    cols = st.columns(6)
     if cols[0].button("Analyze win/loss outcomes"):
         st.session_state.win_loss_learning = post_json("/learning/win-loss", payload)
     if cols[1].button("Generate Strategy Pack"):
@@ -2348,6 +2348,28 @@ with tabs[35]:
         st.session_state.reviewer_workflow = pack["workflow"]
         st.session_state.reviewer_collaboration = pack["collaboration"]
         st.success(f"Reviewer Workflow Pack generated under review_boards: {pack['artifact_path']}")
+    if cols[4].button("Load signoff ledger"):
+        ledger_payload = {**collaboration_payload}
+        if st.session_state.get("reviewer_collaboration"):
+            ledger_payload["collaboration"] = st.session_state.reviewer_collaboration
+        if st.session_state.get("reviewer_workflow"):
+            ledger_payload["workflow"] = st.session_state.reviewer_workflow
+        ledger = post_json("/rfp/reviewer-signoff-ledger", ledger_payload)
+        st.session_state.reviewer_signoff_ledger = ledger
+    if cols[5].button("Export Signoff Pack"):
+        signoff_pack_payload = {**collaboration_payload, "write_artifact": True}
+        if st.session_state.get("reviewer_collaboration"):
+            signoff_pack_payload["collaboration"] = st.session_state.reviewer_collaboration
+        if st.session_state.get("reviewer_workflow"):
+            signoff_pack_payload["workflow"] = st.session_state.reviewer_workflow
+        if st.session_state.get("reviewer_signoff_ledger"):
+            signoff_pack_payload["ledger"] = st.session_state.reviewer_signoff_ledger
+        pack = post_json("/rfp/reviewer-signoff-pack", signoff_pack_payload)
+        st.session_state.reviewer_signoff_pack = pack
+        st.session_state.reviewer_signoff_ledger = pack["ledger"]
+        st.session_state.reviewer_workflow = pack["workflow"]
+        st.session_state.reviewer_collaboration = pack["collaboration"]
+        st.success(f"Reviewer Signoff Pack generated under reviewer_signoffs: {pack['artifact_path']}")
 
     board = st.session_state.get("reviewer_collaboration")
     if board:
@@ -2419,6 +2441,37 @@ with tabs[35]:
             "Download Reviewer Workflow Markdown",
             workflow_pack["markdown"],
             file_name="reviewer_workflow_pack.md",
+        )
+
+    signoff = st.session_state.get("reviewer_signoff_ledger")
+    if signoff:
+        st.write("Reviewer signoff ledger")
+        signoff_cols = st.columns(4)
+        signoff_cols[0].metric("Ledger", signoff["ledger_status"])
+        signoff_cols[1].metric("Records", signoff["summary"]["record_count"])
+        signoff_cols[2].metric("Blocked", signoff["summary"]["blocked_count"])
+        signoff_cols[3].metric("Queue", len(signoff["human_review_queue"]))
+        st.write("Signoff records")
+        st.dataframe(signoff["records"], use_container_width=True)
+        st.write("Governance gates")
+        st.dataframe(signoff["governance_gates"], use_container_width=True)
+        st.write("Human review queue")
+        st.dataframe(signoff["human_review_queue"], use_container_width=True)
+        st.write("Transition log")
+        st.dataframe(signoff["transition_log"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(signoff["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(signoff["limitations"])
+
+    signoff_pack = st.session_state.get("reviewer_signoff_pack")
+    if signoff_pack:
+        st.write("Generated signoff artifact path", signoff_pack["artifact_path"])
+        st.write("Generated signoff JSON path", signoff_pack["json_artifact_path"])
+        st.download_button(
+            "Download Reviewer Signoff Markdown",
+            signoff_pack["markdown"],
+            file_name="reviewer_signoff_ledger_pack.md",
         )
 
 

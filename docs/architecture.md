@@ -38,6 +38,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `RequirementMatrixService` behavior: requirement rows flow through API/domain models and export workflows.
 - `ReviewBoardService`: produces reviewer findings and red-team style concerns for response quality.
 - `ReviewerCollaborationService`: converts matrix rows, review findings, source gaps, and contract redlines into local reviewer assignments, decision comments, approval status, and review-board artifacts.
+- `ReviewerSignoffLedgerService`: converts reviewer boards and workflow replays into durable local signoff readiness ledgers with policy gates, outstanding owner actions, transition logs, and human-review queues.
 - `ActionPlanService`: turns requirements, gaps, and review findings into stakeholder tasks.
 - `DealReadinessService`: scores launch readiness, executive risk, and blockers.
 - `WinStrategyService`: simulates competitor posture, pricing risk, and pursuit strategy.
@@ -102,6 +103,7 @@ Generated files are not committed. They are reproducible outputs from local API 
 - `storage/compliance_packs/`
 - `storage/procurement_packs/`
 - `storage/review_boards/`
+- `storage/reviewer_signoffs/`
 - `storage/exception_registers/`
 - `storage/answer_reuse_library/`
 - `storage/answer_reuse_drift/`

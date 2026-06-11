@@ -1059,6 +1059,39 @@ Writes the reviewer workflow replay as Markdown and JSON under `storage/review_b
 
 The pack is intended for local review-board governance: checkpoint status, blocked state, transition trace notes, approval path, replay notes, proof commands, and known limitations.
 
+### `POST /rfp/reviewer-signoff-ledger`
+
+Builds a local reviewer signoff readiness ledger from a collaboration board and workflow replay. The ledger captures each reviewer role, outstanding blockers, decision-comment references, policy gates, human review queue items, and a transition log. It supports optional `signoff_overrides` for explicit local review inputs, but it does not claim those are real external approvals.
+
+```json
+{
+  "collaboration": {},
+  "workflow": {},
+  "signoff_overrides": [
+    {
+      "reviewer_role": "sales",
+      "approval_status": "approved",
+      "signed_by": "Ava Sales Lead",
+      "evidence_note": "Sales reviewed the local submission context."
+    }
+  ]
+}
+```
+
+The response includes `ledger_status`, `records`, `summary`, `workflow_snapshot`, `governance_gates`, `human_review_queue`, `transition_log`, proof commands, limitations, and `trace_id`.
+
+### `POST /rfp/reviewer-signoff-pack`
+
+Writes the reviewer signoff ledger as Markdown and JSON under `storage/reviewer_signoffs/`.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack is intended for local review-board evidence: signoff readiness, durable workflow replay context, named policy gates, outstanding owner actions, transition history, proof commands, and limitations.
+
 ### `POST /rfp/exception-register`
 
 Creates a local submission exception register from a submission decision plus optional reviewer collaboration board. If called with `{}`, the endpoint derives sample RFP signals locally. Each exception has a waiver type, severity, owner, approver, expiry date, required evidence, linked requirements/artifacts, risk acceptance text, and escalation path.

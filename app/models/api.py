@@ -401,6 +401,68 @@ class ReviewerCollaborationWorkflowPackResponse(BaseModel):
     trace_id: str
 
 
+class ReviewerSignoffOverride(BaseModel):
+    reviewer_role: str
+    approval_status: str = "approved"
+    signed_by: str | None = None
+    signed_at: str | None = None
+    evidence_note: str = ""
+    related_comment_ids: list[str] = Field(default_factory=list)
+
+
+class ReviewerSignoffRecord(BaseModel):
+    signoff_id: str
+    reviewer_role: str
+    reviewer_name: str
+    approval_status: str
+    signoff_state: str
+    policy_gate: str
+    signed_by: str | None = None
+    signed_at: str | None = None
+    evidence_note: str = ""
+    requirement_ids: list[str] = Field(default_factory=list)
+    outstanding_items: list[str] = Field(default_factory=list)
+    decision_comment_ids: list[str] = Field(default_factory=list)
+    citation_refs: list[str] = Field(default_factory=list)
+    trace_notes: list[str] = Field(default_factory=list)
+
+
+class ReviewerSignoffLedgerRequest(ReviewerCollaborationWorkflowRequest):
+    workflow: ReviewerCollaborationWorkflowResponse | None = None
+    signoff_overrides: list[ReviewerSignoffOverride] = Field(default_factory=list)
+
+
+class ReviewerSignoffLedgerResponse(BaseModel):
+    title: str
+    ledger_status: str
+    records: list[ReviewerSignoffRecord]
+    summary: dict[str, Any]
+    workflow_snapshot: dict[str, Any] = Field(default_factory=dict)
+    governance_gates: list[dict[str, Any]] = Field(default_factory=list)
+    human_review_queue: list[dict[str, Any]] = Field(default_factory=list)
+    transition_log: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ReviewerSignoffLedgerPackRequest(ReviewerSignoffLedgerRequest):
+    ledger: ReviewerSignoffLedgerResponse | None = None
+    write_artifact: bool = True
+
+
+class ReviewerSignoffLedgerPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    ledger: ReviewerSignoffLedgerResponse
+    collaboration: ReviewerCollaborationResponse
+    workflow: ReviewerCollaborationWorkflowResponse
+    trace_id: str
+
+
 class ActionPlanRequest(BaseModel):
     rfp_document_id: str | None = None
     analyzed_payload: AnalyzeResponse | None = None

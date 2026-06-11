@@ -564,6 +564,18 @@ async def main() -> None:
         reviewer_workflow,
         write_artifact=True,
     )
+    reviewer_signoff = container.reviewer_signoff.ledger(
+        "demo-reviewer-signoff-ledger",
+        reviewer_collaboration,
+        reviewer_workflow,
+    )
+    reviewer_signoff_pack = container.reviewer_signoff.pack(
+        "demo-reviewer-signoff-pack",
+        reviewer_collaboration,
+        reviewer_workflow,
+        reviewer_signoff,
+        write_artifact=True,
+    )
     exception_register = container.submission_exceptions.create_register(
         trace_id="demo-exception-register",
         submission_decision=submission_decision,
@@ -980,6 +992,16 @@ async def main() -> None:
     print(f"Reviewer Workflow Pack JSON: {reviewer_workflow_pack.json_artifact_path}")
     print("Review boards directory: storage/review_boards")
     print(
+        "Reviewer signoff ledger: "
+        f"status={reviewer_signoff.ledger_status} "
+        f"records={reviewer_signoff.summary['record_count']} "
+        f"blocked={reviewer_signoff.summary['blocked_count']} "
+        f"queue={len(reviewer_signoff.human_review_queue)}"
+    )
+    print(f"Reviewer Signoff Pack: {reviewer_signoff_pack.artifact_path}")
+    print(f"Reviewer Signoff Pack JSON: {reviewer_signoff_pack.json_artifact_path}")
+    print("Reviewer signoff directory: storage/reviewer_signoffs")
+    print(
         "Submission exceptions: "
         f"status={exception_register.register_status} "
         f"exceptions={exception_register.summary['exception_count']} "
@@ -1154,6 +1176,9 @@ async def main() -> None:
         f"{reviewer_workflow.current_state} "
         f"review_boards={reviewer_collaboration_pack.artifact_path} "
         f"reviewer_workflow_pack={reviewer_workflow_pack.artifact_path} "
+        f"reviewer_signoff={reviewer_signoff.ledger_status}/"
+        f"{reviewer_signoff.summary['record_count']} "
+        f"reviewer_signoff_pack={reviewer_signoff_pack.artifact_path} "
         f"exceptions={exception_register.register_status}/"
         f"{exception_register.summary['exception_count']} "
         f"exception_pack={exception_pack.artifact_path} "

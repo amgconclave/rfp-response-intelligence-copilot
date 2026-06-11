@@ -305,6 +305,14 @@ class ArtifactInventoryService:
                 "Select-Object FullName,Length,LastWriteTime"
             ),
             (
+                'rg "reviewer-signoff|Reviewer Signoff|reviewer_signoffs|signoff ledger" '
+                "app dashboard docs README.md tests sample_data Makefile"
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\reviewer_signoffs -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
                 'rg "exception-register|exception-pack|Submission Exception|exception_registers" '
                 "app dashboard docs README.md tests Makefile"
             ),
@@ -431,6 +439,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /rfp/reviewer-collaboration-pack to write the Reviewer Collaboration Pack "
                 "under storage/review_boards/."
+            ),
+            (
+                "Call POST /rfp/reviewer-signoff-pack to write the Reviewer Signoff Ledger Pack "
+                "under storage/reviewer_signoffs/."
             ),
             (
                 "Call POST /rfp/exception-pack to write the Submission Exception Register Pack "
@@ -677,6 +689,12 @@ class ArtifactInventoryService:
                 "review_boards",
                 "POST /rfp/reviewer-collaboration-pack",
                 "Reviewer assignments, decision comments, approval statuses, and redline summary artifacts.",
+            ),
+            self._spec(
+                "reviewer_signoffs",
+                "reviewer_signoffs",
+                "POST /rfp/reviewer-signoff-pack",
+                "Reviewer signoff readiness ledger with governance gates and human review queue artifacts.",
             ),
             self._spec(
                 "exception_registers",
