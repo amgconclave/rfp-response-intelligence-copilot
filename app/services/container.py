@@ -4,6 +4,7 @@ from app.core.config import Settings, get_settings
 from app.providers.factory import build_llm_provider
 from app.repositories.memory import repository
 from app.services.action_plan import StakeholderActionPlanService
+from app.services.amendment_impact import RfpAmendmentImpactService
 from app.services.answer_reuse_approval import AnswerReuseApprovalService
 from app.services.answer_reuse_drift import AnswerReuseDriftService
 from app.services.answer_reuse_library import AnswerReuseLibraryService
@@ -95,6 +96,7 @@ class ServiceContainer:
         self.contract_risk = ContractRiskService(self.repo, settings)
         self.corpus_coverage = CorpusCoverageService(self.repo, settings)
         self.action_plan = StakeholderActionPlanService(settings)
+        self.amendment_impact = RfpAmendmentImpactService(settings)
         self.deal_readiness = DealReadinessService(settings)
         self.evidence_gap = EvidenceGapService(settings)
         self.leadership_brief = LeadershipBriefService(settings)

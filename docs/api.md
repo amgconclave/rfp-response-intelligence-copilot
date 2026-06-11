@@ -1261,6 +1261,37 @@ Writes Markdown/JSON Proposal Readiness Score Pack artifacts under `storage/read
 
 The pack includes the base readiness scorecard, section completeness by proposal section, evidence coverage by category, compliance/security/privacy risk, reviewer bottleneck routing, score trace analysis, durable approval workflow checkpoints, human-review queue items, governance controls, executive artifact links, endpoint references, local proof commands, limitations, Markdown, JSON, and trace ID.
 
+### `POST /rfp/amendment-impact`
+
+Compares a baseline RFP analysis against a revised RFP/addendum and returns deterministic requirement impact, owner routing, readiness impact, and a checkpointed workflow. If called with `{}`, it compares `sample_data/acme_enterprise_rfp.md` to `sample_data/acme_enterprise_rfp_addendum.md`.
+
+```json
+{
+  "baseline_fixture_path": "sample_data/acme_enterprise_rfp.md",
+  "revised_fixture_path": "sample_data/acme_enterprise_rfp_addendum.md",
+  "baseline_matrix": [],
+  "draft_response": {},
+  "readiness_scorecard": {},
+  "review_findings": [],
+  "amendment_label": "Addendum 1"
+}
+```
+
+The response includes `summary`, `requirement_changes`, `readiness_impact`, `draft_update_plan`, `owner_review_queue`, state-machine `workflow` transitions, `trace_spans`, endpoint references, proof commands, limitations, and trace ID.
+
+### `POST /rfp/amendment-impact-pack`
+
+Writes Markdown/JSON Amendment Impact Pack artifacts under `storage/amendment_impact/` by default. It accepts the same inputs as `/rfp/amendment-impact`, or a precomputed `impact`, plus `write_artifact`.
+
+```json
+{
+  "impact": {},
+  "write_artifact": true
+}
+```
+
+The pack includes an executive summary, reviewer playbook, artifact map, typed impact response, local proof commands, limitations, Markdown, JSON, and trace ID.
+
 ### `POST /rfp/win-strategy`
 
 Creates a deterministic competitive win strategy simulation from local RFP analysis, requirement matrix rows, customer fit, readiness scorecard, response memory, action-plan tasks, review findings, competitor context, and pricing notes. If the request is `{}` in local demo mode, the endpoint analyzes the sample RFP and uses the default regulated healthcare profile.

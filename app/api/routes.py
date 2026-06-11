@@ -176,6 +176,10 @@ from app.models.api import (
     ReviewerWalkthroughPackResponse,
     ReviewPackageRequest,
     ReviewPackageResponse,
+    RfpAmendmentImpactPackRequest,
+    RfpAmendmentImpactPackResponse,
+    RfpAmendmentImpactRequest,
+    RfpAmendmentImpactResponse,
     RuntimeDemoPackRequest,
     RuntimeDemoPackResponse,
     RuntimeDemoReadinessResponse,
@@ -1250,6 +1254,84 @@ async def proposal_readiness_score_pack(
             "readiness_score": pack.readiness_score,
             "readiness_level": pack.readiness_level,
             "status": pack.status,
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/rfp/amendment-impact",
+    response_model=RfpAmendmentImpactResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def rfp_amendment_impact(
+    payload: RfpAmendmentImpactRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> RfpAmendmentImpactResponse:
+    trace_id = get_trace_id(request)
+    baseline_analysis, revised_analysis, matrix = _amendment_impact_inputs(payload, trace_id, container)
+    impact = container.amendment_impact.analyze_impact(
+        trace_id=trace_id,
+        baseline_analysis=baseline_analysis,
+        revised_analysis=revised_analysis,
+        requirement_matrix=matrix,
+        draft_response=payload.draft_response,
+        readiness_scorecard=payload.readiness_scorecard,
+        review_findings=payload.review_findings,
+        amendment_label=payload.amendment_label,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.amendment_impact_created",
+        "rfp_amendment_impact",
+        metadata={
+            "status": impact.status,
+            "change_count": impact.summary["change_count"],
+            "blocking_change_count": impact.summary["blocking_change_count"],
+        },
+    )
+    return impact
+
+
+@router.post(
+    "/rfp/amendment-impact-pack",
+    response_model=RfpAmendmentImpactPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def rfp_amendment_impact_pack(
+    payload: RfpAmendmentImpactPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> RfpAmendmentImpactPackResponse:
+    trace_id = get_trace_id(request)
+    impact = payload.impact
+    if impact is None:
+        baseline_analysis, revised_analysis, matrix = _amendment_impact_inputs(payload, trace_id, container)
+        impact = container.amendment_impact.analyze_impact(
+            trace_id=f"{trace_id}-impact",
+            baseline_analysis=baseline_analysis,
+            revised_analysis=revised_analysis,
+            requirement_matrix=matrix,
+            draft_response=payload.draft_response,
+            readiness_scorecard=payload.readiness_scorecard,
+            review_findings=payload.review_findings,
+            amendment_label=payload.amendment_label,
+        )
+    pack = container.amendment_impact.pack(
+        trace_id=trace_id,
+        impact=impact,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.amendment_impact_pack_exported",
+        "rfp_amendment_impact_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "status": impact.status,
+            "change_count": impact.summary["change_count"],
         },
     )
     return pack
@@ -5701,6 +5783,58 @@ def _readiness_inputs(
             detail="Provide analysis, matrix, review findings, customer fit, action plan, or eval metrics.",
         )
     return analysis, matrix or []
+
+
+def _amendment_impact_inputs(
+    payload: RfpAmendmentImpactRequest,
+    trace_id: str,
+    container: ServiceContainer,
+) -> tuple[AnalyzeResponse, AnalyzeResponse, list[RequirementMatrixRow]]:
+    baseline_analysis = payload.baseline_analysis or payload.analysis or payload.analyzed_payload
+    if baseline_analysis is None:
+        baseline_analysis = _analysis_from_text_or_fixture(
+            trace_id=f"{trace_id}-baseline",
+            text=payload.baseline_text,
+            fixture_path=payload.baseline_fixture_path,
+            container=container,
+            label="baseline RFP",
+        )
+    revised_analysis = payload.revised_analysis
+    if revised_analysis is None:
+        revised_analysis = _analysis_from_text_or_fixture(
+            trace_id=f"{trace_id}-revised",
+            text=payload.revised_text,
+            fixture_path=payload.revised_fixture_path,
+            container=container,
+            label="revised RFP",
+        )
+    matrix = payload.baseline_matrix or payload.matrix or payload.requirement_matrix
+    if matrix is None:
+        matrix = container.workbench.create_requirement_matrix(baseline_analysis)
+    return baseline_analysis, revised_analysis, matrix
+
+
+def _analysis_from_text_or_fixture(
+    trace_id: str,
+    text: str | None,
+    fixture_path: str | None,
+    container: ServiceContainer,
+    label: str,
+) -> AnalyzeResponse:
+    if text:
+        return container.analysis.analyze(text, trace_id)
+    if not fixture_path:
+        raise HTTPException(status_code=400, detail=f"Provide {label} text, fixture path, or analysis.")
+    path = Path(fixture_path)
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    if not path.exists():
+        sample_path = container.settings.sample_data_dir / fixture_path
+        if sample_path.exists():
+            path = sample_path
+    if not path.exists():
+        raise HTTPException(status_code=404, detail=f"{label.title()} fixture not found: {fixture_path}")
+    return container.analysis.analyze(path.read_text(encoding="utf-8"), trace_id)
 
 
 def _win_strategy_inputs(

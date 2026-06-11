@@ -115,6 +115,7 @@ tabs = st.tabs(
         "Submission Certification",
         "Verification Evidence",
         "Provider Resilience",
+        "Amendment Impact",
     ]
 )
 
@@ -3929,4 +3930,65 @@ with tabs[54]:
             "Download Provider Resilience Markdown",
             pack["markdown"],
             file_name="provider_resilience_pack.md",
+        )
+
+
+with tabs[55]:
+    st.subheader("Amendment Impact")
+    st.caption(
+        "Compare a baseline RFP against an amended version, route changed requirements to owners, "
+        "and project readiness impact before the team updates the response."
+    )
+    baseline_fixture = st.text_input("Baseline fixture", "sample_data/acme_enterprise_rfp.md")
+    revised_fixture = st.text_input("Revised fixture", "sample_data/acme_enterprise_rfp_addendum.md")
+    amendment_label = st.text_input("Amendment label", "Addendum 1")
+    payload = {
+        "baseline_fixture_path": baseline_fixture,
+        "revised_fixture_path": revised_fixture,
+        "amendment_label": amendment_label,
+    }
+    action_cols = st.columns(2)
+    if action_cols[0].button("Analyze amendment impact"):
+        st.session_state.amendment_impact = post_json("/rfp/amendment-impact", payload)
+    if action_cols[1].button("Generate Amendment Impact Pack"):
+        pack = post_json("/rfp/amendment-impact-pack", {**payload, "write_artifact": True})
+        st.session_state.amendment_impact_pack = pack
+        st.session_state.amendment_impact = pack["impact"]
+        st.success(f"Amendment Impact Pack generated: {pack['artifact_path']}")
+
+    impact = st.session_state.get("amendment_impact")
+    if impact:
+        summary = impact["summary"]
+        readiness = impact["readiness_impact"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", impact["status"])
+        metric_cols[1].metric("Changes", summary["change_count"])
+        metric_cols[2].metric("Blocking", summary["blocking_change_count"])
+        metric_cols[3].metric("Readiness", readiness["projected_readiness_score"])
+        metric_cols[4].metric("Gate", readiness["submission_gate"])
+        st.write("Requirement changes")
+        st.dataframe(impact["requirement_changes"], use_container_width=True)
+        st.write("Owner review queue")
+        st.dataframe(impact["owner_review_queue"], use_container_width=True)
+        st.write("Draft update plan")
+        st.dataframe(impact["draft_update_plan"], use_container_width=True)
+        st.write("Workflow transitions")
+        st.dataframe(impact["workflow"]["transitions"], use_container_width=True)
+        st.write("Conditional routes")
+        st.dataframe(impact["workflow"]["conditional_routes"], use_container_width=True)
+        st.write("Readiness impact")
+        st.json(readiness)
+        st.write("Local proof commands")
+        st.code("\n".join(impact["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(impact["limitations"])
+
+    pack = st.session_state.get("amendment_impact_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Amendment Impact Markdown",
+            pack["markdown"],
+            file_name="rfp_amendment_impact_pack.md",
         )

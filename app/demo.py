@@ -161,6 +161,25 @@ async def main() -> None:
         readiness_scorecard=scorecard,
         executive_report=executive_report,
     )
+    revised_analysis = container.analysis.analyze(
+        (container.settings.sample_data_dir / "acme_enterprise_rfp_addendum.md").read_text(encoding="utf-8"),
+        "demo-amendment-revised",
+    )
+    amendment_impact = container.amendment_impact.analyze_impact(
+        trace_id="demo-amendment-impact",
+        baseline_analysis=analysis,
+        revised_analysis=revised_analysis,
+        requirement_matrix=matrix,
+        draft_response=draft,
+        readiness_scorecard=scorecard,
+        review_findings=package_review.findings,
+        amendment_label="Addendum 1",
+    )
+    amendment_impact_pack = container.amendment_impact.pack(
+        trace_id="demo-amendment-impact-pack",
+        impact=amendment_impact,
+        write_artifact=True,
+    )
     win_strategy = container.win_strategy.create_win_strategy(
         trace_id="demo-win-strategy",
         analysis=analysis,
@@ -744,6 +763,16 @@ async def main() -> None:
     print(f"Executive risk report: {executive_report.artifact_path}")
     print(f"Proposal readiness score pack: {readiness_pack.artifact_path}")
     print(
+        "Amendment impact: "
+        f"status={amendment_impact.status} "
+        f"changes={amendment_impact.summary['change_count']} "
+        f"blocking={amendment_impact.summary['blocking_change_count']} "
+        f"gate={amendment_impact.readiness_impact['submission_gate']}"
+    )
+    print(f"Amendment Impact Pack: {amendment_impact_pack.artifact_path}")
+    print(f"Amendment Impact Pack JSON: {amendment_impact_pack.json_artifact_path}")
+    print("Amendment impact directory: storage/amendment_impact")
+    print(
         "Win score: "
         f"{win_strategy.win_score} ({win_strategy.win_level}) "
         f"competitor_risk={win_strategy.competitor_risk_profile['risk_level']} "
@@ -1134,6 +1163,8 @@ async def main() -> None:
         f"answer_reuse_approval_pack={answer_reuse_approval_pack.artifact_path} "
         f"readiness={scorecard.readiness_score}/{scorecard.readiness_level} "
         f"readiness_pack={readiness_pack.artifact_path} "
+        f"amendment_impact={amendment_impact.status}/{amendment_impact.summary['change_count']} "
+        f"amendment_impact_pack={amendment_impact_pack.artifact_path} "
         f"win score={win_strategy.win_score}/{win_strategy.win_level} "
         f"pricing_memo={pricing_memo.artifact_path} "
         f"contract_risk={contract_risk.risk_score}/{contract_risk.status} "

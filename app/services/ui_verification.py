@@ -433,6 +433,12 @@ class UIVerificationService:
                 "artifact_root": "proposal_observability",
             },
             {
+                "label": "Amendment Impact",
+                "endpoint_paths": ["/rfp/amendment-impact", "/rfp/amendment-impact-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "amendment_impact",
+            },
+            {
                 "label": "Portfolio Pack",
                 "endpoint_paths": ["/portfolio/evidence-index", "/portfolio/interview-pack"],
                 "generated_artifact_tab": True,
@@ -687,6 +693,17 @@ class UIVerificationService:
                 "path": "/rfp/proposal-readiness-score-pack",
                 "purpose": "Deal Readiness tab generated Score Pack.",
                 "expected_artifacts": ["storage/readiness_packs/*.md", "storage/readiness_packs/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/amendment-impact",
+                "purpose": "Amendment Impact tab deterministic RFP addendum comparison.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/amendment-impact-pack",
+                "purpose": "Amendment Impact generated Markdown/JSON pack.",
+                "expected_artifacts": ["storage/amendment_impact/*.md", "storage/amendment_impact/*.json"],
             },
             {
                 "method": "POST",

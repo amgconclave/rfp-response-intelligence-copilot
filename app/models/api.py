@@ -1026,6 +1026,56 @@ class ProposalReadinessScorePackResponse(BaseModel):
     trace_id: str
 
 
+class RfpAmendmentImpactRequest(BaseModel):
+    baseline_analysis: AnalyzeResponse | None = None
+    analysis: AnalyzeResponse | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+    revised_analysis: AnalyzeResponse | None = None
+    baseline_fixture_path: str | None = "sample_data/acme_enterprise_rfp.md"
+    revised_fixture_path: str | None = "sample_data/acme_enterprise_rfp_addendum.md"
+    baseline_text: str | None = None
+    revised_text: str | None = None
+    baseline_matrix: list[RequirementMatrixRow] | None = None
+    matrix: list[RequirementMatrixRow] | None = None
+    requirement_matrix: list[RequirementMatrixRow] | None = None
+    draft_response: DraftResponse | None = None
+    readiness_scorecard: DealReadinessScorecardResponse | None = None
+    review_findings: list[ReviewFinding] = Field(default_factory=list)
+    amendment_label: str = "Addendum 1"
+
+
+class RfpAmendmentImpactResponse(BaseModel):
+    title: str
+    amendment_label: str
+    status: str
+    summary: dict[str, Any]
+    requirement_changes: list[dict[str, Any]] = Field(default_factory=list)
+    readiness_impact: dict[str, Any]
+    draft_update_plan: list[dict[str, Any]] = Field(default_factory=list)
+    owner_review_queue: list[dict[str, Any]] = Field(default_factory=list)
+    workflow: dict[str, Any]
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class RfpAmendmentImpactPackRequest(RfpAmendmentImpactRequest):
+    impact: RfpAmendmentImpactResponse | None = None
+    write_artifact: bool = True
+
+
+class RfpAmendmentImpactPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    impact: RfpAmendmentImpactResponse
+    trace_id: str
+
+
 class EvaluationMetrics(BaseModel):
     question_count: int
     retrieval_precision_at_k: float
