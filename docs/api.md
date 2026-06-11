@@ -697,6 +697,25 @@ Writes Markdown and JSON GitHub Publish Pack artifacts under ignored `storage/re
 
 The pack includes release summary, setup/demo commands, verification commands, expected outputs, endpoint inventory, artifact inventory, screenshot/manual verification placeholders, GitHub repo checklist, commit/push readiness notes, recruiter review notes, known limitations, embedded quality gate details, Markdown, JSON, and trace ID.
 
+### `GET /ops/verification-evidence`
+
+Returns the local Verification Evidence Ledger. It rolls up the required acceptance commands (`pytest`, `ruff`, standard eval, red-team eval, dashboard smoke, and demo), Release Candidate gate, Final Handoff audit, dashboard smoke, artifact inventory, reviewer signoff rows, proof commands, limitations, and trace ID. The endpoint does not execute shell commands.
+
+### `POST /ops/verification-evidence`
+
+Returns the same ledger with optional reviewer-supplied `command_results` so observed terminal summaries can be captured after local verification.
+
+```bash
+curl -X POST "http://127.0.0.1:8000/ops/verification-evidence" \
+  -H "X-API-Key: local-demo-key" \
+  -H "Content-Type: application/json" \
+  -d '{"command_results":[{"command_id":"pytest","status":"pass","observed_output":"all tests passed"}]}'
+```
+
+### `POST /ops/verification-evidence-pack`
+
+Writes Markdown and JSON Verification Evidence Pack artifacts under ignored `storage/verification_evidence/` by default. The pack captures command evidence rows, release/final/dashboard/artifact snapshots, reviewer controls, local proof commands, limitations, and artifact paths.
+
 ### `GET /reviewer/quickstart`
 
 Returns the Reviewer Quickstart runbook for a GitHub reviewer. It is local/mock by default and includes exact setup commands, one-command demo, verification commands, endpoint walkthrough order, RAG/RFP workflow walkthrough, artifact proof map, expected outputs, troubleshooting, role-specific reviewer notes, proof tour, GitHub README blurb, and trace ID.

@@ -67,6 +67,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `ReviewerService`: generates reviewer quickstart and walkthrough packs.
 - `ApiContractsService`: snapshots OpenAPI routes and reviewer collection artifacts.
 - `ReleaseService`: creates release candidate quality gates and GitHub publish packs.
+- `VerificationEvidenceService`: builds a local acceptance evidence ledger for pytest, ruff, eval, red-team, dashboard smoke, demo, release gate, final audit, artifact inventory, and reviewer signoff without executing shell commands from the API.
 - `ArtifactInventoryService`: indexes generated artifact directories and README checklist artifacts.
 - `UiVerificationService`: verifies dashboard wiring and writes UI verification packs.
 - `GitReadinessService`: checks local git status, remote, auth posture, and publish readiness.
@@ -80,6 +81,7 @@ The API exposes:
 
 - `GET /handoff/final-audit`: returns the README Consistency final audit.
 - `POST /handoff/final-pack`: writes Markdown/JSON Final Handoff artifacts under `storage/final_handoff/`.
+- `GET /ops/verification-evidence`, `POST /ops/verification-evidence`, and `POST /ops/verification-evidence-pack`: capture local command evidence and write Markdown/JSON Verification Evidence artifacts under `storage/verification_evidence/`.
 
 The Final Handoff Pack includes exact clone/run commands, verification order, endpoint inventory, artifact inventory, dashboard smoke summary, RAG/eval/red-team proof, local/mock limitations, Azure optional notes, and a recruiter-facing README blurb.
 
@@ -121,6 +123,7 @@ Generated files are not committed. They are reproducible outputs from local API 
 - `storage/artifact_indexes/`
 - `storage/ui_verification/`
 - `storage/final_handoff/`
+- `storage/verification_evidence/`
 
 ## Local-First And Provider Boundaries
 

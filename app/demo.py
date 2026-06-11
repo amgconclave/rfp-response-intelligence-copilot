@@ -350,6 +350,18 @@ async def main() -> None:
         dashboard_smoke,
         write_artifact=True,
     )
+    verification_evidence = container.verification_evidence.evidence(
+        "demo-verification-evidence",
+        release_gate,
+        final_audit,
+        dashboard_smoke,
+        artifact_inventory,
+    )
+    verification_evidence_pack = container.verification_evidence.pack(
+        "demo-verification-evidence-pack",
+        verification_evidence,
+        write_artifact=True,
+    )
     git_readiness = container.git_readiness.readiness("demo-git-readiness")
     git_push_plan = container.git_readiness.push_plan("demo-git-push-plan", write_artifact=True)
     runtime_readiness = container.runtime_demo.readiness("demo-runtime-readiness")
@@ -1014,6 +1026,16 @@ async def main() -> None:
     print(f"Proposal Observability Pack: {proposal_observability_pack.artifact_path}")
     print(f"Proposal Observability Pack JSON: {proposal_observability_pack.json_artifact_path}")
     print("Proposal observability directory: storage/proposal_observability")
+    print(
+        "Verification evidence: "
+        f"status={verification_evidence.status} "
+        f"score={verification_evidence.score} "
+        f"recorded={verification_evidence.summary['recorded_command_count']}/"
+        f"{verification_evidence.summary['required_command_count']}"
+    )
+    print(f"Verification Evidence Pack: {verification_evidence_pack.artifact_path}")
+    print(f"Verification Evidence Pack JSON: {verification_evidence_pack.json_artifact_path}")
+    print("Verification evidence directory: storage/verification_evidence")
     print(f"Eval pass: {evaluation.passed}")
     print(f"Retrieval precision@k: {evaluation.retrieval_precision_at_k}")
     print(f"Citation coverage: {evaluation.citation_coverage}")
@@ -1125,6 +1147,8 @@ async def main() -> None:
         f"proposal_observability={proposal_observability.status}/"
         f"{proposal_observability.summary['trace_span_count']} "
         f"proposal_observability_pack={proposal_observability_pack.artifact_path} "
+        f"verification_evidence={verification_evidence.status}/{verification_evidence.score} "
+        f"verification_evidence_pack={verification_evidence_pack.artifact_path} "
         f"red_team={red_team['passed']} brief={leadership_brief.artifact_path}"
     )
 

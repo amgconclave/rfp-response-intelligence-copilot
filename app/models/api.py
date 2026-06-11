@@ -2365,6 +2365,49 @@ class PublishPackResponse(BaseModel):
     trace_id: str
 
 
+class VerificationCommandResult(BaseModel):
+    command_id: str
+    status: str = "not_recorded"
+    observed_output: str = ""
+    duration_seconds: float | None = None
+    notes: list[str] = Field(default_factory=list)
+
+
+class VerificationEvidenceRequest(BaseModel):
+    command_results: list[VerificationCommandResult] = Field(default_factory=list)
+
+
+class VerificationEvidencePackRequest(VerificationEvidenceRequest):
+    evidence: VerificationEvidenceResponse | None = None
+    write_artifact: bool = True
+
+
+class VerificationEvidenceResponse(BaseModel):
+    title: str
+    status: str
+    score: int
+    summary: dict[str, Any]
+    command_evidence: list[dict[str, Any]] = Field(default_factory=list)
+    release_gate_snapshot: dict[str, Any] = Field(default_factory=dict)
+    final_audit_snapshot: dict[str, Any] = Field(default_factory=dict)
+    dashboard_smoke_snapshot: dict[str, Any] = Field(default_factory=dict)
+    artifact_inventory_snapshot: dict[str, Any] = Field(default_factory=dict)
+    reviewer_signoff: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class VerificationEvidencePackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    evidence: VerificationEvidenceResponse
+    trace_id: str
+
+
 class GitPushPlanRequest(BaseModel):
     write_artifact: bool = True
 

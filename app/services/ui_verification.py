@@ -428,6 +428,15 @@ class UIVerificationService:
                 "artifact_root": "release_packs",
             },
             {
+                "label": "Verification Evidence",
+                "endpoint_paths": [
+                    "/ops/verification-evidence",
+                    "/ops/verification-evidence-pack",
+                ],
+                "generated_artifact_tab": True,
+                "artifact_root": "verification_evidence",
+            },
+            {
                 "label": "CI Doctor / Audit Pack",
                 "endpoint_paths": ["/ops/ci-doctor", "/ops/audit-pack"],
                 "generated_artifact_tab": True,
@@ -688,6 +697,25 @@ class UIVerificationService:
             },
             {"method": "GET", "path": "/release/quality-gate", "purpose": "Release Pack tab gate."},
             {"method": "POST", "path": "/release/publish-pack", "purpose": "Release Pack generated artifact."},
+            {
+                "method": "GET",
+                "path": "/ops/verification-evidence",
+                "purpose": "Verification Evidence tab current command ledger.",
+            },
+            {
+                "method": "POST",
+                "path": "/ops/verification-evidence",
+                "purpose": "Verification Evidence tab ledger with reviewer-supplied command results.",
+            },
+            {
+                "method": "POST",
+                "path": "/ops/verification-evidence-pack",
+                "purpose": "Verification Evidence generated ledger pack.",
+                "expected_artifacts": [
+                    "storage/verification_evidence/*.md",
+                    "storage/verification_evidence/*.json",
+                ],
+            },
             {"method": "GET", "path": "/artifacts/inventory", "purpose": "Artifact Inventory tab."},
             {
                 "method": "POST",

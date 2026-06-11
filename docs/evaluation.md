@@ -49,6 +49,8 @@ The v0.2 API also exposes proof-oriented coverage endpoints:
 - `POST /ops/proposal-observability-pack`: writes the Proposal Observability Pack under `storage/proposal_observability/`.
 - `GET /handoff/final-audit`: returns the README Consistency final audit.
 - `POST /handoff/final-pack`: writes the Final Handoff Pack under `storage/final_handoff/`.
+- `GET /ops/verification-evidence`: returns the local Verification Evidence Ledger for pytest, ruff, eval, red-team, dashboard smoke, demo, release gate, final audit, artifact inventory, and reviewer signoff.
+- `POST /ops/verification-evidence-pack`: writes the Verification Evidence Pack under `storage/verification_evidence/`.
 
 ## Final Audit Coverage
 
@@ -78,6 +80,7 @@ Expected final proof points include:
 - Proposal Observability report includes local trace spans, retrieval diagnostics, governance findings, and the pack is written under `storage/proposal_observability/`.
 - Final audit status reports `pass`.
 - Final Handoff Pack is written under `storage/final_handoff/`.
+- Verification Evidence Pack is written under `storage/verification_evidence/`.
 
 ## Local And Cloud Notes
 

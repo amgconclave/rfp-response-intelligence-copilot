@@ -97,6 +97,9 @@ class LaunchChecklistService:
                 "POST /artifacts/readme-checklist",
                 "GET /release/quality-gate",
                 "POST /release/publish-pack",
+                "GET /ops/verification-evidence",
+                "POST /ops/verification-evidence",
+                "POST /ops/verification-evidence-pack",
                 "GET /reviewer/quickstart",
                 "POST /reviewer/walkthrough-pack",
                 "GET /handoff/final-audit",
@@ -120,6 +123,14 @@ class LaunchChecklistService:
                 (
                     'rg "ops/cost-governance|ops/cost-governance-pack|Cost Governance|'
                     'cost_governance|provider readiness" app dashboard docs README.md tests Makefile'
+                ),
+                (
+                    'rg "ops/verification-evidence|Verification Evidence|verification_evidence|'
+                    'command evidence ledger" app dashboard docs README.md tests Makefile'
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\verification_evidence "
+                    "-ErrorAction SilentlyContinue | Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\cost_governance -ErrorAction SilentlyContinue | "
@@ -1547,6 +1558,36 @@ class LaunchChecklistService:
                 200,
                 "Writes Release Candidate GitHub Publish Pack Markdown and JSON.",
                 ["storage/release_packs/*.md", "storage/release_packs/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Verification Evidence Ledger",
+                "GET",
+                "/ops/verification-evidence",
+                "ops",
+                200,
+                (
+                    "Returns a local acceptance evidence ledger across pytest, ruff, eval, red-team, "
+                    "dashboard smoke, demo, release gate, final audit, and artifact inventory."
+                ),
+            ),
+            self._row(
+                "Verification Evidence Ledger With Results",
+                "POST",
+                "/ops/verification-evidence",
+                "ops",
+                200,
+                "Returns the verification evidence ledger with optional reviewer-supplied observed command results.",
+                body='{"command_results":[]}',
+            ),
+            self._row(
+                "Verification Evidence Pack",
+                "POST",
+                "/ops/verification-evidence-pack",
+                "artifact",
+                200,
+                "Writes Verification Evidence Markdown and JSON artifacts.",
+                ["storage/verification_evidence/*.md", "storage/verification_evidence/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

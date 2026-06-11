@@ -58,6 +58,7 @@ from app.services.submission_exceptions import SubmissionExceptionService
 from app.services.submission_regression import SubmissionRegressionService
 from app.services.timeline_orchestration import TimelineOrchestrationService
 from app.services.ui_verification import UIVerificationService
+from app.services.verification_evidence import VerificationEvidenceService
 from app.services.win_loss_learning import WinLossLearningService
 from app.services.win_strategy import WinStrategyService
 from app.services.workbench import RfpWorkbenchService
@@ -106,6 +107,7 @@ class ServiceContainer:
         self.reviewer_collaboration = ReviewerCollaborationService(settings)
         self.reviewer_workflow = ReviewerWorkflowService(settings)
         self.ui_verification = UIVerificationService(settings)
+        self.verification_evidence = VerificationEvidenceService(settings)
         self.final_handoff = FinalHandoffService(settings)
         self.git_readiness = GitReadinessService(settings)
         self.runtime_demo = RuntimeDemoService(settings)

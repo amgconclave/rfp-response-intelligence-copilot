@@ -189,6 +189,10 @@ from app.models.api import (
     UIVerificationPackRequest,
     UIVerificationPackResponse,
     UsageResponse,
+    VerificationEvidencePackRequest,
+    VerificationEvidencePackResponse,
+    VerificationEvidenceRequest,
+    VerificationEvidenceResponse,
     WinLossLearningRequest,
     WinLossLearningResponse,
     WinLossStrategyPackRequest,
@@ -2474,6 +2478,143 @@ async def release_publish_pack(
         quality_gate=gate,
         trace_id=trace_id,
     )
+
+
+@router.get(
+    "/ops/verification-evidence",
+    response_model=VerificationEvidenceResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def verification_evidence_current(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> VerificationEvidenceResponse:
+    trace_id = get_trace_id(request)
+    smoke = container.launch_checklist.smoke_matrix(f"{trace_id}-smoke")
+    dashboard_smoke = container.ui_verification.dashboard_smoke(f"{trace_id}-dashboard-smoke")
+    artifact_inventory = container.artifact_inventory.inventory(f"{trace_id}-artifact-inventory")
+    release_gate = container.release.quality_gate(smoke, f"{trace_id}-release-gate")
+    final_audit = container.final_handoff.final_audit(
+        f"{trace_id}-final-audit",
+        smoke,
+        artifact_inventory,
+        dashboard_smoke,
+    )
+    evidence = container.verification_evidence.evidence(
+        trace_id,
+        release_gate,
+        final_audit,
+        dashboard_smoke,
+        artifact_inventory,
+    )
+    container.audit.record(
+        trace_id,
+        "ops.verification_evidence_viewed",
+        "verification_evidence",
+        metadata={
+            "status": evidence.status,
+            "score": evidence.score,
+            "recorded_commands": evidence.summary["recorded_command_count"],
+            "failed_commands": evidence.summary["failed_command_count"],
+        },
+    )
+    return evidence
+
+
+@router.post(
+    "/ops/verification-evidence",
+    response_model=VerificationEvidenceResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def verification_evidence(
+    request: Request,
+    payload: VerificationEvidenceRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> VerificationEvidenceResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or VerificationEvidenceRequest()
+    smoke = container.launch_checklist.smoke_matrix(f"{trace_id}-smoke")
+    dashboard_smoke = container.ui_verification.dashboard_smoke(f"{trace_id}-dashboard-smoke")
+    artifact_inventory = container.artifact_inventory.inventory(f"{trace_id}-artifact-inventory")
+    release_gate = container.release.quality_gate(smoke, f"{trace_id}-release-gate")
+    final_audit = container.final_handoff.final_audit(
+        f"{trace_id}-final-audit",
+        smoke,
+        artifact_inventory,
+        dashboard_smoke,
+    )
+    evidence = container.verification_evidence.evidence(
+        trace_id,
+        release_gate,
+        final_audit,
+        dashboard_smoke,
+        artifact_inventory,
+        command_results=request_payload.command_results,
+    )
+    container.audit.record(
+        trace_id,
+        "ops.verification_evidence_viewed",
+        "verification_evidence",
+        metadata={
+            "status": evidence.status,
+            "score": evidence.score,
+            "recorded_commands": evidence.summary["recorded_command_count"],
+            "failed_commands": evidence.summary["failed_command_count"],
+        },
+    )
+    return evidence
+
+
+@router.post(
+    "/ops/verification-evidence-pack",
+    response_model=VerificationEvidencePackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def verification_evidence_pack(
+    request: Request,
+    payload: VerificationEvidencePackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> VerificationEvidencePackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or VerificationEvidencePackRequest()
+    evidence = request_payload.evidence
+    if evidence is None:
+        smoke = container.launch_checklist.smoke_matrix(f"{trace_id}-smoke")
+        dashboard_smoke = container.ui_verification.dashboard_smoke(f"{trace_id}-dashboard-smoke")
+        artifact_inventory = container.artifact_inventory.inventory(f"{trace_id}-artifact-inventory")
+        release_gate = container.release.quality_gate(smoke, f"{trace_id}-release-gate")
+        final_audit = container.final_handoff.final_audit(
+            f"{trace_id}-final-audit",
+            smoke,
+            artifact_inventory,
+            dashboard_smoke,
+        )
+        evidence = container.verification_evidence.evidence(
+            f"{trace_id}-evidence",
+            release_gate,
+            final_audit,
+            dashboard_smoke,
+            artifact_inventory,
+            command_results=request_payload.command_results,
+        )
+    pack = container.verification_evidence.pack(
+        trace_id,
+        evidence,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "ops.verification_evidence_pack_generated",
+        "verification_evidence_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "evidence_status": pack.evidence.status,
+            "evidence_score": pack.evidence.score,
+        },
+    )
+    return pack
 
 
 @router.get(

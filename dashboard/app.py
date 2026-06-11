@@ -113,6 +113,7 @@ tabs = st.tabs(
         "Retrieval Experiments",
         "Proposal Observability",
         "Submission Certification",
+        "Verification Evidence",
     ]
 )
 
@@ -3656,4 +3657,58 @@ with tabs[52]:
             "Download Submission Certification Markdown",
             pack["markdown"],
             file_name="proposal_submission_certification_pack.md",
+        )
+
+
+with tabs[53]:
+    st.subheader("Verification Evidence")
+    st.caption(
+        "Capture the local acceptance ledger for pytest, ruff, eval, red-team, dashboard smoke, demo, "
+        "release gate, final audit, artifact inventory, and reviewer signoff."
+    )
+    action_cols = st.columns(2)
+    if action_cols[0].button("Load evidence ledger"):
+        st.session_state.verification_evidence = get_json("/ops/verification-evidence")
+    if action_cols[1].button("Generate Evidence Pack"):
+        pack = post_json("/ops/verification-evidence-pack", {"write_artifact": True})
+        st.session_state.verification_evidence_pack = pack
+        st.session_state.verification_evidence = pack["evidence"]
+        st.success(f"Verification Evidence Pack generated: {pack['artifact_path']}")
+
+    evidence = st.session_state.get("verification_evidence")
+    if evidence:
+        summary = evidence["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", evidence["status"])
+        metric_cols[1].metric("Score", evidence["score"])
+        metric_cols[2].metric("Recorded", f"{summary['recorded_command_count']}/{summary['required_command_count']}")
+        metric_cols[3].metric("Failed", summary["failed_command_count"])
+        metric_cols[4].metric("Artifacts", summary["artifact_files"])
+        st.write("Command evidence")
+        st.dataframe(evidence["command_evidence"], use_container_width=True)
+        st.write("Release gate snapshot")
+        st.json(evidence["release_gate_snapshot"])
+        st.write("Final audit snapshot")
+        st.json(evidence["final_audit_snapshot"])
+        st.write("Dashboard smoke snapshot")
+        st.json(evidence["dashboard_smoke_snapshot"])
+        st.write("Artifact inventory snapshot")
+        st.json(evidence["artifact_inventory_snapshot"])
+        st.write("Reviewer signoff")
+        st.dataframe(evidence["reviewer_signoff"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(evidence["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(evidence["limitations"])
+
+    pack = st.session_state.get("verification_evidence_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.write("Reviewer controls")
+        st.write(pack["pack"]["reviewer_controls"])
+        st.download_button(
+            "Download Verification Evidence Markdown",
+            pack["markdown"],
+            file_name="verification_evidence_pack.md",
         )

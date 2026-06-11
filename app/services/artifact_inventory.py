@@ -215,6 +215,14 @@ class ArtifactInventoryService:
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
             (
+                'rg "ops/verification-evidence|Verification Evidence|verification_evidence|'
+                'command evidence ledger" app dashboard docs README.md tests Makefile'
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\verification_evidence "
+                "-ErrorAction SilentlyContinue | Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
                 'rg "ops/proposal-observability|Proposal Observability|proposal_observability" '
                 "app dashboard docs README.md tests Makefile"
             ),
@@ -483,6 +491,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /proposal/submission-certification-pack to write the Proposal Submission "
                 "Certification Pack under storage/submission_certifications/."
+            ),
+            (
+                "Call POST /ops/verification-evidence-pack to write the Verification Evidence Pack "
+                "under storage/verification_evidence/."
             ),
             (
                 "Call POST /ops/proposal-observability-pack to write the Proposal Observability Pack "
@@ -790,6 +802,15 @@ class ArtifactInventoryService:
                 (
                     "Observability control-plane artifacts with trace analysis, retrieval diagnostics, "
                     "experiment comparison, provider posture, governance, and HITL signals."
+                ),
+            ),
+            self._spec(
+                "verification_evidence",
+                "verification_evidence",
+                "POST /ops/verification-evidence-pack",
+                (
+                    "Acceptance evidence ledger artifacts for pytest, ruff, eval, red-team, dashboard smoke, "
+                    "demo, release gate, final audit, and reviewer signoff."
                 ),
             ),
             self._spec(

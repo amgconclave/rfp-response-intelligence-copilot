@@ -301,6 +301,7 @@ class ReleaseService:
             "freshness_packs": "Evidence freshness and expiry risk packs",
             "source_trust": "Source trust gate packs",
             "agent_council": "Proposal agent council transcript, handoff, tool governance, and budget packs",
+            "verification_evidence": "Verification evidence ledger packs",
             "portfolio_packs": "Portfolio interview packs",
             "release_packs": "GitHub publish packs",
             "ui_verification": "Dashboard Smoke and UI verification packs",
