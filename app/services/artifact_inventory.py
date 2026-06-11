@@ -312,6 +312,14 @@ class ArtifactInventoryService:
                 "Get-ChildItem -Recurse -File storage\\conflict_packs -ErrorAction SilentlyContinue | "
                 "Select-Object FullName,Length,LastWriteTime"
             ),
+            (
+                'rg "evidence/citation-lineage|Citation Lineage|citation_lineage|'
+                'integrity audit" app dashboard docs README.md tests sample_data Makefile'
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\citation_lineage -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
         ]
 
     def _reviewer_proof_checklist(self) -> list[str]:
@@ -362,6 +370,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /evidence/conflict-pack to write the Evidence Conflict Resolver Pack "
                 "under storage/conflict_packs/."
+            ),
+            (
+                "Call POST /evidence/citation-lineage-pack to write the Citation Lineage Integrity Pack "
+                "under storage/citation_lineage/."
             ),
             (
                 "Inspect storage/artifact_indexes plus at least one Markdown/JSON artifact from each "
@@ -549,6 +561,12 @@ class ArtifactInventoryService:
                 "conflict_packs",
                 "POST /evidence/conflict-pack",
                 "Evidence conflict resolver artifacts with source precedence, ambiguity, and reviewer routing.",
+            ),
+            self._spec(
+                "citation_lineage",
+                "citation_lineage",
+                "POST /evidence/citation-lineage-pack",
+                "Citation lineage and integrity artifacts with missing, stale, weak, and claim-risk checks.",
             ),
             self._spec(
                 "audit_packs",

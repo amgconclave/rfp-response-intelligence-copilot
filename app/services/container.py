@@ -9,6 +9,7 @@ from app.services.artifact_inventory import ArtifactInventoryService
 from app.services.audit import AuditService
 from app.services.bid_simulator import BidScenarioSimulatorService
 from app.services.ci_doctor import CiDoctorService
+from app.services.citation_lineage import CitationLineageService
 from app.services.compliance import ComplianceControlMappingService
 from app.services.contract_risk import ContractRiskService
 from app.services.corpus_coverage import CorpusCoverageService
@@ -98,6 +99,7 @@ class ServiceContainer:
         self.evaluation = EvaluationService(self.retrieval, self.generation)
         self.evidence_conflicts = EvidenceConflictService(self.repo, settings)
         self.evidence_freshness = EvidenceFreshnessService(self.repo, settings)
+        self.citation_lineage = CitationLineageService(self.repo, settings)
         self.objection_handling = CompetitiveObjectionHandlingService(
             self.repo,
             settings,

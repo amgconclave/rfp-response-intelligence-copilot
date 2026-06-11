@@ -100,6 +100,7 @@ tabs = st.tabs(
         "Evidence Conflicts",
         "Privacy Retention",
         "Submission Exceptions",
+        "Citation Lineage",
     ]
 )
 
@@ -2549,4 +2550,72 @@ with tabs[39]:
             "Download Exception Register Markdown",
             pack["markdown"],
             file_name="submission_exception_register.md",
+        )
+
+
+with tabs[40]:
+    st.subheader("Citation Lineage")
+    st.caption(
+        "Audit answer and draft citations back to repository documents and chunks, then flag stale references, "
+        "missing sources, weak citations, and generated claims needing approval."
+    )
+    cols = st.columns(2)
+    if cols[0].button("Load Lineage Audit"):
+        st.session_state.citation_lineage = get_json("/evidence/citation-lineage")
+    if cols[1].button("Generate Lineage Pack"):
+        pack = post_json("/evidence/citation-lineage-pack", {"write_artifact": True})
+        st.session_state.citation_lineage_pack = pack
+        st.session_state.citation_lineage = pack["lineage"]
+        st.success(f"Citation Lineage Pack generated under citation_lineage: {pack['artifact_path']}")
+
+    lineage = st.session_state.get("citation_lineage")
+    if lineage:
+        summary = lineage["summary"]
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Score", summary["integrity_score"])
+        metric_cols[1].metric("Citations", summary["citation_count"])
+        metric_cols[2].metric("Verified", summary["verified_count"])
+        metric_cols[3].metric("Issues", summary["blocking_issue_count"])
+        st.write("Citation lineage matrix")
+        st.dataframe(
+            [
+                {
+                    "id": item["citation_id"],
+                    "source": item["source_kind"],
+                    "file": item["filename"],
+                    "owner": item["policy_owner"],
+                    "status": item["integrity_status"],
+                    "risk": item["risk_level"],
+                    "score": item["score"],
+                    "flags": "; ".join(item["risk_flags"]),
+                    "endpoints": ", ".join(item["endpoint_references"]),
+                }
+                for item in lineage["lineages"]
+            ],
+            use_container_width=True,
+        )
+        if lineage["generated_claim_flags"]:
+            st.warning("Generated claim flags require reviewer approval.")
+            st.dataframe(lineage["generated_claim_flags"], use_container_width=True)
+        st.write("Missing citations")
+        st.dataframe(lineage["missing_citations"], use_container_width=True)
+        st.write("Stale citations")
+        st.dataframe(lineage["stale_citations"], use_container_width=True)
+        st.write("Owner follow-ups")
+        st.dataframe(lineage["owner_followups"], use_container_width=True)
+        st.write("Endpoint references")
+        st.dataframe(lineage["endpoint_references"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(lineage["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(lineage["limitations"])
+
+    pack = st.session_state.get("citation_lineage_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Citation Lineage Markdown",
+            pack["markdown"],
+            file_name="citation_lineage_pack.md",
         )

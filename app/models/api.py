@@ -944,6 +944,59 @@ class PrivacyRetentionPackResponse(BaseModel):
     trace_id: str
 
 
+class CitationLineageItem(BaseModel):
+    citation_id: str
+    source_kind: str
+    source_label: str
+    document_id: str
+    chunk_id: str
+    filename: str
+    document_exists: bool
+    chunk_exists: bool
+    filename_match: bool
+    snippet_match: bool
+    integrity_status: str
+    risk_level: str
+    risk_flags: list[str] = Field(default_factory=list)
+    score: float
+    document_type: str
+    policy_owner: str
+    source_path: str | None = None
+    citation_snippet: str
+    repository_excerpt: str | None = None
+    endpoint_references: list[str] = Field(default_factory=list)
+
+
+class CitationLineageAuditResponse(BaseModel):
+    title: str
+    status: str
+    score: int
+    summary: dict[str, Any]
+    lineages: list[CitationLineageItem]
+    missing_citations: list[dict[str, Any]] = Field(default_factory=list)
+    stale_citations: list[dict[str, Any]] = Field(default_factory=list)
+    generated_claim_flags: list[dict[str, Any]] = Field(default_factory=list)
+    owner_followups: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class CitationLineagePackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class CitationLineagePackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    lineage: CitationLineageAuditResponse
+    trace_id: str
+
+
 class EvidenceFreshnessSource(BaseModel):
     document_id: str
     filename: str

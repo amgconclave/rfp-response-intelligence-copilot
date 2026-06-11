@@ -20,6 +20,9 @@ from app.models.api import (
     BidRoiPackResponse,
     BidScenarioAnalysisResponse,
     CiDoctorResponse,
+    CitationLineageAuditResponse,
+    CitationLineagePackRequest,
+    CitationLineagePackResponse,
     ComplianceEvidenceMatrixResponse,
     ContractRiskRequest,
     ContractRiskResponse,
@@ -2476,6 +2479,66 @@ async def evidence_conflict_pack(
 
 
 @router.get(
+    "/evidence/citation-lineage",
+    response_model=CitationLineageAuditResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def evidence_citation_lineage(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> CitationLineageAuditResponse:
+    trace_id = get_trace_id(request)
+    answer, draft = await _citation_lineage_inputs(trace_id, container)
+    result = container.citation_lineage.audit(trace_id, answers=[answer], drafts=[draft])
+    container.audit.record(
+        trace_id,
+        "evidence.citation_lineage_viewed",
+        "citation_lineage",
+        metadata={
+            "citations": result.summary["citation_count"],
+            "verified": result.summary["verified_count"],
+            "blocking_issues": result.summary["blocking_issue_count"],
+            "score": result.score,
+        },
+    )
+    return result
+
+
+@router.post(
+    "/evidence/citation-lineage-pack",
+    response_model=CitationLineagePackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def evidence_citation_lineage_pack(
+    request: Request,
+    payload: CitationLineagePackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> CitationLineagePackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or CitationLineagePackRequest()
+    answer, draft = await _citation_lineage_inputs(trace_id, container)
+    lineage = container.citation_lineage.audit(f"{trace_id}-lineage", answers=[answer], drafts=[draft])
+    pack = container.citation_lineage.lineage_pack(
+        trace_id,
+        lineage,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "evidence.citation_lineage_pack_generated",
+        "citation_lineage_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "citations": pack.lineage.summary["citation_count"],
+            "blocking_issues": pack.lineage.summary["blocking_issue_count"],
+        },
+    )
+    return pack
+
+
+@router.get(
     "/compliance/evidence-matrix",
     response_model=ComplianceEvidenceMatrixResponse,
     dependencies=[Depends(require_api_key)],
@@ -2927,6 +2990,35 @@ async def _freshness_inputs(container: ServiceContainer) -> None:
         if filename not in loaded:
             await container.ingestion.ingest_path(fixture_path, document_type=document_type, source="sample_data")
             loaded.add(filename)
+
+
+async def _citation_lineage_inputs(trace_id: str, container: ServiceContainer) -> tuple[Answer, DraftResponse]:
+    await _freshness_inputs(container)
+    rfp_doc = next(
+        (
+            document
+            for document in container.repo.documents.values()
+            if document.filename == "acme_enterprise_rfp.md"
+        ),
+        None,
+    )
+    requirement_ids: list[str] = []
+    if rfp_doc is not None:
+        rfp_text = container.ingestion.get_text(rfp_doc.id)
+        analysis = container.analysis.analyze(rfp_text, f"{trace_id}-analysis")
+        requirement_ids = [requirement.id for requirement in analysis.requirements[:4]]
+    answer = await container.generation.answer_question(
+        "What SSO, encryption, audit logging, and reviewer controls are supported?",
+        f"{trace_id}-answer",
+        top_k=4,
+    )
+    draft = await container.generation.draft_response(
+        f"{trace_id}-draft",
+        requirement_ids=requirement_ids,
+        section_names=["Security and Compliance", "Implementation Controls"],
+        top_k=5,
+    )
+    return answer, draft
 
 
 async def _procurement_inputs(

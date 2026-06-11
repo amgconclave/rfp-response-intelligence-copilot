@@ -44,6 +44,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `ContractRiskService`: identifies risky customer terms and writes negotiation briefs.
 - `EvidenceGapService`: produces source request packs for unsupported claims.
 - `EvidenceConflictService`: detects cited source-precedence, scope, and ambiguity conflicts before draft approval.
+- `CitationLineageService`: verifies generated answer and draft citations against local repository document/chunk IDs, stale snippets, generated-claim flags, owners, and endpoint impact.
 - `TimelineOrchestrationService`: creates proposal milestones and submission calendar packs.
 - `SubmissionDecisionService`: builds final go/no-go scores and executive memos.
 - `LeadershipBriefService`: consolidates portfolio-level readouts for recruiters and stakeholders.
@@ -94,6 +95,7 @@ Generated files are not committed. They are reproducible outputs from local API 
 - `storage/objection_packs/`
 - `storage/win_loss_packs/`
 - `storage/conflict_packs/`
+- `storage/citation_lineage/`
 - `storage/portfolio_packs/`
 - `storage/reviewer_packs/`
 - `storage/api_contracts/`

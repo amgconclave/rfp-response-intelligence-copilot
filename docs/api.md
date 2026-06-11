@@ -159,6 +159,29 @@ Writes Markdown and JSON Evidence Conflict Resolver Pack artifacts under ignored
 
 The pack includes a conflict matrix, cited resolutions, reviewer queue, endpoint references, exact local proof commands, limitations, artifact paths, embedded conflict JSON, Markdown, JSON, and trace ID.
 
+### `GET /evidence/citation-lineage`
+
+Returns the Citation Lineage + Integrity Audit. It generates representative local answer and draft citations from the sample corpus, then verifies each citation back to the in-memory repository document and chunk IDs. It flags missing references, stale snippets, filename mismatches, weak citation scores, generated regulated or absolute claim language, owner follow-ups, endpoint impact, local proof commands, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/evidence/citation-lineage" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The default path is local/mock and self-contained. It auto-loads the sample corpus when needed and does not require OpenAI, Azure, Qdrant, or an external document repository.
+
+### `POST /evidence/citation-lineage-pack`
+
+Writes Markdown and JSON Citation Lineage + Integrity Pack artifacts under ignored `storage/citation_lineage/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes the citation lineage matrix, stale/missing citation lists, generated-claim flags, owner follow-ups, endpoint references, exact proof commands, limitations, Markdown, JSON, and trace ID.
+
 ### `GET /compliance/evidence-matrix`
 
 Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.

@@ -183,6 +183,8 @@ class ApiContractService:
             "/evidence/freshness-pack",
             "/evidence/conflicts",
             "/evidence/conflict-pack",
+            "/evidence/citation-lineage",
+            "/evidence/citation-lineage-pack",
             "/ops/smoke-matrix",
             "/ops/launch-checklist",
             "/ui/dashboard-smoke",
@@ -537,6 +539,7 @@ class ApiContractService:
             "/learning/win-loss-pack": '{"write_artifact":true}',
             "/evidence/freshness-pack": '{"write_artifact":true}',
             "/evidence/conflict-pack": '{"write_artifact":true}',
+            "/evidence/citation-lineage-pack": '{"write_artifact":true}',
         }
         no_body_paths = {"/health", "/documents", "/metrics/usage", "/audit/events"}
         return bodies.get(path, "{}" if path not in no_body_paths else None)

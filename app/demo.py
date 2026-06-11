@@ -325,6 +325,17 @@ async def main() -> None:
         evidence_conflicts,
         write_artifact=True,
     )
+    citation_lineage = container.citation_lineage.audit(
+        "demo-citation-lineage",
+        answers=[answer],
+        drafts=[draft],
+        export_payloads=[export.package],
+    )
+    citation_lineage_pack = container.citation_lineage.lineage_pack(
+        "demo-citation-lineage-pack",
+        citation_lineage,
+        write_artifact=True,
+    )
     compliance_matrix = container.compliance.evidence_matrix(
         "demo-compliance-evidence-matrix",
         analysis=analysis,
@@ -564,6 +575,16 @@ async def main() -> None:
     print(f"Evidence Conflict Resolver Pack JSON: {evidence_conflict_pack.json_artifact_path}")
     print("Conflict packs directory: storage/conflict_packs")
     print(
+        "Citation lineage: "
+        f"score={citation_lineage.score} "
+        f"citations={citation_lineage.summary['citation_count']} "
+        f"verified={citation_lineage.summary['verified_count']} "
+        f"issues={citation_lineage.summary['blocking_issue_count']}"
+    )
+    print(f"Citation Lineage Pack: {citation_lineage_pack.artifact_path}")
+    print(f"Citation Lineage Pack JSON: {citation_lineage_pack.json_artifact_path}")
+    print("Citation lineage directory: storage/citation_lineage")
+    print(
         "Compliance control coverage: "
         f"{compliance_matrix.coverage_summary['coverage_ratio']} "
         f"families={compliance_matrix.coverage_summary['control_family_count']} "
@@ -692,6 +713,8 @@ async def main() -> None:
         f"freshness_packs={evidence_freshness_pack.artifact_path} "
         f"conflicts={evidence_conflicts.summary['conflict_count']} "
         f"conflict_packs={evidence_conflict_pack.artifact_path} "
+        f"citation_lineage={citation_lineage.score}/{citation_lineage.summary['citation_count']} "
+        f"citation_lineage_pack={citation_lineage_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "
         f"compliance_packs={compliance_control_pack.artifact_path} "
         f"privacy_retention={privacy_retention.summary['high_risk_surface_count']}/"

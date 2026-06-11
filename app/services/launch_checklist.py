@@ -356,6 +356,7 @@ class LaunchChecklistService:
             "win_loss_packs": "storage/win_loss_packs",
             "freshness_packs": "storage/freshness_packs",
             "conflict_packs": "storage/conflict_packs",
+            "citation_lineage": "storage/citation_lineage",
             "api_contracts": "storage/api_contracts",
             "portfolio_packs": "storage/portfolio_packs",
             "release_packs": "storage/release_packs",
@@ -945,6 +946,27 @@ class LaunchChecklistService:
                 200,
                 "Writes Evidence Conflict Resolver Markdown and JSON.",
                 ["storage/conflict_packs/*.md", "storage/conflict_packs/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Citation lineage audit",
+                "GET",
+                "/evidence/citation-lineage",
+                "evidence",
+                200,
+                (
+                    "Returns answer and draft citation lineage, missing/stale reference checks, "
+                    "generated-claim flags, owners, endpoint impact, and proof commands."
+                ),
+            ),
+            self._row(
+                "Citation Lineage Pack",
+                "POST",
+                "/evidence/citation-lineage-pack",
+                "artifact",
+                200,
+                "Writes citation lineage integrity Markdown and JSON.",
+                ["storage/citation_lineage/*.md", "storage/citation_lineage/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

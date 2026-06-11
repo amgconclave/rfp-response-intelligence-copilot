@@ -494,6 +494,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "conflict_packs",
             },
+            {
+                "label": "Citation Lineage",
+                "endpoint_paths": ["/evidence/citation-lineage", "/evidence/citation-lineage-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "citation_lineage",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -671,6 +677,17 @@ class UIVerificationService:
                 "path": "/evidence/conflict-pack",
                 "purpose": "Evidence Conflicts generated resolver pack.",
                 "expected_artifacts": ["storage/conflict_packs/*.md", "storage/conflict_packs/*.json"],
+            },
+            {
+                "method": "GET",
+                "path": "/evidence/citation-lineage",
+                "purpose": "Citation Lineage tab answer and draft citation integrity audit.",
+            },
+            {
+                "method": "POST",
+                "path": "/evidence/citation-lineage-pack",
+                "purpose": "Citation Lineage generated integrity pack.",
+                "expected_artifacts": ["storage/citation_lineage/*.md", "storage/citation_lineage/*.json"],
             },
         ]
 
