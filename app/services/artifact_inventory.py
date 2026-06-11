@@ -460,6 +460,15 @@ class ArtifactInventoryService:
                 "Leadership readiness and risk report.",
             ),
             self._spec(
+                "readiness_packs",
+                "readiness_packs",
+                "POST /rfp/proposal-readiness-score-pack",
+                (
+                    "Proposal readiness score pack with section completeness, evidence coverage, "
+                    "compliance risk, and bottlenecks."
+                ),
+            ),
+            self._spec(
                 "pricing_memos",
                 "pricing_memos",
                 "POST /rfp/pricing-risk-memo",

@@ -272,6 +272,34 @@ def test_requirement_matrix_and_export_package(client, auth_headers):
     assert "## Submission Recommendation" in report["markdown"]
     assert "submission_recommendation" in report["report"]
 
+    readiness_pack_response = client.post(
+        "/rfp/proposal-readiness-score-pack",
+        headers=auth_headers,
+        json={
+            "analysis": analysis,
+            "matrix": risky_matrix,
+            "draft_response": draft,
+            "review_findings": review["findings"],
+            "action_plan": action_plan["tasks"],
+            "readiness_scorecard": scorecard,
+            "executive_report": report,
+            "red_team_summary": {"passed": True, "missing_evidence_detection_count": 2},
+            "write_artifact": True,
+        },
+    )
+    assert readiness_pack_response.status_code == 200
+    readiness_pack = readiness_pack_response.json()
+    assert readiness_pack["artifact_path"]
+    assert readiness_pack["json_artifact_path"]
+    assert Path(readiness_pack["artifact_path"]).exists()
+    assert Path(readiness_pack["json_artifact_path"]).exists()
+    assert "readiness_packs" in readiness_pack["artifact_path"]
+    assert readiness_pack["pack"]["section_completeness"]["sections"]
+    assert readiness_pack["pack"]["evidence_coverage"]["uncovered_requirement_count"] >= 1
+    assert readiness_pack["pack"]["compliance_risk"]["risk_level"] in {"low", "medium", "high", "critical"}
+    assert readiness_pack["pack"]["reviewer_bottlenecks"]
+    assert "POST /rfp/proposal-readiness-score-pack" in readiness_pack["markdown"]
+
     contract_text = Path("sample_data/customer_contract_terms.md").read_text(encoding="utf-8")
     contract_risk = client.post(
         "/rfp/contract-risk",

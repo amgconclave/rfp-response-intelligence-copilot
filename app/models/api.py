@@ -756,6 +756,28 @@ class ExecutiveRiskReportResponse(BaseModel):
     trace_id: str
 
 
+class ProposalReadinessScorePackRequest(ExecutiveRiskReportRequest):
+    draft_response: DraftResponse | None = None
+    readiness_scorecard: DealReadinessScorecardResponse | None = None
+    executive_report: ExecutiveRiskReportResponse | None = None
+
+
+class ProposalReadinessScorePackResponse(BaseModel):
+    title: str
+    status: str
+    readiness_score: int
+    readiness_level: str
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    readiness_scorecard: DealReadinessScorecardResponse
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
 class EvaluationMetrics(BaseModel):
     question_count: int
     retrieval_precision_at_k: float

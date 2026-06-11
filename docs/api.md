@@ -853,6 +853,27 @@ The report includes readiness score and level, top blockers, evidence coverage, 
 
 The response includes `artifact_path`, `json_artifact_path`, `markdown`, `report`, and `trace_id`.
 
+### `POST /rfp/proposal-readiness-score-pack`
+
+Writes Markdown/JSON Proposal Readiness Score Pack artifacts under `storage/readiness_packs/` by default. It accepts the same inputs as `/rfp/executive-risk-report` plus an optional `draft_response`, precomputed `readiness_scorecard`, and precomputed `executive_report`.
+
+```json
+{
+  "analysis": {},
+  "matrix": [],
+  "draft_response": {},
+  "review_findings": [],
+  "action_plan": [],
+  "eval_metrics": {},
+  "red_team_summary": {
+    "passed": true
+  },
+  "write_artifact": true
+}
+```
+
+The pack includes the base readiness scorecard, section completeness by proposal section, evidence coverage by category, compliance/security/privacy risk, reviewer bottleneck routing, executive artifact links, endpoint references, local proof commands, limitations, Markdown, JSON, and trace ID.
+
 ### `POST /rfp/win-strategy`
 
 Creates a deterministic competitive win strategy simulation from local RFP analysis, requirement matrix rows, customer fit, readiness scorecard, response memory, action-plan tasks, review findings, competitor context, and pricing notes. If the request is `{}` in local demo mode, the endpoint analyzes the sample RFP and uses the default regulated healthcare profile.

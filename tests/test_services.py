@@ -411,6 +411,91 @@ def test_executive_risk_report_export_contains_leadership_sections(tmp_path, mon
     get_settings.cache_clear()
 
 
+def test_proposal_readiness_score_pack_exports_section_and_reviewer_metrics(tmp_path, monkeypatch):
+    monkeypatch.setenv("STORAGE_DIR", str(tmp_path / "storage"))
+    get_settings.cache_clear()
+    service = DealReadinessService(get_settings())
+    matrix = [
+        RequirementMatrixRow(
+            requirement_id="req_security",
+            category="security",
+            requirement_text="Vendor must support SSO and encryption.",
+            priority="high",
+            owner_role="security",
+            status="evidence_found",
+            risk_level="medium",
+            suggested_response="Use approved security posture.",
+            evidence_refs=["security_policy.md"],
+        ),
+        RequirementMatrixRow(
+            requirement_id="req_compliance",
+            category="compliance",
+            requirement_text="Vendor must provide FedRAMP evidence.",
+            priority="high",
+            owner_role="legal",
+            status="blocked",
+            risk_level="high",
+            suggested_response="Do not claim unsupported authorization.",
+            missing_evidence=["No FedRAMP authorization evidence found."],
+        ),
+    ]
+    findings = [
+        ReviewFinding(
+            severity="high",
+            category="missing_evidence",
+            message="FedRAMP evidence is missing for compliance response.",
+            related_requirement_id="req_compliance",
+            recommendation="Route exception to legal and security.",
+        )
+    ]
+    tasks = [
+        StakeholderTask(
+            task_id="task_req_compliance",
+            owner_role="legal",
+            title="Legal: approve FedRAMP exception",
+            description="Decide whether this is a no-bid blocker.",
+            priority="high",
+            due_hint="before executive review",
+            source_requirement_id="req_compliance",
+            risk_level="high",
+            status="blocked",
+        )
+    ]
+    draft = DraftResponse(
+        sections=[
+            DraftSection(
+                title="Security Response",
+                body="SSO and encryption response using approved controls.",
+                requirement_ids=["req_security"],
+            )
+        ],
+        trace_id="draft-test",
+    )
+
+    pack = service.create_score_pack(
+        trace_id="score-pack-test",
+        requirement_matrix=matrix,
+        review_findings=findings,
+        action_plan=tasks,
+        draft_response=draft,
+    )
+
+    assert pack.artifact_path
+    assert pack.json_artifact_path
+    assert Path(pack.artifact_path).exists()
+    assert Path(pack.json_artifact_path).exists()
+    assert "readiness_packs" in pack.artifact_path
+    assert pack.status in {"blocked_by_compliance_risk", "blocked_by_reviewer_bottleneck", "needs_owner_followup"}
+    assert pack.pack["section_completeness"]["sections"]
+    assert pack.pack["section_completeness"]["blocked_sections"] == ["compliance"]
+    assert pack.pack["evidence_coverage"]["overall_coverage"] == 0.5
+    assert pack.pack["compliance_risk"]["risk_level"] in {"high", "critical"}
+    assert pack.pack["reviewer_bottlenecks"][0]["escalation_required"] is True
+    assert "## Section Completeness" in pack.markdown
+    assert "POST /rfp/proposal-readiness-score-pack" in pack.markdown
+    get_settings.cache_clear()
+
+
 def test_evidence_gap_prioritization_and_closure_criteria(tmp_path, monkeypatch):
     monkeypatch.setenv("STORAGE_DIR", str(tmp_path / "storage"))
     get_settings.cache_clear()

@@ -130,6 +130,19 @@ async def main() -> None:
         eval_metrics=evaluation,
         red_team_summary=red_team,
     )
+    readiness_pack = container.deal_readiness.create_score_pack(
+        trace_id="demo-proposal-readiness-score-pack",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=package_review.findings,
+        customer_fit=customer_fit,
+        action_plan=action_plan,
+        eval_metrics=evaluation,
+        draft_response=draft,
+        red_team_summary=red_team,
+        readiness_scorecard=scorecard,
+        executive_report=executive_report,
+    )
     win_strategy = container.win_strategy.create_win_strategy(
         trace_id="demo-win-strategy",
         analysis=analysis,
@@ -525,6 +538,7 @@ async def main() -> None:
     print(f"Handoff artifact: {handoff.artifact_path}")
     print(f"Readiness score: {scorecard.readiness_score} ({scorecard.readiness_level})")
     print(f"Executive risk report: {executive_report.artifact_path}")
+    print(f"Proposal readiness score pack: {readiness_pack.artifact_path}")
     print(
         "Win score: "
         f"{win_strategy.win_score} ({win_strategy.win_level}) "
@@ -774,6 +788,7 @@ async def main() -> None:
         f"answer_reuse={answer_reuse_library.status}/{answer_reuse_library.summary['snippet_count']} "
         f"answer_reuse_library={answer_reuse_library_pack.artifact_path} "
         f"readiness={scorecard.readiness_score}/{scorecard.readiness_level} "
+        f"readiness_pack={readiness_pack.artifact_path} "
         f"win score={win_strategy.win_score}/{win_strategy.win_level} "
         f"pricing_memo={pricing_memo.artifact_path} "
         f"contract_risk={contract_risk.risk_score}/{contract_risk.status} "

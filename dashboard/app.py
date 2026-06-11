@@ -454,6 +454,7 @@ with tabs[10]:
     st.subheader("Deal Readiness and Executive Risk Report")
     latest_analysis = st.session_state.get("analysis")
     latest_matrix = st.session_state.get("matrix")
+    latest_draft = st.session_state.get("draft")
     latest_fit = st.session_state.get("customer_fit")
     latest_review = st.session_state.get("review_report")
     latest_plan = st.session_state.get("action_plan")
@@ -472,6 +473,8 @@ with tabs[10]:
         payload["analysis"] = latest_analysis
     if latest_matrix:
         payload["matrix"] = latest_matrix
+    if latest_draft:
+        payload["draft_response"] = latest_draft
     if latest_fit:
         payload["customer_fit"] = latest_fit
     if latest_review:
@@ -481,7 +484,7 @@ with tabs[10]:
     if latest_eval:
         payload["eval_metrics"] = latest_eval
 
-    cols = st.columns(2)
+    cols = st.columns(3)
     if cols[0].button("Create readiness scorecard", disabled=not bool(payload)):
         scorecard = post_json("/rfp/readiness-scorecard", payload)
         st.session_state.readiness_scorecard = scorecard
@@ -501,6 +504,19 @@ with tabs[10]:
             "Download Executive Report Markdown",
             report["markdown"],
             file_name="executive_risk_report.md",
+        )
+
+    if cols[2].button("Export readiness score pack", disabled=not bool(payload)):
+        score_pack = post_json("/rfp/proposal-readiness-score-pack", {**payload, "write_artifact": True})
+        st.session_state.proposal_readiness_score_pack = score_pack
+        st.success(f"Exported readiness score pack: {score_pack['artifact_path']}")
+        st.metric("Pack status", score_pack["status"])
+        st.json(score_pack["pack"]["section_completeness"])
+        st.dataframe(score_pack["pack"]["reviewer_bottlenecks"], use_container_width=True)
+        st.download_button(
+            "Download Readiness Score Pack Markdown",
+            score_pack["markdown"],
+            file_name="proposal_readiness_score_pack.md",
         )
 
     if not payload:

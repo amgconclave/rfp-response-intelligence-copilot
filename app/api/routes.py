@@ -100,6 +100,8 @@ from app.models.api import (
     ProcurementRiskDeskPackRequest,
     ProcurementRiskDeskPackResponse,
     ProcurementRiskDeskResponse,
+    ProposalReadinessScorePackRequest,
+    ProposalReadinessScorePackResponse,
     PublishPackRequest,
     PublishPackResponse,
     QueryRequest,
@@ -845,6 +847,47 @@ async def executive_risk_report(
         },
     )
     return report
+
+
+@router.post(
+    "/rfp/proposal-readiness-score-pack",
+    response_model=ProposalReadinessScorePackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_readiness_score_pack(
+    payload: ProposalReadinessScorePackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalReadinessScorePackResponse:
+    trace_id = get_trace_id(request)
+    analysis, matrix = _readiness_inputs(payload, container)
+    pack = container.deal_readiness.create_score_pack(
+        trace_id=trace_id,
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=payload.review_findings,
+        customer_fit=payload.customer_fit,
+        action_plan=payload.action_plan,
+        eval_metrics=payload.eval_metrics,
+        draft_response=payload.draft_response,
+        red_team_summary=payload.red_team_summary,
+        readiness_scorecard=payload.readiness_scorecard,
+        executive_report=payload.executive_report,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.proposal_readiness_score_pack_exported",
+        "proposal_readiness_score_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "readiness_score": pack.readiness_score,
+            "readiness_level": pack.readiness_level,
+            "status": pack.status,
+        },
+    )
+    return pack
 
 
 @router.post(

@@ -346,7 +346,13 @@ class UIVerificationService:
             {"label": "Audit Events", "endpoint_paths": ["/audit/events"]},
             {
                 "label": "Deal Readiness / Executive Report",
-                "endpoint_paths": ["/rfp/readiness-scorecard", "/rfp/executive-risk-report"],
+                "endpoint_paths": [
+                    "/rfp/readiness-scorecard",
+                    "/rfp/executive-risk-report",
+                    "/rfp/proposal-readiness-score-pack",
+                ],
+                "generated_artifact_tab": True,
+                "artifact_root": "readiness_packs",
             },
             {
                 "label": "Win Strategy / Pricing Memo",
@@ -559,6 +565,12 @@ class UIVerificationService:
                 "path": "/rfp/reviewer-collaboration-pack",
                 "purpose": "Reviewer Collaboration generated pack.",
                 "expected_artifacts": ["storage/review_boards/*.md", "storage/review_boards/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/proposal-readiness-score-pack",
+                "purpose": "Deal Readiness tab generated Score Pack.",
+                "expected_artifacts": ["storage/readiness_packs/*.md", "storage/readiness_packs/*.json"],
             },
             {
                 "method": "POST",
