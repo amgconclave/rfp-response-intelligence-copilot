@@ -370,6 +370,12 @@ async def main() -> None:
         privacy_retention,
         write_artifact=True,
     )
+    model_risk = container.model_risk.register("demo-model-risk")
+    model_risk_pack = container.model_risk.risk_pack(
+        "demo-model-risk-pack",
+        model_risk,
+        write_artifact=True,
+    )
     procurement_question_risk = await container.procurement.question_risk(
         "demo-procurement-question-risk",
         analysis=analysis,
@@ -638,6 +644,15 @@ async def main() -> None:
     print(f"Privacy Retention Guardrail Pack JSON: {privacy_retention_pack.json_artifact_path}")
     print("Privacy packs directory: storage/privacy_packs")
     print(
+        "Model risk register: "
+        f"status={model_risk.register_status} "
+        f"risks={model_risk.summary['risk_count']} "
+        f"needs_review={model_risk.summary['needs_review_count']}"
+    )
+    print(f"Model Risk Register Pack: {model_risk_pack.artifact_path}")
+    print(f"Model Risk Register Pack JSON: {model_risk_pack.json_artifact_path}")
+    print("Model risk directory: storage/model_risk")
+    print(
         "Procurement question risk: "
         f"questions={procurement_question_risk.coverage_summary['question_count']} "
         f"coverage={procurement_question_risk.coverage_summary['coverage_ratio']} "
@@ -760,6 +775,8 @@ async def main() -> None:
         f"privacy_retention={privacy_retention.summary['high_risk_surface_count']}/"
         f"{privacy_retention.summary['surface_count']} "
         f"privacy_packs={privacy_retention_pack.artifact_path} "
+        f"model_risk={model_risk.register_status}/{model_risk.summary['risk_count']} "
+        f"model_risk_pack={model_risk_pack.artifact_path} "
         f"procurement question risk={procurement_question_risk.coverage_summary['coverage_ratio']} "
         f"procurement_packs={procurement_approval_pack.artifact_path} "
         f"reviewer_collaboration={reviewer_collaboration.board_status}/"

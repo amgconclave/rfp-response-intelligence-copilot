@@ -103,6 +103,7 @@ tabs = st.tabs(
         "Citation Lineage",
         "Cost Governance",
         "Source Trust Gate",
+        "Model Risk Register",
     ]
 )
 
@@ -2729,4 +2730,47 @@ with tabs[42]:
             "Download Source Trust Markdown",
             pack["markdown"],
             file_name="source_trust_gate.md",
+        )
+
+
+with tabs[43]:
+    st.subheader("Model Risk Register")
+    st.caption("Review local model/provider risks, release gates, evidence, and governance owner queue.")
+    action_cols = st.columns(2)
+    if action_cols[0].button("Analyze model risk"):
+        st.session_state.model_risk_register = get_json("/governance/model-risk-register")
+    if action_cols[1].button("Generate Model Risk Pack"):
+        pack = post_json("/governance/model-risk-pack", {"write_artifact": True})
+        st.session_state.model_risk_pack = pack
+        st.session_state.model_risk_register = pack["register"]
+        st.success(f"Model Risk Pack generated under model_risk: {pack['artifact_path']}")
+
+    register = st.session_state.get("model_risk_register")
+    if register:
+        summary = register["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", register["register_status"])
+        metric_cols[1].metric("Risks", summary["risk_count"])
+        metric_cols[2].metric("High/Critical", summary["high_or_critical_count"])
+        metric_cols[3].metric("Needs review", summary["needs_review_count"])
+        metric_cols[4].metric("Provider", register["provider_mode"])
+        st.write("Risk register")
+        st.dataframe(register["risks"], use_container_width=True)
+        st.write("Release gates")
+        st.dataframe(register["release_gates"], use_container_width=True)
+        st.write("Reviewer queue")
+        st.dataframe(register["reviewer_queue"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(register["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(register["limitations"])
+
+    pack = st.session_state.get("model_risk_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Model Risk Markdown",
+            pack["markdown"],
+            file_name="model_risk_register.md",
         )

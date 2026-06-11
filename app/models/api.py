@@ -944,6 +944,52 @@ class PrivacyRetentionPackResponse(BaseModel):
     trace_id: str
 
 
+class ModelRiskRegisterItem(BaseModel):
+    risk_id: str
+    title: str
+    risk_category: str
+    severity: str
+    likelihood: str
+    status: str
+    reviewer_owner: str
+    description: str
+    mitigation_controls: list[str] = Field(default_factory=list)
+    evidence_sources: list[ComplianceEvidenceSource] = Field(default_factory=list)
+    eval_gate: str
+    red_team_gate: str
+    endpoint_references: list[str] = Field(default_factory=list)
+    required_actions: list[str] = Field(default_factory=list)
+
+
+class ModelRiskRegisterResponse(BaseModel):
+    title: str
+    generated_at: str
+    provider_mode: str
+    register_status: str
+    risks: list[ModelRiskRegisterItem]
+    summary: dict[str, Any]
+    release_gates: list[dict[str, Any]] = Field(default_factory=list)
+    reviewer_queue: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ModelRiskPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class ModelRiskPackResponse(BaseModel):
+    model_config = {"populate_by_name": True}
+
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    risk_register: ModelRiskRegisterResponse = Field(alias="register")
+    trace_id: str
+
+
 class CitationLineageItem(BaseModel):
     citation_id: str
     source_kind: str

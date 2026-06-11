@@ -73,6 +73,9 @@ from app.models.api import (
     LaunchChecklistResponse,
     LeadershipBriefRequest,
     LeadershipBriefResponse,
+    ModelRiskPackRequest,
+    ModelRiskPackResponse,
+    ModelRiskRegisterResponse,
     NegotiationBriefRequest,
     NegotiationBriefResponse,
     ObjectionHandlingPackRequest,
@@ -2827,6 +2830,66 @@ async def privacy_retention_pack(
             "json_artifact_path": pack.json_artifact_path,
             "surfaces": pack.guardrails.summary["surface_count"],
             "retention_actions": pack.guardrails.summary["retention_action_count"],
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/governance/model-risk-register",
+    response_model=ModelRiskRegisterResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def model_risk_register(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ModelRiskRegisterResponse:
+    trace_id = get_trace_id(request)
+    await _freshness_inputs(container)
+    result = container.model_risk.register(trace_id)
+    container.audit.record(
+        trace_id,
+        "governance.model_risk_register_viewed",
+        "model_risk_register",
+        metadata={
+            "status": result.register_status,
+            "risks": result.summary["risk_count"],
+            "high_or_critical": result.summary["high_or_critical_count"],
+            "needs_review": result.summary["needs_review_count"],
+        },
+    )
+    return result
+
+
+@router.post(
+    "/governance/model-risk-pack",
+    response_model=ModelRiskPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def model_risk_pack(
+    request: Request,
+    payload: ModelRiskPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ModelRiskPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ModelRiskPackRequest()
+    await _freshness_inputs(container)
+    register = container.model_risk.register(f"{trace_id}-model-risk")
+    pack = container.model_risk.risk_pack(
+        trace_id,
+        register,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "governance.model_risk_pack_generated",
+        "model_risk_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.risk_register.register_status,
+            "risks": pack.risk_register.summary["risk_count"],
         },
     )
     return pack

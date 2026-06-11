@@ -44,6 +44,8 @@ class LaunchChecklistService:
                 "POST /compliance/control-pack",
                 "GET /privacy/retention-guardrails",
                 "POST /privacy/retention-pack",
+                "GET /governance/model-risk-register",
+                "POST /governance/model-risk-pack",
                 "GET /procurement/question-risk",
                 "POST /procurement/approval-pack",
                 "POST /rfp/reviewer-collaboration",
@@ -123,6 +125,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\privacy_packs -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "governance/model-risk|Model Risk Register|model_risk|model-risk-pack" '
+                    "app dashboard docs README.md tests scripts sample_data Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\model_risk -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -855,6 +865,27 @@ class LaunchChecklistService:
                 200,
                 "Writes privacy retention guardrails, prompt logging guidance, owner actions, and proof commands.",
                 ["storage/privacy_packs/*.md", "storage/privacy_packs/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Model risk register",
+                "GET",
+                "/governance/model-risk-register",
+                "governance",
+                200,
+                (
+                    "Returns model/provider risk register items, release gates, local evidence, "
+                    "reviewer queue, and proof commands."
+                ),
+            ),
+            self._row(
+                "Model Risk Register Pack",
+                "POST",
+                "/governance/model-risk-pack",
+                "artifact",
+                200,
+                "Writes model risk register, release gates, reviewer queue, and governance proof artifacts.",
+                ["storage/model_risk/*.md", "storage/model_risk/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

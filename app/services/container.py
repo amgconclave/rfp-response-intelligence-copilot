@@ -28,6 +28,7 @@ from app.services.ingestion import DocumentIngestionService
 from app.services.launch_checklist import LaunchChecklistService
 from app.services.leadership_brief import LeadershipBriefService
 from app.services.metrics import MetricsService
+from app.services.model_risk import ModelRiskRegisterService
 from app.services.objection_handling import CompetitiveObjectionHandlingService
 from app.services.portfolio import PortfolioService
 from app.services.privacy_retention import PrivacyRetentionGuardrailService
@@ -60,6 +61,7 @@ class ServiceContainer:
         self.audit = AuditService(self.repo, settings)
         self.metrics = MetricsService(self.repo, settings)
         self.cost_governance = CostGovernanceService(settings, self.metrics)
+        self.model_risk = ModelRiskRegisterService(self.repo, settings)
         self.bid_simulator = BidScenarioSimulatorService(settings)
         self.customer_intelligence = CustomerIntelligenceService(settings)
         self.compliance = ComplianceControlMappingService(self.repo, settings)

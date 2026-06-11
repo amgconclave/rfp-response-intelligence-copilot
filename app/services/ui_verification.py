@@ -465,6 +465,12 @@ class UIVerificationService:
                 "artifact_root": "privacy_packs",
             },
             {
+                "label": "Model Risk Register",
+                "endpoint_paths": ["/governance/model-risk-register", "/governance/model-risk-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "model_risk",
+            },
+            {
                 "label": "Procurement Q&A",
                 "endpoint_paths": ["/procurement/question-risk", "/procurement/approval-pack"],
                 "generated_artifact_tab": True,
@@ -634,6 +640,17 @@ class UIVerificationService:
                 "path": "/privacy/retention-pack",
                 "purpose": "Privacy Retention generated guardrail pack.",
                 "expected_artifacts": ["storage/privacy_packs/*.md", "storage/privacy_packs/*.json"],
+            },
+            {
+                "method": "GET",
+                "path": "/governance/model-risk-register",
+                "purpose": "Model Risk Register tab risk, gate, and reviewer queue view.",
+            },
+            {
+                "method": "POST",
+                "path": "/governance/model-risk-pack",
+                "purpose": "Model Risk Register generated governance pack.",
+                "expected_artifacts": ["storage/model_risk/*.md", "storage/model_risk/*.json"],
             },
             {
                 "method": "GET",

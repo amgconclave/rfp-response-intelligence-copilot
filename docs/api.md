@@ -287,6 +287,29 @@ Writes Markdown and JSON Privacy Retention Guardrail Pack artifacts under ignore
 
 The pack includes the surface matrix, policy evidence snippets, retention actions, prompt/logging guidance, exact local proof commands, limitations, embedded guardrail JSON, Markdown, JSON, and trace ID.
 
+### `GET /governance/model-risk-register`
+
+Returns the local Model Risk Register. It maps groundedness, provider change, prompt privacy, eval coverage, cost/latency, and human approval risks to local policy evidence, mitigation controls, eval gates, red-team gates, reviewer owners, release gates, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/governance/model-risk-register" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The default path is deterministic and local/mock. It does not call external model-risk, GRC, ticketing, OpenAI, or Azure systems.
+
+### `POST /governance/model-risk-pack`
+
+Writes Markdown and JSON Model Risk Register Pack artifacts under ignored `storage/model_risk/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes the risk register, mapped evidence snippets, release gates, reviewer queue, proof commands, limitations, embedded register JSON, Markdown, JSON, and trace ID.
+
 ### `GET /procurement/question-risk`
 
 Returns the Procurement Q&A question risk catalog. It simulates security architecture, privacy/DPA, SLA/support, disaster recovery, AI governance/model claims, pricing/commercial, implementation timeline, and out-of-scope/adversarial unsupported-claim buyer questions. Each item includes category, risk level, required reviewer role, approval status, evidence support, unsupported-claim flag, citations, snippets, approved response memory matches, reviewer checklist, escalation owner, evidence gaps, review findings, and coverage summary.

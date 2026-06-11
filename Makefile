@@ -3,7 +3,7 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8000
 DASHBOARD_PORT ?= 8501
 
-.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack source-trust source-trust-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack exception-register exception-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
+.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack model-risk model-risk-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack source-trust source-trust-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack exception-register exception-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
 
 install:
 	$(PYTHON) -m pip install -e .
@@ -42,6 +42,12 @@ privacy-guardrails:
 
 privacy-pack:
 	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/privacy/retention-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
+
+model-risk:
+	$(PYTHON) -c "import httpx; r=httpx.get('http://127.0.0.1:8000/governance/model-risk-register', headers={'X-API-Key': 'local-demo-key'}, timeout=30).json(); print({'status': r['register_status'], 'risks': r['summary']['risk_count'], 'review': r['summary']['needs_review_count']})"
+
+model-risk-pack:
+	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/governance/model-risk-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
 
 freshness:
 	$(PYTHON) -c "import httpx; f=httpx.get('http://127.0.0.1:8000/evidence/freshness', headers={'X-API-Key': 'local-demo-key'}, timeout=30).json(); print({'avg_score': f['summary']['average_freshness_score'], 'sources': f['summary']['source_count'], 'expired': f['summary']['expired_count'], 'flags': f['summary']['unsupported_claim_count']})"

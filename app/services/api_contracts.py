@@ -169,6 +169,8 @@ class ApiContractService:
             "/compliance/control-pack",
             "/privacy/retention-guardrails",
             "/privacy/retention-pack",
+            "/governance/model-risk-register",
+            "/governance/model-risk-pack",
             "/procurement/question-risk",
             "/procurement/approval-pack",
             "/rfp/reviewer-collaboration",
@@ -272,6 +274,8 @@ class ApiContractService:
             "storage/compliance_packs": "compliance_packs",
             "/privacy/retention-pack": "privacy_retention_pack",
             "storage/privacy_packs": "privacy_packs",
+            "/governance/model-risk-pack": "model_risk_pack",
+            "storage/model_risk": "model_risk",
             "/procurement/approval-pack": "procurement_approval_pack",
             "storage/procurement_packs": "procurement_packs",
             "/rfp/reviewer-collaboration-pack": "reviewer_collaboration_pack",
@@ -533,6 +537,7 @@ class ApiContractService:
             "/rfp/submission-regression": '{"top_k":4,"write_artifacts":true}',
             "/compliance/control-pack": '{"write_artifact":true}',
             "/privacy/retention-pack": '{"write_artifact":true}',
+            "/governance/model-risk-pack": '{"write_artifact":true}',
             "/procurement/approval-pack": '{"write_artifact":true}',
             "/rfp/reviewer-collaboration": "{}",
             "/rfp/reviewer-collaboration-pack": '{"write_artifact":true}',
@@ -584,6 +589,8 @@ class ApiContractService:
             return "compliance"
         if path.startswith("/privacy"):
             return "privacy"
+        if path.startswith("/governance"):
+            return "governance"
         if path.startswith("/procurement"):
             return "procurement"
         if path.startswith("/bid"):

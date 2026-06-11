@@ -264,6 +264,14 @@ class ArtifactInventoryService:
                 "Select-Object FullName,Length,LastWriteTime"
             ),
             (
+                'rg "governance/model-risk|Model Risk Register|model_risk|model-risk-pack" '
+                "app dashboard docs README.md tests sample_data Makefile"
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\model_risk -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
                 'rg "procurement/question-risk|procurement/approval-pack|Procurement Q&A|'
                 'Approval Workflow|procurement_packs|question risk" '
                 "app dashboard docs README.md tests scripts sample_data Makefile"
@@ -531,6 +539,12 @@ class ArtifactInventoryService:
                 "privacy_packs",
                 "POST /privacy/retention-pack",
                 "Privacy retention guardrail matrix, prompt logging guidance, and owner actions.",
+            ),
+            self._spec(
+                "model_risk",
+                "model_risk",
+                "POST /governance/model-risk-pack",
+                "Model risk register, release gates, reviewer queue, and local AI governance artifacts.",
             ),
             self._spec(
                 "procurement_packs",
