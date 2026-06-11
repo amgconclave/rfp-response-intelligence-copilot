@@ -28,6 +28,10 @@ from app.models.api import (
     ContractRiskResponse,
     ControlPackRequest,
     ControlPackResponse,
+    CostGovernancePackRequest,
+    CostGovernancePackResponse,
+    CostGovernanceRequest,
+    CostGovernanceResponse,
     CustomerFitRequest,
     CustomerFitResponse,
     CustomerProfilesResponse,
@@ -1717,6 +1721,103 @@ async def launch_checklist(
         },
     )
     return checklist
+
+
+@router.get("/ops/cost-governance", response_model=CostGovernanceResponse, dependencies=[Depends(require_api_key)])
+async def cost_governance(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> CostGovernanceResponse:
+    trace_id = get_trace_id(request)
+    report = container.cost_governance.report(trace_id)
+    container.audit.record(
+        trace_id,
+        "ops.cost_governance_viewed",
+        "cost_governance",
+        metadata={
+            "status": report.governance_status,
+            "provider_mode": report.provider_readiness["provider_mode"],
+            "daily_estimated_cost": report.budget_summary["daily_estimated_cost"],
+        },
+    )
+    return report
+
+
+@router.post(
+    "/ops/cost-governance",
+    response_model=CostGovernanceResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def cost_governance_with_assumptions(
+    payload: CostGovernanceRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> CostGovernanceResponse:
+    trace_id = get_trace_id(request)
+    report = container.cost_governance.report(
+        trace_id,
+        daily_rfp_count=payload.daily_rfp_count,
+        questions_per_rfp=payload.questions_per_rfp,
+        draft_sections_per_rfp=payload.draft_sections_per_rfp,
+        eval_runs_per_day=payload.eval_runs_per_day,
+        red_team_runs_per_day=payload.red_team_runs_per_day,
+        daily_budget_usd=payload.daily_budget_usd,
+    )
+    container.audit.record(
+        trace_id,
+        "ops.cost_governance_viewed",
+        "cost_governance",
+        metadata={
+            "status": report.governance_status,
+            "provider_mode": report.provider_readiness["provider_mode"],
+            "daily_estimated_cost": report.budget_summary["daily_estimated_cost"],
+            "daily_budget_usd": report.budget_summary["daily_budget_usd"],
+        },
+    )
+    return report
+
+
+@router.post(
+    "/ops/cost-governance-pack",
+    response_model=CostGovernancePackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def cost_governance_pack(
+    request: Request,
+    payload: CostGovernancePackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> CostGovernancePackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or CostGovernancePackRequest()
+    governance = request_payload.governance
+    if governance is None:
+        governance = container.cost_governance.report(
+            f"{trace_id}-report",
+            daily_rfp_count=request_payload.daily_rfp_count,
+            questions_per_rfp=request_payload.questions_per_rfp,
+            draft_sections_per_rfp=request_payload.draft_sections_per_rfp,
+            eval_runs_per_day=request_payload.eval_runs_per_day,
+            red_team_runs_per_day=request_payload.red_team_runs_per_day,
+            daily_budget_usd=request_payload.daily_budget_usd,
+        )
+    pack = container.cost_governance.pack(
+        trace_id,
+        report=governance,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "ops.cost_governance_pack_generated",
+        "cost_governance_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.governance.governance_status,
+            "daily_estimated_cost": pack.governance.budget_summary["daily_estimated_cost"],
+        },
+    )
+    return pack
 
 
 @router.get(

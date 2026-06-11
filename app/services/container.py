@@ -13,6 +13,7 @@ from app.services.citation_lineage import CitationLineageService
 from app.services.compliance import ComplianceControlMappingService
 from app.services.contract_risk import ContractRiskService
 from app.services.corpus_coverage import CorpusCoverageService
+from app.services.cost_governance import CostGovernanceService
 from app.services.customer_intelligence import CustomerIntelligenceService
 from app.services.deal_readiness import DealReadinessService
 from app.services.demo_script import DemoScriptService
@@ -57,6 +58,7 @@ class ServiceContainer:
         self.llm_provider = build_llm_provider(settings)
         self.audit = AuditService(self.repo, settings)
         self.metrics = MetricsService(self.repo, settings)
+        self.cost_governance = CostGovernanceService(settings, self.metrics)
         self.bid_simulator = BidScenarioSimulatorService(settings)
         self.customer_intelligence = CustomerIntelligenceService(settings)
         self.compliance = ComplianceControlMappingService(self.repo, settings)

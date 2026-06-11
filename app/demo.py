@@ -260,6 +260,12 @@ async def main() -> None:
     )
     demo_script = container.demo_script.generate("demo-script", regression)
     launch_checklist = container.launch_checklist.launch_checklist("demo-launch-checklist")
+    cost_governance = container.cost_governance.report("demo-cost-governance")
+    cost_governance_pack = container.cost_governance.pack(
+        "demo-cost-governance-pack",
+        cost_governance,
+        write_artifact=True,
+    )
     portfolio_evidence = container.portfolio.evidence_index("demo-portfolio-evidence")
     interview_pack = await container.portfolio.generate_interview_pack(
         container,
@@ -495,6 +501,14 @@ async def main() -> None:
     )
     print(f"Launch checklist artifact: {launch_checklist.artifact_path}")
     print(
+        "Cost governance: "
+        f"status={cost_governance.governance_status} "
+        f"provider={cost_governance.provider_readiness['provider_mode']} "
+        f"daily_cost={cost_governance.budget_summary['daily_estimated_cost']}"
+    )
+    print(f"Cost Governance Pack: {cost_governance_pack.artifact_path}")
+    print(f"Cost Governance Pack JSON: {cost_governance_pack.json_artifact_path}")
+    print(
         "Portfolio evidence score: "
         f"{portfolio_evidence.evidence_score} "
         f"covered={portfolio_evidence.covered_skill_count}/{portfolio_evidence.total_skill_count}"
@@ -686,6 +700,9 @@ async def main() -> None:
         f"submission_memo={executive_submission_memo.artifact_path} "
         f"launch readiness={launch_checklist.smoke_matrix.readiness_summary.readiness_level} "
         f"launch_checklist={launch_checklist.artifact_path} "
+        f"cost_governance={cost_governance.governance_status}/"
+        f"{cost_governance.budget_summary['daily_estimated_cost']} "
+        f"cost_governance_pack={cost_governance_pack.artifact_path} "
         f"evidence score={portfolio_evidence.evidence_score} "
         f"interview_pack={interview_pack.artifact_path} "
         f"reviewer_quickstart={reviewer_quickstart.status}/"

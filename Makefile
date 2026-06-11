@@ -3,7 +3,7 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8000
 DASHBOARD_PORT ?= 8501
 
-.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack exception-register exception-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
+.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack exception-register exception-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
 
 install:
 	$(PYTHON) -m pip install -e .
@@ -102,6 +102,12 @@ smoke:
 
 checklist:
 	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/ops/launch-checklist', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
+
+cost-governance:
+	$(PYTHON) -c "import httpx; g=httpx.get('http://127.0.0.1:8000/ops/cost-governance', headers={'X-API-Key': 'local-demo-key'}, timeout=30).json(); print({'status': g['governance_status'], 'provider': g['provider_readiness']['provider_mode'], 'daily_cost': g['budget_summary']['daily_estimated_cost']})"
+
+cost-governance-pack:
+	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/ops/cost-governance-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
 
 runtime-check:
 	$(PYTHON) scripts\runtime_check.py

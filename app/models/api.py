@@ -1188,6 +1188,43 @@ class BidRoiPackResponse(BaseModel):
     trace_id: str
 
 
+class CostGovernanceRequest(BaseModel):
+    daily_rfp_count: int = 3
+    questions_per_rfp: int = 12
+    draft_sections_per_rfp: int = 5
+    eval_runs_per_day: int = 1
+    red_team_runs_per_day: int = 1
+    daily_budget_usd: float = 25.0
+
+
+class CostGovernanceResponse(BaseModel):
+    title: str
+    governance_status: str
+    provider_readiness: dict[str, Any]
+    token_profile: dict[str, Any]
+    workflow_estimates: list[dict[str, Any]] = Field(default_factory=list)
+    budget_summary: dict[str, Any]
+    reviewer_controls: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class CostGovernancePackRequest(CostGovernanceRequest):
+    governance: CostGovernanceResponse | None = None
+    write_artifact: bool = True
+
+
+class CostGovernancePackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    governance: CostGovernanceResponse
+    trace_id: str
+
+
 class UsageResponse(BaseModel):
     metrics: list[UsageMetric]
     totals: dict[str, float | int]

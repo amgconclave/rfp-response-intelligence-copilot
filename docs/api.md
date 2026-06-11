@@ -37,6 +37,42 @@ Writes a Markdown and JSON Local Launch Checklist under `storage/launch_checklis
 
 The response includes `artifact_path`, `json_artifact_path`, `markdown`, structured `checklist`, embedded `smoke_matrix`, and `trace_id`.
 
+### `GET /ops/cost-governance`
+
+Returns local cost and provider governance for the RFP workflow. The report includes provider readiness, current usage totals, token profile, deterministic workflow estimates, budget utilization, reviewer controls, local proof commands, limitations, and trace ID. Local/mock mode remains the default and does not require paid provider keys.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/ops/cost-governance" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /ops/cost-governance`
+
+Returns the same governance report with caller-supplied workflow assumptions.
+
+```json
+{
+  "daily_rfp_count": 3,
+  "questions_per_rfp": 12,
+  "draft_sections_per_rfp": 5,
+  "eval_runs_per_day": 1,
+  "red_team_runs_per_day": 1,
+  "daily_budget_usd": 25.0
+}
+```
+
+### `POST /ops/cost-governance-pack`
+
+Writes Markdown and JSON Cost Governance Pack artifacts under ignored `storage/cost_governance/` by default. The pack includes an executive budget summary, provider readiness, workflow estimates, reviewer controls, proof commands, and limitations.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The response includes `artifact_path`, `json_artifact_path`, `markdown`, structured `pack`, embedded `governance`, and `trace_id`.
+
 ### `GET /runtime/demo-readiness`
 
 Returns local FastAPI and Streamlit runtime readiness for fresh-clone reviewers. It includes exact start commands, stop commands, expected ports, environment requirements, dependency checks, read-only localhost port checks, expected health/smoke URLs, RAG/eval/red-team commands, demo flow order, screenshot checklist placeholders, troubleshooting, recruiter/engineer explanation, known limitations, and trace ID. It does not kill processes or require OpenAI, Azure, live Qdrant, or any external service.

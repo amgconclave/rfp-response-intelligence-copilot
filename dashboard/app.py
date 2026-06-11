@@ -101,6 +101,7 @@ tabs = st.tabs(
         "Privacy Retention",
         "Submission Exceptions",
         "Citation Lineage",
+        "Cost Governance",
     ]
 )
 
@@ -2618,4 +2619,65 @@ with tabs[40]:
             "Download Citation Lineage Markdown",
             pack["markdown"],
             file_name="citation_lineage_pack.md",
+        )
+
+
+with tabs[41]:
+    st.subheader("Cost Governance")
+    st.caption(
+        "Forecast local RFP workflow token/cost exposure, verify provider readiness, and write reviewer proof "
+        "for mock, OpenAI, or Azure OpenAI modes."
+    )
+    cols = st.columns(6)
+    daily_rfps = cols[0].number_input("Daily RFPs", min_value=0, max_value=100, value=3)
+    questions_per_rfp = cols[1].number_input("Questions/RFP", min_value=0, max_value=200, value=12)
+    draft_sections = cols[2].number_input("Draft sections", min_value=0, max_value=50, value=5)
+    eval_runs = cols[3].number_input("Eval runs", min_value=0, max_value=20, value=1)
+    red_team_runs = cols[4].number_input("Red-team runs", min_value=0, max_value=20, value=1)
+    daily_budget = cols[5].number_input("Daily budget", min_value=0.0, max_value=10000.0, value=25.0)
+    governance_payload = {
+        "daily_rfp_count": int(daily_rfps),
+        "questions_per_rfp": int(questions_per_rfp),
+        "draft_sections_per_rfp": int(draft_sections),
+        "eval_runs_per_day": int(eval_runs),
+        "red_team_runs_per_day": int(red_team_runs),
+        "daily_budget_usd": float(daily_budget),
+    }
+    action_cols = st.columns(2)
+    if action_cols[0].button("Analyze cost governance"):
+        st.session_state.cost_governance = post_json("/ops/cost-governance", governance_payload)
+    if action_cols[1].button("Generate Cost Governance Pack"):
+        pack = post_json("/ops/cost-governance-pack", {**governance_payload, "write_artifact": True})
+        st.session_state.cost_governance_pack = pack
+        st.session_state.cost_governance = pack["governance"]
+        st.success(f"Cost Governance Pack generated under cost_governance: {pack['artifact_path']}")
+
+    governance = st.session_state.get("cost_governance")
+    if governance:
+        budget = governance["budget_summary"]
+        provider = governance["provider_readiness"]
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Status", governance["governance_status"])
+        metric_cols[1].metric("Provider", provider["provider_mode"])
+        metric_cols[2].metric("Daily cost", budget["daily_estimated_cost"])
+        metric_cols[3].metric("Budget use", budget["budget_utilization"])
+        st.write("Provider readiness")
+        st.json(provider)
+        st.write("Workflow estimates")
+        st.dataframe(governance["workflow_estimates"], use_container_width=True)
+        st.write("Reviewer controls")
+        st.dataframe(governance["reviewer_controls"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(governance["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(governance["limitations"])
+
+    pack = st.session_state.get("cost_governance_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Cost Governance Markdown",
+            pack["markdown"],
+            file_name="cost_governance_pack.md",
         )

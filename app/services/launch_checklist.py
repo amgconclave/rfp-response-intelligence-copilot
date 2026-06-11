@@ -34,6 +34,8 @@ class LaunchChecklistService:
                 "POST /rfp/submission-regression",
                 "GET /ops/smoke-matrix",
                 "POST /ops/launch-checklist",
+                "GET /ops/cost-governance",
+                "POST /ops/cost-governance-pack",
                 "GET /runtime/demo-readiness",
                 "POST /runtime/demo-pack",
                 "GET /rag/corpus-coverage",
@@ -87,6 +89,14 @@ class LaunchChecklistService:
                 (
                     'rg "runtime/demo-readiness|runtime/demo-pack|Runtime Demo|runtime_packs|'
                     'runtime_check|start_demo" app dashboard docs README.md tests scripts sample_data Makefile'
+                ),
+                (
+                    'rg "ops/cost-governance|ops/cost-governance-pack|Cost Governance|'
+                    'cost_governance|provider readiness" app dashboard docs README.md tests Makefile'
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\cost_governance -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
                     'rg "rag/corpus-coverage|rag/eval-coverage-pack|RAG Corpus|rag_coverage|'
@@ -345,6 +355,7 @@ class LaunchChecklistService:
             "leadership_briefs": "storage/leadership_briefs",
             "demo_scripts": "storage/demo_scripts",
             "launch_checklists": "storage/launch_checklists",
+            "cost_governance": "storage/cost_governance",
             "runtime_packs": "storage/runtime_packs",
             "rag_coverage": "storage/rag_coverage",
             "compliance_packs": "storage/compliance_packs",
@@ -726,6 +737,27 @@ class LaunchChecklistService:
                 "Writes local launch checklist Markdown and JSON.",
                 ["storage/launch_checklists/*.md", "storage/launch_checklists/*.json"],
                 "{}",
+            ),
+            self._row(
+                "Cost governance",
+                "GET",
+                "/ops/cost-governance",
+                "ops",
+                200,
+                (
+                    "Returns provider readiness, current usage totals, workflow cost forecasts, "
+                    "budget status, reviewer controls, and proof commands."
+                ),
+            ),
+            self._row(
+                "Cost Governance Pack",
+                "POST",
+                "/ops/cost-governance-pack",
+                "artifact",
+                200,
+                "Writes provider and budget governance Markdown and JSON.",
+                ["storage/cost_governance/*.md", "storage/cost_governance/*.json"],
+                '{"write_artifact":true}',
             ),
             self._row(
                 "Runtime demo readiness",

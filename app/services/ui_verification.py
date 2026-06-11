@@ -381,6 +381,12 @@ class UIVerificationService:
                 "artifact_root": "launch_checklists",
             },
             {
+                "label": "Cost Governance",
+                "endpoint_paths": ["/ops/cost-governance", "/ops/cost-governance-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "cost_governance",
+            },
+            {
                 "label": "Portfolio Pack",
                 "endpoint_paths": ["/portfolio/evidence-index", "/portfolio/interview-pack"],
                 "generated_artifact_tab": True,
@@ -558,6 +564,17 @@ class UIVerificationService:
             },
             {"method": "GET", "path": "/ops/smoke-matrix", "purpose": "Launch Checklist smoke matrix."},
             {"method": "POST", "path": "/ops/launch-checklist", "purpose": "Launch Checklist generated artifact."},
+            {
+                "method": "GET",
+                "path": "/ops/cost-governance",
+                "purpose": "Cost Governance tab provider readiness and budget forecast.",
+            },
+            {
+                "method": "POST",
+                "path": "/ops/cost-governance-pack",
+                "purpose": "Cost Governance generated reviewer pack.",
+                "expected_artifacts": ["storage/cost_governance/*.md", "storage/cost_governance/*.json"],
+            },
             {"method": "GET", "path": "/handoff/final-audit", "purpose": "Final Handoff tab audit."},
             {
                 "method": "POST",
@@ -728,6 +745,14 @@ class UIVerificationService:
             ),
             (
                 'curl -X POST "http://127.0.0.1:8000/runtime/demo-pack" '
+                '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
+            ),
+            (
+                'curl -X GET "http://127.0.0.1:8000/ops/cost-governance" '
+                '-H "X-API-Key: local-demo-key"'
+            ),
+            (
+                'curl -X POST "http://127.0.0.1:8000/ops/cost-governance-pack" '
                 '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
             ),
             (

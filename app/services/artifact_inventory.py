@@ -207,6 +207,14 @@ class ArtifactInventoryService:
                 "Select-Object FullName,Length,LastWriteTime"
             ),
             (
+                'rg "ops/cost-governance|ops/cost-governance-pack|Cost Governance|'
+                'cost_governance|provider readiness" app dashboard docs README.md tests Makefile'
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\cost_governance -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
                 'rg "handoff/final-audit|handoff/final-pack|Final Handoff|final_handoff|'
                 'README Consistency|final audit" app dashboard docs README.md tests scripts sample_data Makefile'
             ),
@@ -331,6 +339,10 @@ class ArtifactInventoryService:
             "Call GET /artifacts/inventory to inspect directories, producers, latest files, and ignored status.",
             "Call POST /artifacts/readme-checklist to write the README Checklist Pack under storage/artifact_indexes/.",
             "Call POST /runtime/demo-pack to write the Runtime Demo Server Pack under storage/runtime_packs/.",
+            (
+                "Call POST /ops/cost-governance-pack to write the Cost Governance Pack "
+                "under storage/cost_governance/."
+            ),
             (
                 "Call POST /api/reviewer-collection to write the API Reviewer Collection Pack "
                 "under storage/api_contracts/."
@@ -492,6 +504,12 @@ class ArtifactInventoryService:
                 "runtime_packs",
                 "POST /runtime/demo-pack",
                 "Runtime Demo Server Pack with FastAPI/Streamlit commands, readiness checks, and screenshot checklist.",
+            ),
+            self._spec(
+                "cost_governance",
+                "cost_governance",
+                "POST /ops/cost-governance-pack",
+                "Provider readiness, token budget forecast, and local cost governance artifacts.",
             ),
             self._spec(
                 "rag_coverage",

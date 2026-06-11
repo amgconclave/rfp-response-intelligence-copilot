@@ -231,6 +231,7 @@ flowchart LR
 - Submission regression suite via `POST /rfp/submission-regression` that composes ingestion, analysis, matrix, cited answers, missing-evidence behavior, drafting, review, customer fit, response memory, action planning, handoff, eval, red-team, readiness, executive reporting, submission decision memo generation, telemetry, and audit checks.
 - Demo script generator via `POST /rfp/demo-script` that writes Markdown/JSON under `storage/demo_scripts/` for Agentic AI / GenAI engineer interview walkthroughs.
 - Local Launch Checklist + API Smoke Matrix via `GET /ops/smoke-matrix` and `POST /ops/launch-checklist`, writing Markdown/JSON under `storage/launch_checklists/` with commands, endpoint expectations, artifact checks, troubleshooting, JD skills, and talking points.
+- Cost Governance Pack via `GET /ops/cost-governance`, `POST /ops/cost-governance`, and `POST /ops/cost-governance-pack`, writing Markdown/JSON under ignored `storage/cost_governance/` with provider readiness, current usage totals, deterministic workflow cost forecasts, budget utilization, reviewer controls, local proof commands, and local/mock limitations.
 - Runtime Demo Server Pack via `GET /runtime/demo-readiness`, `POST /runtime/demo-pack`, `python scripts\runtime_check.py`, and `scripts\start_demo.ps1`, writing Markdown/JSON under ignored `storage/runtime_packs/` with exact FastAPI/Streamlit commands, expected ports, dependency/env checks, read-only process/port checks, health URLs, screenshot placeholders, troubleshooting, and limitations.
 - RAG Corpus Coverage + Eval Coverage Pack via `GET /rag/corpus-coverage` and `POST /rag/eval-coverage-pack`, writing Markdown/JSON under ignored `storage/rag_coverage/` with corpus coverage, eval coverage, citation/source coverage, red-team coverage, missing-evidence coverage, gaps, warnings, and local commands.
 - Compliance Evidence Matrix + Control Mapping Pack via `GET /compliance/evidence-matrix` and `POST /compliance/control-pack`, writing Markdown/JSON under ignored `storage/compliance_packs/` with control coverage, requirement links, source snippets, confidence, owners, missing-evidence warnings, unsupported-claim flags, owner actions, reviewer notes, proof commands, and limitations.
@@ -368,6 +369,9 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `GET /audit/events`: returns traceable audit events.
 - `GET /ops/smoke-matrix`: returns endpoint smoke expectations, sample curl commands, artifact expectations, auth notes, and readiness summary.
 - `POST /ops/launch-checklist`: writes Markdown/JSON local launch checklist artifacts under `storage/launch_checklists/`.
+- `GET /ops/cost-governance`: returns provider readiness, token profile, workflow cost forecasts, budget status, reviewer controls, proof commands, and limitations.
+- `POST /ops/cost-governance`: returns cost governance with caller-supplied workflow assumptions.
+- `POST /ops/cost-governance-pack`: writes Markdown/JSON Cost Governance Pack artifacts under ignored `storage/cost_governance/`.
 - `GET /runtime/demo-readiness`: returns local FastAPI/Streamlit run commands, expected ports, env requirements, dependency checks, read-only process/port checks, health URLs, RAG/eval/red-team commands, screenshot placeholders, troubleshooting, and limitations.
 - `POST /runtime/demo-pack`: writes Markdown/JSON Runtime Demo Server Pack artifacts under ignored `storage/runtime_packs/`.
 - `GET /ops/ci-doctor`: returns structured CI Doctor checks for pytest, ruff, eval, red-team, demo, CI workflow, Docker Compose, `.env.example`, README/docs coverage, generated artifact ignores, dependencies, local/mock provider notes, and redacted secret scan summary.
@@ -445,6 +449,7 @@ Run the API and dashboard, then capture:
 - Release Pack tab showing Release Candidate gate status, score, blockers/warnings, verification commands, artifact coverage, and generated Publish Pack artifact path.
 - Artifact Inventory tab showing generated artifact directories, producer endpoints/commands, latest files, ignored status, README Checklist artifact path, and reviewer proof checklist.
 - UI Verification tab showing Dashboard Smoke status, checked views/endpoints, generated artifact tabs, limitations, and generated UI Verification Pack artifact path.
+- Cost Governance tab showing provider readiness, workflow cost forecasts, budget utilization, reviewer controls, proof commands, and Cost Governance Pack artifact paths.
 - Git Readiness tab showing branch hygiene status, changed file groups, ignored generated artifact directories, commit groups, local commands, and generated GitHub Push Readiness Pack artifact path.
 - Runtime Demo tab showing FastAPI/Streamlit readiness, commands, ports, dependency/env checks, health URLs, screenshot placeholders, and generated Runtime Demo Pack artifact path.
 - Procurement Q&A tab showing question risk, approval status, evidence support, unsupported-claim flags, escalation owners, and generated Approval Workflow Pack artifact path.
