@@ -43,6 +43,8 @@ The v0.2 API also exposes proof-oriented coverage endpoints:
 - `POST /proposal/agent-council-pack`: writes the Proposal Agent Council Pack under `storage/agent_council/`.
 - `GET /proposal/decision-provenance`: returns graph-level eval assertions for node/edge integrity, checkpoint pass-through, and council eval pass-through.
 - `POST /proposal/decision-provenance-pack`: writes the Proposal Decision Provenance Pack under `storage/decision_provenance/`.
+- `GET /ops/proposal-observability`: returns trace analysis, retrieval diagnostics, experiment comparison, provider posture, governance findings, and HITL signals.
+- `POST /ops/proposal-observability-pack`: writes the Proposal Observability Pack under `storage/proposal_observability/`.
 - `GET /handoff/final-audit`: returns the README Consistency final audit.
 - `POST /handoff/final-pack`: writes the Final Handoff Pack under `storage/final_handoff/`.
 
@@ -71,6 +73,7 @@ Expected final proof points include:
 - Dashboard Smoke reports `pass`.
 - Proposal Agent Council eval scenarios all pass and the pack is written under `storage/agent_council/`.
 - Proposal Decision Provenance eval assertions all pass and the graph pack is written under `storage/decision_provenance/`.
+- Proposal Observability report includes local trace spans, retrieval diagnostics, governance findings, and the pack is written under `storage/proposal_observability/`.
 - Final audit status reports `pass`.
 - Final Handoff Pack is written under `storage/final_handoff/`.
 

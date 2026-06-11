@@ -609,6 +609,22 @@ async def main() -> None:
         comparison=retrieval_experiments,
         write_artifact=True,
     )
+    proposal_observability = container.proposal_observability.report(
+        trace_id="demo-proposal-observability",
+        workflow=buyer_intelligence,
+        replay=buyer_workflow_replay,
+        council=agent_council,
+        provenance=decision_provenance,
+        retrieval_experiment=retrieval_experiments,
+        cost_governance=cost_governance,
+        usage_metrics=container.metrics.list_metrics(),
+        audit_events=container.audit.list_events(),
+    )
+    proposal_observability_pack = container.proposal_observability.pack(
+        "demo-proposal-observability-pack",
+        proposal_observability,
+        write_artifact=True,
+    )
     owner_counts = Counter(task.owner_role for task in action_plan)
 
     print("RFP Response Intelligence Copilot demo")
@@ -965,6 +981,16 @@ async def main() -> None:
     print(f"Retrieval Experiment Pack: {retrieval_experiment_pack.artifact_path}")
     print(f"Retrieval Experiment Pack JSON: {retrieval_experiment_pack.json_artifact_path}")
     print("Retrieval experiments directory: storage/retrieval_experiments")
+    print(
+        "Proposal observability: "
+        f"status={proposal_observability.status} "
+        f"spans={proposal_observability.summary['trace_span_count']} "
+        f"diagnostics={proposal_observability.summary['retrieval_diagnostic_count']} "
+        f"human_review={proposal_observability.summary['human_review_signal_count']}"
+    )
+    print(f"Proposal Observability Pack: {proposal_observability_pack.artifact_path}")
+    print(f"Proposal Observability Pack JSON: {proposal_observability_pack.json_artifact_path}")
+    print("Proposal observability directory: storage/proposal_observability")
     print(f"Eval pass: {evaluation.passed}")
     print(f"Retrieval precision@k: {evaluation.retrieval_precision_at_k}")
     print(f"Citation coverage: {evaluation.citation_coverage}")
@@ -1071,6 +1097,9 @@ async def main() -> None:
         f"win_loss_packs={win_loss_pack.artifact_path} "
         f"retrieval_experiments={retrieval_experiments.recommended_policy_id}/{retrieval_experiments.status} "
         f"retrieval_experiment_pack={retrieval_experiment_pack.artifact_path} "
+        f"proposal_observability={proposal_observability.status}/"
+        f"{proposal_observability.summary['trace_span_count']} "
+        f"proposal_observability_pack={proposal_observability_pack.artifact_path} "
         f"red_team={red_team['passed']} brief={leadership_brief.artifact_path}"
     )
 

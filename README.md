@@ -154,6 +154,13 @@ curl -X POST "http://127.0.0.1:8000/rag/retrieval-experiments" -H "X-API-Key: lo
 curl -X POST "http://127.0.0.1:8000/rag/retrieval-experiment-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 ```
 
+The Proposal Observability tab rolls buyer workflow checkpoints, agent council turns, decision provenance, retrieval experiment diagnostics, provider/cost posture, audit counts, metrics, governance findings, and human-review signals into one local control-plane pack under `storage/proposal_observability/`:
+
+```bash
+curl -X GET "http://127.0.0.1:8000/ops/proposal-observability" -H "X-API-Key: local-demo-key"
+curl -X POST "http://127.0.0.1:8000/ops/proposal-observability-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
+```
+
 The Artifact Inventory and README Checklist Pack include generated artifact directories, latest files, producer endpoints/commands, ignored status, reviewer purpose, freshness notes, README badge suggestions, README checklist suggestions, local commands, a deterministic reviewer proof checklist, and cleanup/regeneration notes.
 
 The Dashboard Smoke script and UI Verification Pack include expected Streamlit tab labels, endpoint references, generated-artifact tabs, local run commands, screenshot placeholders, troubleshooting, and limitations. The smoke script is source-level and does not launch a browser:
@@ -254,6 +261,7 @@ flowchart LR
 - Competitive Objection Handling Pack via `POST /rfp/objection-handling` and `POST /rfp/objection-handling-pack`, writing Markdown/JSON under `storage/objection_packs/` with competitor, pricing, security, compliance, and implementation responses, citations, confidence, checkpointed workflow replay, route decisions, eval assertions, reviewer workflow, endpoint references, and limitations.
 - Win/Loss Learning Loop via `POST /learning/win-loss` and `POST /learning/win-loss-pack`, ingesting fake post-RFP outcomes from `sample_data/rfp_outcomes.json` and writing Markdown/JSON under `storage/win_loss_packs/` with winning evidence patterns, loss guardrails, retrieval boosts, eval/red-team recommendations, response guidance updates, owner actions, proof commands, and limitations.
 - Retrieval Experiment Comparison via `POST /rag/retrieval-experiments` and `POST /rag/retrieval-experiment-pack`, comparing baseline, win/loss boosted, loss-gap guarded, and balanced governed retrieval policies with diagnostics, local trace spans, governance decision, and Markdown/JSON under `storage/retrieval_experiments/`.
+- Proposal Observability Control Plane via `GET /ops/proposal-observability` and `POST /ops/proposal-observability-pack`, writing Markdown/JSON under `storage/proposal_observability/` with trace analysis, retrieval diagnostics, experiment comparison, provider posture, governance findings, and HITL signals.
 - Evidence Conflict Resolver via `GET /evidence/conflicts` and `POST /evidence/conflict-pack`, writing Markdown/JSON under `storage/conflict_packs/` with cited source-precedence conflicts, scope ambiguity, reviewer owners, endpoint impact, and resolution guidance.
 - Citation Lineage + Integrity Audit via `GET /evidence/citation-lineage` and `POST /evidence/citation-lineage-pack`, writing Markdown/JSON under `storage/citation_lineage/` with repository document/chunk verification, stale citation flags, generated-claim flags, owner follow-ups, endpoint impact, and proof commands.
 - Source Trust Gate via `GET /evidence/source-trust` and `POST /evidence/source-trust-pack`, writing Markdown/JSON under `storage/source_trust/` with source trust scores, retrieval policy updates, reviewer queues, approval decisions, endpoint impact, proof commands, and limitations.
@@ -396,6 +404,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /learning/win-loss-pack`: writes a Markdown/JSON Win/Loss Learning Strategy Pack under `storage/win_loss_packs/`.
 - `POST /rag/retrieval-experiments`: compares local retrieval policies over the eval dataset with diagnostics, trace spans, and governance recommendation.
 - `POST /rag/retrieval-experiment-pack`: writes a Markdown/JSON Retrieval Experiment Comparison Pack under `storage/retrieval_experiments/`.
+- `GET /ops/proposal-observability`: returns a proposal observability control plane with trace map, retrieval diagnostics, experiment comparison, provider/cost signals, governance findings, and human-review signals.
+- `POST /ops/proposal-observability-pack`: writes Markdown/JSON Proposal Observability artifacts under `storage/proposal_observability/`.
 - `GET /evidence/conflicts`: returns cited source-precedence, scope, and ambiguity conflicts with reviewer owner, status, endpoint impact, and resolution guidance.
 - `POST /evidence/conflict-pack`: writes a Markdown/JSON Evidence Conflict Resolver Pack under `storage/conflict_packs/`.
 - `GET /evidence/citation-lineage`: returns citation integrity checks for generated answer and draft citations, including repository document/chunk verification, stale references, claim flags, owners, and endpoint impact.
@@ -502,6 +512,7 @@ Run the API and dashboard, then capture:
 - Submission Exceptions tab showing waiver records, approvers, expiry, evidence requirements, approval queue, proof commands, and generated `storage/exception_registers/` artifact path.
 - Win/Loss Learning tab showing outcome count, win rate, winning evidence patterns, losing risk patterns, retrieval/eval recommendations, response guidance updates, proof commands, limitations, and generated `storage/win_loss_packs/` artifact path.
 - Retrieval Experiments tab showing policy comparison scores, per-question diagnostics, local trace spans, governance decision, proof commands, limitations, and generated `storage/retrieval_experiments/` artifact path.
+- Proposal Observability tab showing trace map, retrieval diagnostics, experiment comparison, provider/cost signals, governance findings, HITL signals, proof commands, limitations, and generated `storage/proposal_observability/` artifact path.
 - Evidence Conflicts tab showing conflict counts, blocked/needs-review status, reviewer queue, cited claims, endpoint impact, and generated `storage/conflict_packs/` artifact path.
 - Citation Lineage tab showing citation integrity score, verified/missing/stale references, generated claim flags, owner follow-ups, endpoint impact, proof commands, and generated `storage/citation_lineage/` artifact path.
 - Source Trust Gate tab showing source trust status, approved/blocked counts, reviewer queue, retrieval policy updates, endpoint impact, proof commands, and generated `storage/source_trust/` artifact path.

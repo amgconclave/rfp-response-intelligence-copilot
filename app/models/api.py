@@ -1797,6 +1797,38 @@ class ProposalDecisionProvenancePackResponse(BaseModel):
     trace_id: str
 
 
+class ProposalObservabilityResponse(BaseModel):
+    title: str
+    status: str
+    generated_at: str
+    summary: dict[str, Any]
+    trace_map: list[dict[str, Any]] = Field(default_factory=list)
+    retrieval_diagnostics: list[dict[str, Any]] = Field(default_factory=list)
+    experiment_comparison: dict[str, Any] = Field(default_factory=dict)
+    provider_and_cost_signals: dict[str, Any] = Field(default_factory=dict)
+    governance_findings: list[dict[str, Any]] = Field(default_factory=list)
+    human_review_signals: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ProposalObservabilityPackRequest(BaseModel):
+    dataset_path: str = "sample_data/eval_dataset.json"
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json"
+    top_k: int = 4
+    write_artifact: bool = True
+
+
+class ProposalObservabilityPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    observability: ProposalObservabilityResponse
+    trace_id: str
+
+
 class ProcurementQuestionRiskItem(BaseModel):
     question_id: str
     question_type: str

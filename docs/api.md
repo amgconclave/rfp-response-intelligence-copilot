@@ -564,6 +564,30 @@ Writes Markdown and JSON Retrieval Experiment Comparison Pack artifacts under ig
 
 The pack includes an executive summary, policy comparison table, question diagnostics, local trace spans, governance recommendation, proof commands, limitations, embedded comparison JSON, Markdown, JSON, and trace ID.
 
+### `GET /ops/proposal-observability`
+
+Returns a local proposal observability control plane that aggregates buyer workflow checkpoints, replay transitions, agent council turns, decision provenance nodes, retrieval experiment trace spans, retrieval diagnostics, provider/cost posture, governance findings, and human-review signals.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/ops/proposal-observability" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /ops/proposal-observability-pack`
+
+Writes Markdown and JSON Proposal Observability Pack artifacts under ignored `storage/proposal_observability/` by default.
+
+```json
+{
+  "dataset_path": "sample_data/eval_dataset.json",
+  "outcomes_fixture_path": "sample_data/rfp_outcomes.json",
+  "top_k": 4,
+  "write_artifact": true
+}
+```
+
+The pack includes the trace map, risky retrieval diagnostics, experiment comparison, provider and cost signals, governance findings, human-review signals, proof commands, limitations, embedded observability JSON, Markdown, JSON, and trace ID.
+
 ### `POST /api/reviewer-collection`
 
 Writes a Markdown and JSON Reviewer Collection Pack under ignored `storage/api_contracts/` by default. The collection includes endpoint inventory grouped by domain, sample curl and PowerShell commands with `X-API-Key`, demo-token flow, expected status codes, auth notes, generated artifact endpoints, RAG/eval/red-team verification order, recruiter and engineer explanation, local-only limitations, embedded API Contract Snapshot, Markdown, JSON, and trace ID.

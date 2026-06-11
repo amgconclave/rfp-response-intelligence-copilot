@@ -942,6 +942,27 @@ class LaunchChecklistService:
                 '{"write_artifact":true}',
             ),
             self._row(
+                "Proposal observability",
+                "GET",
+                "/ops/proposal-observability",
+                "ops",
+                200,
+                (
+                    "Returns trace map, retrieval diagnostics, experiment comparison, provider cost signals, "
+                    "governance findings, and human-review signals."
+                ),
+            ),
+            self._row(
+                "Proposal Observability Pack",
+                "POST",
+                "/ops/proposal-observability-pack",
+                "artifact",
+                200,
+                "Writes local observability control-plane Markdown and JSON.",
+                ["storage/proposal_observability/*.md", "storage/proposal_observability/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
                 "Runtime demo readiness",
                 "GET",
                 "/runtime/demo-readiness",

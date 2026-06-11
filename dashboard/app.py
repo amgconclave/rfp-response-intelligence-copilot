@@ -111,6 +111,7 @@ tabs = st.tabs(
         "Decision Provenance",
         "Governed Retrieval",
         "Retrieval Experiments",
+        "Proposal Observability",
     ]
 )
 
@@ -3531,4 +3532,74 @@ with tabs[50]:
             "Download Retrieval Experiment Markdown",
             pack["markdown"],
             file_name="retrieval_experiment_pack.md",
+        )
+
+
+with tabs[51]:
+    st.subheader("Proposal Observability")
+    st.caption(
+        "Roll up buyer workflow traces, agent handoffs, decision provenance, retrieval diagnostics, "
+        "experiment comparison, provider cost posture, audit, and metrics into one local control-plane view."
+    )
+    obs_dataset_path = st.text_input("Observability eval dataset", "sample_data/eval_dataset.json")
+    obs_outcomes_path = st.text_input("Observability win/loss fixture", "sample_data/rfp_outcomes.json")
+    obs_top_k = st.number_input("Observability Top K", min_value=1, max_value=10, value=4, step=1)
+    payload = {
+        "dataset_path": obs_dataset_path,
+        "outcomes_fixture_path": obs_outcomes_path,
+        "top_k": int(obs_top_k),
+    }
+    action_cols = st.columns(2)
+    if action_cols[0].button("Load observability report"):
+        st.session_state.proposal_observability = get_json("/ops/proposal-observability")
+    if action_cols[1].button("Generate Observability Pack"):
+        pack = post_json("/ops/proposal-observability-pack", {**payload, "write_artifact": True})
+        st.session_state.proposal_observability_pack = pack
+        st.session_state.proposal_observability = pack["observability"]
+        st.success(f"Proposal Observability Pack generated under proposal_observability: {pack['artifact_path']}")
+
+    observability = st.session_state.get("proposal_observability")
+    if observability:
+        summary = observability["summary"]
+        provider = observability["provider_and_cost_signals"]
+        experiment = observability["experiment_comparison"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", observability["status"])
+        metric_cols[1].metric("Trace spans", summary["trace_span_count"])
+        metric_cols[2].metric("Diagnostics", summary["retrieval_diagnostic_count"])
+        metric_cols[3].metric("Human review", summary["human_review_signal_count"])
+        metric_cols[4].metric("Provider", provider["provider_mode"])
+        st.write("Experiment comparison")
+        st.json(
+            {
+                "status": experiment["status"],
+                "recommended_policy_id": experiment["recommended_policy_id"],
+                "score_delta_vs_baseline": experiment["score_delta_vs_baseline"],
+                "policy_count": experiment["policy_count"],
+                "question_count": experiment["question_count"],
+            }
+        )
+        st.write("Trace map")
+        st.dataframe(observability["trace_map"], use_container_width=True)
+        st.write("Retrieval diagnostics")
+        st.dataframe(observability["retrieval_diagnostics"], use_container_width=True)
+        st.write("Governance findings")
+        st.dataframe(observability["governance_findings"], use_container_width=True)
+        st.write("Human review signals")
+        st.dataframe(observability["human_review_signals"], use_container_width=True)
+        st.write("Provider and cost signals")
+        st.json(provider)
+        st.write("Local proof commands")
+        st.code("\n".join(observability["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(observability["limitations"])
+
+    pack = st.session_state.get("proposal_observability_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Proposal Observability Markdown",
+            pack["markdown"],
+            file_name="proposal_observability_pack.md",
         )

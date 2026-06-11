@@ -41,6 +41,7 @@ from app.services.privacy_retention import PrivacyRetentionGuardrailService
 from app.services.procurement import ProcurementQuestionRiskService
 from app.services.procurement_risk_desk import ProcurementRiskDeskService
 from app.services.proposal_agent_council import ProposalAgentCouncilService
+from app.services.proposal_observability import ProposalObservabilityService
 from app.services.release import ReleaseService
 from app.services.retrieval import RetrievalService
 from app.services.retrieval_experiments import RetrievalExperimentComparisonService
@@ -76,6 +77,7 @@ class ServiceContainer:
         self.buyer_contracts = BuyerStructuredContractService(settings)
         self.proposal_agent_council = ProposalAgentCouncilService(settings)
         self.decision_provenance = ProposalDecisionProvenanceService(settings)
+        self.proposal_observability = ProposalObservabilityService(settings)
         self.bid_simulator = BidScenarioSimulatorService(settings)
         self.customer_intelligence = CustomerIntelligenceService(settings)
         self.answer_reuse_library = AnswerReuseLibraryService(self.repo, settings)

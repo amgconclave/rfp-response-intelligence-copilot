@@ -210,8 +210,16 @@ class ArtifactInventoryService:
                 'rg "ops/cost-governance|ops/cost-governance-pack|Cost Governance|'
                 'cost_governance|provider readiness" app dashboard docs README.md tests Makefile'
             ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\cost_governance -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
             (
-                "Get-ChildItem -Recurse -File storage\\cost_governance -ErrorAction SilentlyContinue | "
+                'rg "ops/proposal-observability|Proposal Observability|proposal_observability" '
+                "app dashboard docs README.md tests Makefile"
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\proposal_observability -ErrorAction SilentlyContinue | "
                 "Select-Object FullName,Length,LastWriteTime"
             ),
             (
@@ -463,6 +471,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /proposal/decision-provenance-pack to write the Proposal Decision Provenance Pack "
                 "under storage/decision_provenance/."
+            ),
+            (
+                "Call POST /ops/proposal-observability-pack to write the Proposal Observability Pack "
+                "under storage/proposal_observability/."
             ),
             (
                 "Inspect storage/artifact_indexes plus at least one Markdown/JSON artifact from each "
@@ -748,6 +760,15 @@ class ArtifactInventoryService:
                 (
                     "Decision provenance artifacts with typed graph nodes, traceable edges, controls, "
                     "and eval assertions."
+                ),
+            ),
+            self._spec(
+                "proposal_observability",
+                "proposal_observability",
+                "POST /ops/proposal-observability-pack",
+                (
+                    "Observability control-plane artifacts with trace analysis, retrieval diagnostics, "
+                    "experiment comparison, provider posture, governance, and HITL signals."
                 ),
             ),
             self._spec(

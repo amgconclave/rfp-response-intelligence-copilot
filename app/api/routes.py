@@ -123,6 +123,9 @@ from app.models.api import (
     ProposalDecisionProvenancePackRequest,
     ProposalDecisionProvenancePackResponse,
     ProposalDecisionProvenanceResponse,
+    ProposalObservabilityPackRequest,
+    ProposalObservabilityPackResponse,
+    ProposalObservabilityResponse,
     ProposalReadinessScorePackRequest,
     ProposalReadinessScorePackResponse,
     PublishPackRequest,
@@ -3984,9 +3987,118 @@ async def usage(container: ServiceContainer = Depends(get_container)) -> UsageRe
     return UsageResponse(metrics=container.metrics.list_metrics(), totals=container.metrics.totals())
 
 
+@router.get(
+    "/ops/proposal-observability",
+    response_model=ProposalObservabilityResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_observability(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalObservabilityResponse:
+    trace_id = get_trace_id(request)
+    observability = await _proposal_observability_report(trace_id, container)
+    container.audit.record(
+        trace_id,
+        "ops.proposal_observability_viewed",
+        "proposal_observability",
+        metadata={
+            "status": observability.status,
+            "trace_spans": observability.summary["trace_span_count"],
+            "retrieval_diagnostics": observability.summary["retrieval_diagnostic_count"],
+        },
+    )
+    return observability
+
+
+@router.post(
+    "/ops/proposal-observability-pack",
+    response_model=ProposalObservabilityPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_observability_pack(
+    request: Request,
+    payload: ProposalObservabilityPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalObservabilityPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProposalObservabilityPackRequest()
+    observability = await _proposal_observability_report(
+        trace_id,
+        container,
+        dataset_path=request_payload.dataset_path,
+        outcomes_fixture_path=request_payload.outcomes_fixture_path,
+        top_k=request_payload.top_k,
+    )
+    pack = container.proposal_observability.pack(
+        trace_id,
+        observability,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "ops.proposal_observability_pack_generated",
+        "proposal_observability_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": observability.status,
+        },
+    )
+    return pack
+
+
 @router.get("/audit/events", response_model=AuditResponse, dependencies=[Depends(require_api_key)])
 async def audit_events(container: ServiceContainer = Depends(get_container)) -> AuditResponse:
     return AuditResponse(events=container.audit.list_events())
+
+
+async def _proposal_observability_report(
+    trace_id: str,
+    container: ServiceContainer,
+    dataset_path: str = "sample_data/eval_dataset.json",
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json",
+    top_k: int = 4,
+) -> ProposalObservabilityResponse:
+    inputs = await _buyer_intelligence_inputs(f"{trace_id}-buyer", container)
+    workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+    replay = container.buyer_intelligence.replay(f"{trace_id}-replay", workflow)
+    council = container.proposal_agent_council.council(
+        trace_id=f"{trace_id}-council",
+        workflow=workflow,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    provenance = container.decision_provenance.provenance(
+        trace_id=f"{trace_id}-provenance",
+        workflow=workflow,
+        replay=replay,
+        council=council,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    retrieval_experiment = await container.retrieval_experiments.compare(
+        trace_id=f"{trace_id}-retrieval-experiment",
+        dataset_path=dataset_path,
+        outcomes_fixture_path=outcomes_fixture_path,
+        top_k=top_k,
+    )
+    return container.proposal_observability.report(
+        trace_id=trace_id,
+        workflow=workflow,
+        replay=replay,
+        council=council,
+        provenance=provenance,
+        retrieval_experiment=retrieval_experiment,
+        cost_governance=inputs["cost_governance"],
+        usage_metrics=container.metrics.list_metrics(),
+        audit_events=container.audit.list_events(),
+    )
 
 
 async def _win_loss_inputs(

@@ -410,6 +410,12 @@ class UIVerificationService:
                 "artifact_root": "cost_governance",
             },
             {
+                "label": "Proposal Observability",
+                "endpoint_paths": ["/ops/proposal-observability", "/ops/proposal-observability-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "proposal_observability",
+            },
+            {
                 "label": "Portfolio Pack",
                 "endpoint_paths": ["/portfolio/evidence-index", "/portfolio/interview-pack"],
                 "generated_artifact_tab": True,
@@ -691,6 +697,20 @@ class UIVerificationService:
                 "path": "/ops/cost-governance-pack",
                 "purpose": "Cost Governance generated reviewer pack.",
                 "expected_artifacts": ["storage/cost_governance/*.md", "storage/cost_governance/*.json"],
+            },
+            {
+                "method": "GET",
+                "path": "/ops/proposal-observability",
+                "purpose": "Proposal Observability tab trace, retrieval, governance, and provider rollup.",
+            },
+            {
+                "method": "POST",
+                "path": "/ops/proposal-observability-pack",
+                "purpose": "Proposal Observability generated control-plane pack.",
+                "expected_artifacts": [
+                    "storage/proposal_observability/*.md",
+                    "storage/proposal_observability/*.json",
+                ],
             },
             {"method": "GET", "path": "/handoff/final-audit", "purpose": "Final Handoff tab audit."},
             {
