@@ -1105,6 +1105,46 @@ class RetrievalExperimentPackResponse(BaseModel):
     trace_id: str
 
 
+class WinLossPolicyActivationRequest(WinLossLearningRequest):
+    dataset_path: str = "sample_data/eval_dataset.json"
+    top_k: int = 4
+    policy_ids: list[str] = Field(default_factory=list)
+    learning_response: WinLossLearningResponse | None = None
+    retrieval_experiment: RetrievalExperimentResponse | None = None
+    activation_mode: str = "shadow_eval"
+
+
+class WinLossPolicyActivationResponse(BaseModel):
+    title: str
+    status: str
+    activation_mode: str
+    recommended_policy_id: str
+    policy_rules: list[dict[str, Any]] = Field(default_factory=list)
+    state_transitions: list[dict[str, Any]] = Field(default_factory=list)
+    checkpoints: list[dict[str, Any]] = Field(default_factory=list)
+    owner_review_queue: list[dict[str, Any]] = Field(default_factory=list)
+    rollback_plan: dict[str, Any]
+    governance_summary: dict[str, Any]
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class WinLossPolicyPackRequest(WinLossPolicyActivationRequest):
+    activation_plan: WinLossPolicyActivationResponse | None = None
+    write_artifact: bool = True
+
+
+class WinLossPolicyPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    activation_plan: WinLossPolicyActivationResponse
+    trace_id: str
+
+
 class ComplianceRequirementLink(BaseModel):
     requirement_id: str
     requirement_text: str

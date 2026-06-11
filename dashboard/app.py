@@ -2181,6 +2181,11 @@ with tabs[34]:
         "then generate retrieval, eval, and response guidance updates."
     )
     fixture_path = st.text_input("Outcome fixture", "sample_data/rfp_outcomes.json")
+    activation_mode = st.selectbox(
+        "Policy activation mode",
+        ["shadow_eval", "review_only", "limited_rollout"],
+        key="win_loss_activation_mode",
+    )
     payload = {"outcomes_fixture_path": fixture_path, "top_k_patterns": 6}
     if st.session_state.get("analysis"):
         payload["analysis"] = st.session_state.analysis
@@ -2189,7 +2194,7 @@ with tabs[34]:
     if st.session_state.get("win_strategy"):
         payload["win_strategy"] = st.session_state.win_strategy
 
-    cols = st.columns(2)
+    cols = st.columns(4)
     if cols[0].button("Analyze win/loss outcomes"):
         st.session_state.win_loss_learning = post_json("/learning/win-loss", payload)
     if cols[1].button("Generate Strategy Pack"):
@@ -2200,6 +2205,25 @@ with tabs[34]:
         st.session_state.win_loss_pack = pack
         st.session_state.win_loss_learning = pack["learning_response"]
         st.success(f"Win/Loss Strategy Pack generated under win_loss_packs: {pack['artifact_path']}")
+    if cols[2].button("Plan Policy Activation"):
+        policy_payload = {**payload, "activation_mode": activation_mode}
+        if st.session_state.get("win_loss_learning"):
+            policy_payload["learning_response"] = st.session_state.win_loss_learning
+        if st.session_state.get("retrieval_experiments"):
+            policy_payload["retrieval_experiment"] = st.session_state.retrieval_experiments
+        st.session_state.win_loss_policy = post_json("/learning/win-loss-policy", policy_payload)
+    if cols[3].button("Generate Policy Pack"):
+        policy_pack_payload = {**payload, "activation_mode": activation_mode, "write_artifact": True}
+        if st.session_state.get("win_loss_policy"):
+            policy_pack_payload["activation_plan"] = st.session_state.win_loss_policy
+        elif st.session_state.get("win_loss_learning"):
+            policy_pack_payload["learning_response"] = st.session_state.win_loss_learning
+        if st.session_state.get("retrieval_experiments"):
+            policy_pack_payload["retrieval_experiment"] = st.session_state.retrieval_experiments
+        policy_pack = post_json("/learning/win-loss-policy-pack", policy_pack_payload)
+        st.session_state.win_loss_policy_pack = policy_pack
+        st.session_state.win_loss_policy = policy_pack["activation_plan"]
+        st.success(f"Win/Loss Policy Pack generated under win_loss_policy: {policy_pack['artifact_path']}")
 
     learning = st.session_state.get("win_loss_learning")
     if learning:
@@ -2238,6 +2262,37 @@ with tabs[34]:
             "Download Win/Loss Strategy Markdown",
             pack["markdown"],
             file_name="win_loss_strategy_pack.md",
+        )
+
+    policy = st.session_state.get("win_loss_policy")
+    if policy:
+        st.write("Policy activation plan")
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Status", policy["status"])
+        metric_cols[1].metric("Policy", policy["recommended_policy_id"])
+        metric_cols[2].metric("Rules", len(policy["policy_rules"]))
+        metric_cols[3].metric("Checkpoints", len(policy["checkpoints"]))
+        st.json(policy["governance_summary"])
+        st.write("Policy rules")
+        st.dataframe(policy["policy_rules"], use_container_width=True)
+        st.write("State transitions")
+        st.dataframe(policy["state_transitions"], use_container_width=True)
+        st.write("Checkpoints")
+        st.dataframe(policy["checkpoints"], use_container_width=True)
+        st.write("Owner review queue")
+        st.dataframe(policy["owner_review_queue"], use_container_width=True)
+        st.write("Rollback plan")
+        st.json(policy["rollback_plan"])
+        st.code("\n".join(policy["local_proof_commands"]), language="powershell")
+
+    policy_pack = st.session_state.get("win_loss_policy_pack")
+    if policy_pack:
+        st.write("Policy pack artifact path", policy_pack["artifact_path"])
+        st.write("Policy pack JSON path", policy_pack["json_artifact_path"])
+        st.download_button(
+            "Download Win/Loss Policy Markdown",
+            policy_pack["markdown"],
+            file_name="win_loss_policy_activation_pack.md",
         )
 
 

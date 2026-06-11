@@ -534,7 +534,12 @@ class UIVerificationService:
             },
             {
                 "label": "Win/Loss Learning",
-                "endpoint_paths": ["/learning/win-loss", "/learning/win-loss-pack"],
+                "endpoint_paths": [
+                    "/learning/win-loss",
+                    "/learning/win-loss-pack",
+                    "/learning/win-loss-policy",
+                    "/learning/win-loss-policy-pack",
+                ],
                 "generated_artifact_tab": True,
                 "artifact_root": "win_loss_packs",
             },
@@ -868,6 +873,17 @@ class UIVerificationService:
                 "path": "/learning/win-loss-pack",
                 "purpose": "Win/Loss Learning generated strategy pack.",
                 "expected_artifacts": ["storage/win_loss_packs/*.md", "storage/win_loss_packs/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/learning/win-loss-policy",
+                "purpose": "Win/Loss Policy Activation state machine, checkpoints, owner queue, and rollback plan.",
+            },
+            {
+                "method": "POST",
+                "path": "/learning/win-loss-policy-pack",
+                "purpose": "Win/Loss Policy Activation generated Markdown and JSON pack.",
+                "expected_artifacts": ["storage/win_loss_policy/*.md", "storage/win_loss_policy/*.json"],
             },
             {
                 "method": "POST",

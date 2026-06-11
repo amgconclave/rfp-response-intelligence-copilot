@@ -634,6 +634,17 @@ async def main() -> None:
         comparison=retrieval_experiments,
         write_artifact=True,
     )
+    win_loss_policy = container.win_loss_policy.activation_plan(
+        trace_id="demo-win-loss-policy",
+        learning=win_loss_learning,
+        retrieval_experiment=retrieval_experiments,
+        activation_mode="shadow_eval",
+    )
+    win_loss_policy_pack = container.win_loss_policy.policy_pack(
+        trace_id="demo-win-loss-policy-pack",
+        activation_plan=win_loss_policy,
+        write_artifact=True,
+    )
     proposal_observability = container.proposal_observability.report(
         trace_id="demo-proposal-observability",
         workflow=buyer_intelligence,
@@ -1007,6 +1018,16 @@ async def main() -> None:
     print(f"Win/Loss Strategy Pack JSON: {win_loss_pack.json_artifact_path}")
     print("Win/Loss packs directory: storage/win_loss_packs")
     print(
+        "Win/Loss policy activation: "
+        f"status={win_loss_policy.status} "
+        f"rules={len(win_loss_policy.policy_rules)} "
+        f"checkpoints={len(win_loss_policy.checkpoints)} "
+        f"owners={len(win_loss_policy.owner_review_queue)}"
+    )
+    print(f"Win/Loss Policy Pack: {win_loss_policy_pack.artifact_path}")
+    print(f"Win/Loss Policy Pack JSON: {win_loss_policy_pack.json_artifact_path}")
+    print("Win/Loss policy directory: storage/win_loss_policy")
+    print(
         "Retrieval experiments: "
         f"status={retrieval_experiments.status} "
         f"recommended={retrieval_experiments.recommended_policy_id} "
@@ -1142,6 +1163,8 @@ async def main() -> None:
         f"objection_packs={objection_pack.artifact_path} "
         f"win_loss={win_loss_learning.win_rate}/{win_loss_learning.outcome_count} "
         f"win_loss_packs={win_loss_pack.artifact_path} "
+        f"win_loss_policy={win_loss_policy.status}/{len(win_loss_policy.policy_rules)} "
+        f"win_loss_policy_pack={win_loss_policy_pack.artifact_path} "
         f"retrieval_experiments={retrieval_experiments.recommended_policy_id}/{retrieval_experiments.status} "
         f"retrieval_experiment_pack={retrieval_experiment_pack.artifact_path} "
         f"proposal_observability={proposal_observability.status}/"

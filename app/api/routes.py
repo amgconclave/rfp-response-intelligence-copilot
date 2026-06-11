@@ -195,6 +195,10 @@ from app.models.api import (
     VerificationEvidenceResponse,
     WinLossLearningRequest,
     WinLossLearningResponse,
+    WinLossPolicyActivationRequest,
+    WinLossPolicyActivationResponse,
+    WinLossPolicyPackRequest,
+    WinLossPolicyPackResponse,
     WinLossStrategyPackRequest,
     WinLossStrategyPackResponse,
     WinStrategyRequest,
@@ -4186,6 +4190,88 @@ async def win_loss_strategy_pack(
     return pack
 
 
+@router.post(
+    "/learning/win-loss-policy",
+    response_model=WinLossPolicyActivationResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def win_loss_policy_activation(
+    request: Request,
+    payload: WinLossPolicyActivationRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> WinLossPolicyActivationResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or WinLossPolicyActivationRequest()
+    await _freshness_inputs(container)
+    try:
+        learning, comparison = await _win_loss_policy_inputs(request_payload, trace_id, container)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    plan = container.win_loss_policy.activation_plan(
+        trace_id=trace_id,
+        learning=learning,
+        retrieval_experiment=comparison,
+        activation_mode=request_payload.activation_mode,
+    )
+    container.audit.record(
+        trace_id,
+        "learning.win_loss_policy_planned",
+        "win_loss_policy_activation",
+        metadata={
+            "status": plan.status,
+            "recommended_policy_id": plan.recommended_policy_id,
+            "policy_rules": len(plan.policy_rules),
+            "checkpoints": len(plan.checkpoints),
+        },
+    )
+    return plan
+
+
+@router.post(
+    "/learning/win-loss-policy-pack",
+    response_model=WinLossPolicyPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def win_loss_policy_pack(
+    request: Request,
+    payload: WinLossPolicyPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> WinLossPolicyPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or WinLossPolicyPackRequest()
+    await _freshness_inputs(container)
+    activation_plan = request_payload.activation_plan
+    if activation_plan is None:
+        try:
+            learning, comparison = await _win_loss_policy_inputs(request_payload, f"{trace_id}-policy", container)
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        activation_plan = container.win_loss_policy.activation_plan(
+            trace_id=f"{trace_id}-policy",
+            learning=learning,
+            retrieval_experiment=comparison,
+            activation_mode=request_payload.activation_mode,
+        )
+    pack = container.win_loss_policy.policy_pack(
+        trace_id=trace_id,
+        activation_plan=activation_plan,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "learning.win_loss_policy_pack_generated",
+        "win_loss_policy_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": activation_plan.status,
+            "policy_rules": len(activation_plan.policy_rules),
+        },
+    )
+    return pack
+
+
 @router.get("/metrics/usage", response_model=UsageResponse, dependencies=[Depends(require_api_key)])
 async def usage(container: ServiceContainer = Depends(get_container)) -> UsageResponse:
     return UsageResponse(metrics=container.metrics.list_metrics(), totals=container.metrics.totals())
@@ -4346,6 +4432,33 @@ async def _win_loss_inputs(
         "win_strategy": win_strategy,
         "eval_metrics": payload.eval_metrics,
     }
+
+
+async def _win_loss_policy_inputs(
+    payload: WinLossPolicyActivationRequest,
+    trace_id: str,
+    container: ServiceContainer,
+) -> tuple[WinLossLearningResponse, RetrievalExperimentResponse]:
+    learning = payload.learning_response
+    if learning is None:
+        inputs = await _win_loss_inputs(payload, f"{trace_id}-learning", container)
+        learning = container.win_loss_learning.learn(
+            trace_id=f"{trace_id}-learning",
+            outcomes=payload.outcomes,
+            outcomes_fixture_path=payload.outcomes_fixture_path,
+            top_k_patterns=payload.top_k_patterns,
+            **inputs,
+        )
+    comparison = payload.retrieval_experiment
+    if comparison is None:
+        comparison = await container.retrieval_experiments.compare(
+            trace_id=f"{trace_id}-retrieval-experiment",
+            dataset_path=payload.dataset_path,
+            outcomes_fixture_path=payload.outcomes_fixture_path,
+            top_k=payload.top_k,
+            policy_ids=payload.policy_ids,
+        )
+    return learning, comparison
 
 
 async def _buyer_intelligence_inputs(trace_id: str, container: ServiceContainer) -> dict[str, object]:

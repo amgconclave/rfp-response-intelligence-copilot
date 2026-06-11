@@ -60,6 +60,7 @@ from app.services.timeline_orchestration import TimelineOrchestrationService
 from app.services.ui_verification import UIVerificationService
 from app.services.verification_evidence import VerificationEvidenceService
 from app.services.win_loss_learning import WinLossLearningService
+from app.services.win_loss_policy import WinLossPolicyActivationService
 from app.services.win_strategy import WinStrategyService
 from app.services.workbench import RfpWorkbenchService
 from app.vectorstores.factory import build_vector_store
@@ -113,6 +114,7 @@ class ServiceContainer:
         self.runtime_demo = RuntimeDemoService(settings)
         self.timeline_orchestration = TimelineOrchestrationService(settings)
         self.win_loss_learning = WinLossLearningService(settings)
+        self.win_loss_policy = WinLossPolicyActivationService(settings)
         self.win_strategy = WinStrategyService(self.repo, settings)
         self.ingestion = DocumentIngestionService(self.repo, self.vector_store, settings)
         self.retrieval = RetrievalService(self.repo, self.vector_store)

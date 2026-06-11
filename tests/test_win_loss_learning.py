@@ -58,3 +58,59 @@ def test_win_loss_strategy_pack_writes_artifacts_and_dashboard_smoke_tracks_it(c
 
     audit = client.get("/audit/events", headers=auth_headers).json()
     assert any(event["action"] == "learning.win_loss_pack_generated" for event in audit["events"])
+
+
+def test_win_loss_policy_activation_returns_traceable_rules_and_checkpoints(client, auth_headers):
+    ingest_corpus(client, auth_headers)
+
+    response = client.post(
+        "/learning/win-loss-policy",
+        headers=auth_headers,
+        json={"activation_mode": "shadow_eval"},
+    )
+
+    assert response.status_code == 200
+    plan = response.json()
+    assert plan["title"] == "Win/Loss Policy Activation Plan"
+    assert plan["activation_mode"] == "shadow_eval"
+    assert plan["recommended_policy_id"]
+    assert plan["policy_rules"]
+    assert any(rule["rule_type"] == "source_boost" for rule in plan["policy_rules"])
+    assert any(rule["rule_type"] == "gap_guardrail" for rule in plan["policy_rules"])
+    assert any(item["to_state"] == "rolled_back" for item in plan["state_transitions"])
+    assert any(item["checkpoint_id"] == "cp-red-team-missing-evidence" for item in plan["checkpoints"])
+    assert plan["owner_review_queue"]
+    assert plan["rollback_plan"]["default_policy_id"] == "baseline"
+    assert "state_machine_workflow" in plan["governance_summary"]["patterns_used"]
+    assert "typed_contracts" in plan["governance_summary"]["patterns_used"]
+
+    audit = client.get("/audit/events", headers=auth_headers).json()
+    assert any(event["action"] == "learning.win_loss_policy_planned" for event in audit["events"])
+
+
+def test_win_loss_policy_pack_writes_artifacts_and_dashboard_smoke_tracks_it(client, auth_headers):
+    response = client.post(
+        "/learning/win-loss-policy-pack",
+        headers=auth_headers,
+        json={"write_artifact": True},
+    )
+
+    assert response.status_code == 200
+    pack = response.json()
+    assert pack["artifact_path"]
+    assert pack["json_artifact_path"]
+    assert Path(pack["artifact_path"]).exists()
+    assert Path(pack["json_artifact_path"]).exists()
+    assert "win_loss_policy" in pack["artifact_path"]
+    assert "Win/Loss Policy Activation Pack" in pack["markdown"]
+    assert pack["activation_plan"]["policy_rules"]
+    assert pack["pack"]["state_transitions"]
+    assert pack["pack"]["rollback_plan"]["rollback_state"] == "rolled_back"
+
+    smoke = client.get("/ui/dashboard-smoke", headers=auth_headers).json()
+    assert smoke["status"] == "pass"
+    assert any(endpoint["path"] == "/learning/win-loss-policy" for endpoint in smoke["endpoint_references"])
+    assert any(endpoint["path"] == "/learning/win-loss-policy-pack" for endpoint in smoke["endpoint_references"])
+
+    audit = client.get("/audit/events", headers=auth_headers).json()
+    assert any(event["action"] == "learning.win_loss_policy_pack_generated" for event in audit["events"])
