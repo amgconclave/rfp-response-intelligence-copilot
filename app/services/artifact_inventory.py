@@ -337,7 +337,8 @@ class ArtifactInventoryService:
                 "Select-Object FullName,Length,LastWriteTime"
             ),
             (
-                'rg "proposal/buyer-intelligence|Buyer-Grade Proposal Intelligence|'
+                'rg "proposal/buyer-intelligence|buyer-intelligence-replay|'
+                'Buyer-Grade Proposal Intelligence|Buyer Workflow Replay|'
                 'buyer_intelligence|storage/buyer_intelligence" app dashboard docs README.md tests Makefile'
             ),
             (
@@ -405,6 +406,10 @@ class ArtifactInventoryService:
             ),
             (
                 "Call POST /proposal/buyer-intelligence-pack to write the Buyer-Grade Proposal Intelligence Pack "
+                "under storage/buyer_intelligence/."
+            ),
+            (
+                "Call POST /proposal/buyer-intelligence-replay-pack to write the Buyer Workflow Replay Pack "
                 "under storage/buyer_intelligence/."
             ),
             (
@@ -645,7 +650,7 @@ class ArtifactInventoryService:
                 "POST /proposal/buyer-intelligence-pack",
                 (
                     "Buyer-grade proposal workflow pack with durable checkpoints, HITL approval queue, "
-                    "governance gates, provider routes, and local state JSON."
+                    "governance gates, provider routes, local state JSON, and replay transition packs."
                 ),
             ),
             self._spec(

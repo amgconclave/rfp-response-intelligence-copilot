@@ -264,6 +264,27 @@ Writes Markdown, JSON, and durable local workflow state JSON artifacts under ign
 
 The pack includes buyer-facing workflow checkpoints, restart keys, human-in-the-loop approvals, governance gates, provider-flexibility guidance, local trace analysis, executive controls, proof commands, limitations, embedded workflow JSON, Markdown, JSON, state JSON, and trace ID.
 
+### `GET /proposal/buyer-intelligence-replay`
+
+Returns the Buyer Workflow Replay and Transition Audit. It derives ordered state-machine transitions from the buyer workflow, including conditional route decisions, checkpoint keys, trace references, checkpoint validation, replay summary, eval-friendly assertions, proof commands, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/proposal/buyer-intelligence-replay" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /proposal/buyer-intelligence-replay-pack`
+
+Writes Markdown and JSON replay artifacts under ignored `storage/buyer_intelligence/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes the replay transition table, conditional routing decisions, checkpoint validation, eval scenarios, reviewer controls, local proof commands, limitations, embedded replay JSON, Markdown, JSON, and trace ID.
+
 ### `GET /compliance/evidence-matrix`
 
 Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.

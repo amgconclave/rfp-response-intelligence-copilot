@@ -1309,6 +1309,19 @@ class BuyerProviderRoute(BaseModel):
     governance_notes: list[str] = Field(default_factory=list)
 
 
+class BuyerWorkflowTransition(BaseModel):
+    transition_id: str
+    replay_order: int
+    from_stage_id: str | None = None
+    to_stage_id: str
+    condition: str
+    decision: str
+    status: str
+    evidence: str
+    checkpoint_key: str
+    trace_refs: list[str] = Field(default_factory=list)
+
+
 class BuyerIntelligenceWorkflowResponse(BaseModel):
     title: str
     workflow_id: str
@@ -1339,6 +1352,35 @@ class BuyerIntelligencePackResponse(BaseModel):
     markdown: str
     pack: dict[str, Any]
     workflow: BuyerIntelligenceWorkflowResponse
+    trace_id: str
+
+
+class BuyerWorkflowReplayResponse(BaseModel):
+    title: str
+    status: str
+    generated_at: str
+    workflow_id: str
+    transition_count: int
+    transitions: list[BuyerWorkflowTransition]
+    route_decisions: list[dict[str, Any]] = Field(default_factory=list)
+    checkpoint_validation: dict[str, Any] = Field(default_factory=dict)
+    replay_summary: dict[str, Any] = Field(default_factory=dict)
+    eval_scenarios: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class BuyerWorkflowReplayPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class BuyerWorkflowReplayPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    replay: BuyerWorkflowReplayResponse
     trace_id: str
 
 

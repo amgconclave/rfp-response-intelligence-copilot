@@ -14,7 +14,10 @@ from app.models.api import (
     BuyerIntelligencePackResponse,
     BuyerIntelligenceWorkflowResponse,
     BuyerProviderRoute,
+    BuyerWorkflowReplayPackResponse,
+    BuyerWorkflowReplayResponse,
     BuyerWorkflowStage,
+    BuyerWorkflowTransition,
     CostGovernanceResponse,
     ModelRiskRegisterResponse,
     ProcurementQuestionRiskResponse,
@@ -131,6 +134,65 @@ class BuyerProposalIntelligenceService:
             markdown=markdown,
             pack=pack,
             workflow=workflow,
+            trace_id=trace_id,
+        )
+
+    def replay(
+        self,
+        trace_id: str,
+        workflow: BuyerIntelligenceWorkflowResponse,
+    ) -> BuyerWorkflowReplayResponse:
+        transitions = self._transitions(workflow)
+        checkpoint_validation = self._checkpoint_validation(workflow, transitions)
+        route_decisions = self._route_decisions(workflow, transitions)
+        status = "pass" if checkpoint_validation["status"] == "pass" else "needs_review"
+        return BuyerWorkflowReplayResponse(
+            title="Buyer Workflow Replay and Transition Audit",
+            status=status,
+            generated_at=datetime.now(UTC).isoformat(),
+            workflow_id=workflow.workflow_id,
+            transition_count=len(transitions),
+            transitions=transitions,
+            route_decisions=route_decisions,
+            checkpoint_validation=checkpoint_validation,
+            replay_summary=self._replay_summary(workflow, transitions, checkpoint_validation),
+            eval_scenarios=self._eval_scenarios(workflow, transitions),
+            local_proof_commands=self._replay_local_proof_commands(),
+            limitations=self._replay_limitations(),
+            trace_id=trace_id,
+        )
+
+    def replay_pack(
+        self,
+        trace_id: str,
+        replay: BuyerWorkflowReplayResponse,
+        write_artifact: bool = True,
+    ) -> BuyerWorkflowReplayPackResponse:
+        pack = self._replay_pack_payload(trace_id, replay)
+        markdown = self._render_replay_markdown(pack)
+        artifact_path: str | None = None
+        json_artifact_path: str | None = None
+
+        if write_artifact:
+            pack_dir = self.settings.storage_dir / "buyer_intelligence"
+            pack_dir.mkdir(parents=True, exist_ok=True)
+            safe_trace_id = self._slug(trace_id)
+            markdown_path = pack_dir / f"buyer_workflow_replay_{safe_trace_id}.md"
+            json_path = pack_dir / f"buyer_workflow_replay_{safe_trace_id}.json"
+            artifact_path = str(markdown_path.resolve())
+            json_artifact_path = str(json_path.resolve())
+            pack["artifact_paths"]["buyer_workflow_replay_markdown"] = artifact_path
+            pack["artifact_paths"]["buyer_workflow_replay_json"] = json_artifact_path
+            markdown = self._render_replay_markdown(pack)
+            markdown_path.write_text(markdown, encoding="utf-8")
+            json_path.write_text(json.dumps(pack, indent=2), encoding="utf-8")
+
+        return BuyerWorkflowReplayPackResponse(
+            artifact_path=artifact_path,
+            json_artifact_path=json_artifact_path,
+            markdown=markdown,
+            pack=pack,
+            replay=replay,
             trace_id=trace_id,
         )
 
@@ -570,6 +632,239 @@ class BuyerProposalIntelligenceService:
             "Trace analysis is local structured metadata and can be exported to a tracing backend later.",
         ]
 
+    def _transitions(self, workflow: BuyerIntelligenceWorkflowResponse) -> list[BuyerWorkflowTransition]:
+        transitions: list[BuyerWorkflowTransition] = []
+        previous: BuyerWorkflowStage | None = None
+        for stage in sorted(workflow.workflow_stages, key=lambda item: item.sequence):
+            transitions.append(
+                BuyerWorkflowTransition(
+                    transition_id=f"transition-{stage.sequence:02d}-{self._slug(stage.stage_id)}",
+                    replay_order=stage.sequence,
+                    from_stage_id=previous.stage_id if previous else None,
+                    to_stage_id=stage.stage_id,
+                    condition=self._transition_condition(previous, stage),
+                    decision=self._transition_decision(stage),
+                    status=stage.status,
+                    evidence=self._transition_evidence(stage),
+                    checkpoint_key=stage.durability_key,
+                    trace_refs=stage.trace_refs,
+                )
+            )
+            previous = stage
+        return transitions
+
+    def _transition_condition(self, previous: BuyerWorkflowStage | None, stage: BuyerWorkflowStage) -> str:
+        if previous is None:
+            return "start when RFP intake is available"
+        if previous.status in {"blocked", "waiting_on_approvals"}:
+            return f"hold after {previous.stage_id} until reviewer or governance clearance"
+        if stage.status in {"needs_review", "waiting_on_approvals"}:
+            return f"route to {stage.owner_role} review because stage status is {stage.status}"
+        return f"advance from {previous.stage_id} after checkpoint {previous.durability_key}"
+
+    def _transition_decision(self, stage: BuyerWorkflowStage) -> str:
+        if stage.status == "blocked":
+            return "blocked_until_governance_or_owner_action"
+        if stage.status in {"needs_review", "waiting_on_approvals"}:
+            return "route_to_human_approval_queue"
+        if stage.status == "ready":
+            return "ready_for_submission_review"
+        return "continue"
+
+    def _transition_evidence(self, stage: BuyerWorkflowStage) -> str:
+        gates = ", ".join(stage.governance_gates) or "no gate"
+        outputs = ", ".join(stage.outputs) or "no output"
+        return f"{stage.name} produced {outputs}; governed by {gates}."
+
+    def _checkpoint_validation(
+        self,
+        workflow: BuyerIntelligenceWorkflowResponse,
+        transitions: list[BuyerWorkflowTransition],
+    ) -> dict[str, Any]:
+        expected_orders = list(range(1, len(transitions) + 1))
+        actual_orders = [transition.replay_order for transition in transitions]
+        missing_checkpoint_transitions = [
+            transition.transition_id
+            for transition in transitions
+            if not transition.checkpoint_key or ":" not in transition.checkpoint_key
+        ]
+        missing_trace_transitions = [
+            transition.transition_id for transition in transitions if not transition.trace_refs
+        ]
+        terminal_transition = transitions[-1].to_stage_id if transitions else None
+        terminal_matches_status = bool(
+            transitions
+            and transitions[-1].status in {"ready", "waiting_on_approvals", "blocked", "needs_review", "complete"}
+            and workflow.workflow_status in {"ready_for_submission_review", "waiting_on_human_approval", "blocked"}
+        )
+        failures = []
+        if actual_orders != expected_orders:
+            failures.append("transition_order_not_contiguous")
+        if missing_checkpoint_transitions:
+            failures.append("missing_checkpoint_key")
+        if missing_trace_transitions:
+            failures.append("missing_trace_refs")
+        if not terminal_matches_status:
+            failures.append("terminal_status_not_supported")
+        return {
+            "status": "pass" if not failures else "fail",
+            "failures": failures,
+            "expected_orders": expected_orders,
+            "actual_orders": actual_orders,
+            "checkpoint_count": workflow.durable_state.get("checkpoint_count"),
+            "transition_count": len(transitions),
+            "missing_checkpoint_transitions": missing_checkpoint_transitions,
+            "missing_trace_transitions": missing_trace_transitions,
+            "terminal_transition": terminal_transition,
+            "terminal_matches_status": terminal_matches_status,
+        }
+
+    def _route_decisions(
+        self,
+        workflow: BuyerIntelligenceWorkflowResponse,
+        transitions: list[BuyerWorkflowTransition],
+    ) -> list[dict[str, Any]]:
+        approval_stage_ids = {
+            stage_id
+            for item in workflow.human_approval_queue
+            for stage_id in item.related_stage_ids
+        }
+        gate_by_stage = {
+            stage.stage_id: [
+                gate.gate_id
+                for gate in workflow.governance_gates
+                if any(gate_ref in stage.governance_gates for gate_ref in self._gate_aliases(gate.gate_id))
+            ]
+            for stage in workflow.workflow_stages
+        }
+        decisions = []
+        for transition in transitions:
+            decisions.append(
+                {
+                    "transition_id": transition.transition_id,
+                    "stage_id": transition.to_stage_id,
+                    "decision": transition.decision,
+                    "requires_human_review": transition.to_stage_id in approval_stage_ids
+                    or transition.decision == "route_to_human_approval_queue",
+                    "governance_gate_refs": gate_by_stage.get(transition.to_stage_id, []),
+                    "checkpoint_key": transition.checkpoint_key,
+                    "eval_assertion": "checkpointed" if transition.checkpoint_key else "missing_checkpoint",
+                }
+            )
+        return decisions
+
+    def _gate_aliases(self, gate_id: str) -> list[str]:
+        aliases = {
+            "gate-human-approval": ["human_in_the_loop", "unsupported_claim_block", "executive_signoff"],
+            "gate-source-trust": ["source_trust", "citation_coverage"],
+            "gate-model-risk": ["model_risk", "provider_flexibility"],
+            "gate-provider-cost": ["provider_flexibility"],
+            "gate-procurement-risk": ["procurement_approval", "commercial_exception_review"],
+            "gate-durable-state": ["state_checkpoint", "input_traceability"],
+        }
+        return aliases.get(gate_id, [gate_id])
+
+    def _replay_summary(
+        self,
+        workflow: BuyerIntelligenceWorkflowResponse,
+        transitions: list[BuyerWorkflowTransition],
+        checkpoint_validation: dict[str, Any],
+    ) -> dict[str, Any]:
+        decisions = Counter(transition.decision for transition in transitions)
+        statuses = Counter(transition.status for transition in transitions)
+        return {
+            "workflow_status": workflow.workflow_status,
+            "transition_count": len(transitions),
+            "decision_counts": dict(sorted(decisions.items())),
+            "status_counts": dict(sorted(statuses.items())),
+            "checkpoint_validation_status": checkpoint_validation["status"],
+            "approval_queue_items": len(workflow.human_approval_queue),
+            "governance_gate_count": len(workflow.governance_gates),
+            "replayable_from_local_state": checkpoint_validation["status"] == "pass",
+        }
+
+    def _eval_scenarios(
+        self,
+        workflow: BuyerIntelligenceWorkflowResponse,
+        transitions: list[BuyerWorkflowTransition],
+    ) -> list[dict[str, Any]]:
+        observed_orders = [transition.replay_order for transition in transitions]
+        expected_orders = list(range(1, len(transitions) + 1))
+        return [
+            {
+                "scenario_id": "buyer-workflow-ordering",
+                "assertion": "transition replay order is contiguous and follows workflow stage sequence",
+                "expected": expected_orders,
+                "observed": observed_orders,
+                "passed": observed_orders == expected_orders,
+            },
+            {
+                "scenario_id": "buyer-workflow-hitl-routing",
+                "assertion": "reviewable workflow states produce human approval or governance routing",
+                "expected": "approval queue when workflow is not ready",
+                "observed": {
+                    "workflow_status": workflow.workflow_status,
+                    "approval_queue_items": len(workflow.human_approval_queue),
+                },
+                "passed": workflow.workflow_status == "ready_for_submission_review"
+                or bool(workflow.human_approval_queue),
+            },
+            {
+                "scenario_id": "buyer-workflow-checkpoints",
+                "assertion": "every transition includes a durable local checkpoint key",
+                "expected": len(transitions),
+                "observed": sum(1 for transition in transitions if transition.checkpoint_key),
+                "passed": all(transition.checkpoint_key for transition in transitions),
+            },
+            {
+                "scenario_id": "buyer-workflow-traceability",
+                "assertion": "transitions retain source trace references for audit review",
+                "expected": len(transitions),
+                "observed": sum(1 for transition in transitions if transition.trace_refs),
+                "passed": all(transition.trace_refs for transition in transitions),
+            },
+        ]
+
+    def _replay_local_proof_commands(self) -> list[str]:
+        return [
+            'curl -X GET "http://127.0.0.1:8000/proposal/buyer-intelligence-replay" -H "X-API-Key: local-demo-key"',
+            (
+                'curl -X POST "http://127.0.0.1:8000/proposal/buyer-intelligence-replay-pack" '
+                '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
+            ),
+            (
+                'rg "buyer-intelligence-replay|Buyer Workflow Replay|buyer_workflow_replay" '
+                "app dashboard docs README.md tests Makefile"
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\buyer_intelligence -Filter "
+                "*replay* -ErrorAction SilentlyContinue | Select-Object FullName,Length,LastWriteTime"
+            ),
+        ]
+
+    def _replay_limitations(self) -> list[str]:
+        return [
+            "Replay uses deterministic local workflow snapshots and does not call an external orchestrator.",
+            "Transition decisions are auditable control outputs, not asynchronous job execution state.",
+            "Checkpoint validation confirms local keys and trace refs, not durable cloud storage recovery.",
+            "Eval scenarios are contract-style assertions designed for local regression and reviewer inspection.",
+        ]
+
+    def _replay_pack_payload(self, trace_id: str, replay: BuyerWorkflowReplayResponse) -> dict[str, Any]:
+        return {
+            "trace_id": trace_id,
+            "title": "Buyer Workflow Replay Pack",
+            "generated_at": datetime.now(UTC).isoformat(),
+            "replay": replay.model_dump(mode="json"),
+            "reviewer_controls": [
+                "Verify replay status is pass before using the buyer pack as a submission control artifact.",
+                "Inspect route decisions for human approval and governance handoffs.",
+                "Confirm every transition carries a checkpoint key and trace refs.",
+                "Regenerate after changing stage routing, source trust, procurement, or model-risk policy.",
+            ],
+            "artifact_paths": {},
+        }
+
     def _pack_payload(self, trace_id: str, workflow: BuyerIntelligenceWorkflowResponse) -> dict[str, Any]:
         return {
             "trace_id": trace_id,
@@ -648,6 +943,63 @@ class BuyerProposalIntelligenceService:
         lines.extend(f"```powershell\n{command}\n```" for command in workflow["local_proof_commands"])
         lines.extend(["", "## Limitations", ""])
         lines.extend(f"- {self._md(item)}" for item in workflow["limitations"])
+        if pack["artifact_paths"]:
+            lines.extend(["", "## Generated Artifacts", ""])
+            lines.extend(f"- {label}: {path}" for label, path in pack["artifact_paths"].items())
+        return "\n".join(lines).strip() + "\n"
+
+    def _render_replay_markdown(self, pack: dict[str, Any]) -> str:
+        replay = pack["replay"]
+        summary = replay["replay_summary"]
+        lines = [
+            "# Buyer Workflow Replay Pack",
+            "",
+            "## Summary",
+            "",
+            f"- Replay status: {replay['status']}",
+            f"- Workflow status: {summary['workflow_status']}",
+            f"- Transitions: {summary['transition_count']}",
+            f"- Approval queue items: {summary['approval_queue_items']}",
+            f"- Checkpoint validation: {summary['checkpoint_validation_status']}",
+            "",
+            "## Transition Replay",
+            "",
+            "| Order | From | To | Decision | Status | Checkpoint |",
+            "| ---: | --- | --- | --- | --- | --- |",
+        ]
+        for transition in replay["transitions"]:
+            lines.append(
+                "| {order} | {from_stage} | {to_stage} | {decision} | {status} | `{checkpoint}` |".format(
+                    order=transition["replay_order"],
+                    from_stage=self._md(transition["from_stage_id"] or "START"),
+                    to_stage=self._md(transition["to_stage_id"]),
+                    decision=self._md(transition["decision"]),
+                    status=self._md(transition["status"]),
+                    checkpoint=self._md(transition["checkpoint_key"]),
+                )
+            )
+        lines.extend(["", "## Route Decisions", ""])
+        for decision in replay["route_decisions"]:
+            gates = self._md(", ".join(decision["governance_gate_refs"]) or "none")
+            lines.append(
+                f"- {decision['transition_id']}: {decision['decision']} "
+                f"(human_review={decision['requires_human_review']}, gates={gates})"
+            )
+        lines.extend(["", "## Checkpoint Validation", ""])
+        validation = replay["checkpoint_validation"]
+        lines.append(f"- Status: {validation['status']}")
+        lines.append(f"- Failures: {', '.join(validation['failures']) or 'none'}")
+        lines.append(f"- Terminal transition: {validation['terminal_transition']}")
+        lines.extend(["", "## Eval Scenarios", ""])
+        for scenario in replay["eval_scenarios"]:
+            result = "pass" if scenario["passed"] else "fail"
+            lines.append(f"- {scenario['scenario_id']} ({result}): {scenario['assertion']}")
+        lines.extend(["", "## Reviewer Controls", ""])
+        lines.extend(f"- [ ] {item}" for item in pack["reviewer_controls"])
+        lines.extend(["", "## Local Proof Commands", ""])
+        lines.extend(f"```powershell\n{command}\n```" for command in replay["local_proof_commands"])
+        lines.extend(["", "## Limitations", ""])
+        lines.extend(f"- {self._md(item)}" for item in replay["limitations"])
         if pack["artifact_paths"]:
             lines.extend(["", "## Generated Artifacts", ""])
             lines.extend(f"- {label}: {path}" for label, path in pack["artifact_paths"].items())

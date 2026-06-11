@@ -26,6 +26,9 @@ from app.models.api import (
     BuyerIntelligencePackRequest,
     BuyerIntelligencePackResponse,
     BuyerIntelligenceWorkflowResponse,
+    BuyerWorkflowReplayPackRequest,
+    BuyerWorkflowReplayPackResponse,
+    BuyerWorkflowReplayResponse,
     CiDoctorResponse,
     CitationLineageAuditResponse,
     CitationLineagePackRequest,
@@ -2883,6 +2886,68 @@ async def buyer_intelligence_pack(
             "state_artifact_path": pack.state_artifact_path,
             "status": pack.workflow.workflow_status,
             "approvals": len(pack.workflow.human_approval_queue),
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/proposal/buyer-intelligence-replay",
+    response_model=BuyerWorkflowReplayResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def buyer_intelligence_replay(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> BuyerWorkflowReplayResponse:
+    trace_id = get_trace_id(request)
+    inputs = await _buyer_intelligence_inputs(trace_id, container)
+    workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+    replay = container.buyer_intelligence.replay(trace_id, workflow)
+    container.audit.record(
+        trace_id,
+        "proposal.buyer_intelligence_replay_viewed",
+        "buyer_workflow_replay",
+        metadata={
+            "status": replay.status,
+            "workflow_id": replay.workflow_id,
+            "transitions": replay.transition_count,
+            "checkpoint_validation": replay.checkpoint_validation["status"],
+        },
+    )
+    return replay
+
+
+@router.post(
+    "/proposal/buyer-intelligence-replay-pack",
+    response_model=BuyerWorkflowReplayPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def buyer_intelligence_replay_pack(
+    request: Request,
+    payload: BuyerWorkflowReplayPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> BuyerWorkflowReplayPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or BuyerWorkflowReplayPackRequest()
+    inputs = await _buyer_intelligence_inputs(trace_id, container)
+    workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+    replay = container.buyer_intelligence.replay(f"{trace_id}-replay", workflow)
+    pack = container.buyer_intelligence.replay_pack(
+        trace_id,
+        replay,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.buyer_intelligence_replay_pack_generated",
+        "buyer_workflow_replay_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.replay.status,
+            "transitions": pack.replay.transition_count,
         },
     )
     return pack

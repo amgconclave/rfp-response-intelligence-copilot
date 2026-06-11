@@ -538,7 +538,12 @@ class UIVerificationService:
             },
             {
                 "label": "Buyer Intelligence Pack",
-                "endpoint_paths": ["/proposal/buyer-intelligence", "/proposal/buyer-intelligence-pack"],
+                "endpoint_paths": [
+                    "/proposal/buyer-intelligence",
+                    "/proposal/buyer-intelligence-pack",
+                    "/proposal/buyer-intelligence-replay",
+                    "/proposal/buyer-intelligence-replay-pack",
+                ],
                 "generated_artifact_tab": True,
                 "artifact_root": "buyer_intelligence",
             },
@@ -804,6 +809,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/buyer_intelligence/*.md",
                     "storage/buyer_intelligence/*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/proposal/buyer-intelligence-replay",
+                "purpose": "Buyer Intelligence Pack tab transition replay and checkpoint validation view.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/buyer-intelligence-replay-pack",
+                "purpose": "Buyer Intelligence Pack generated replay Markdown and JSON artifacts.",
+                "expected_artifacts": [
+                    "storage/buyer_intelligence/*replay*.md",
+                    "storage/buyer_intelligence/*replay*.json",
                 ],
             },
         ]

@@ -430,6 +430,15 @@ async def main() -> None:
         buyer_intelligence,
         write_artifact=True,
     )
+    buyer_workflow_replay = container.buyer_intelligence.replay(
+        "demo-buyer-workflow-replay",
+        buyer_intelligence,
+    )
+    buyer_workflow_replay_pack = container.buyer_intelligence.replay_pack(
+        "demo-buyer-workflow-replay-pack",
+        buyer_workflow_replay,
+        write_artifact=True,
+    )
     procurement_risk_desk = await container.procurement_risk_desk.risk_desk(
         "demo-procurement-risk-desk",
         analysis=analysis,
@@ -702,6 +711,13 @@ async def main() -> None:
     print(f"Buyer Intelligence Pack: {buyer_intelligence_pack.artifact_path}")
     print(f"Buyer Intelligence Pack JSON: {buyer_intelligence_pack.json_artifact_path}")
     print(f"Buyer Intelligence State: {buyer_intelligence_pack.state_artifact_path}")
+    print(
+        "Buyer Workflow Replay: "
+        f"{buyer_workflow_replay.status} transitions={buyer_workflow_replay.transition_count} "
+        f"checkpoint={buyer_workflow_replay.checkpoint_validation['status']}"
+    )
+    print(f"Buyer Workflow Replay Pack: {buyer_workflow_replay_pack.artifact_path}")
+    print(f"Buyer Workflow Replay Pack JSON: {buyer_workflow_replay_pack.json_artifact_path}")
     print("Buyer intelligence directory: storage/buyer_intelligence")
     print(
         "Compliance control coverage: "
@@ -863,6 +879,8 @@ async def main() -> None:
         f"buyer_intelligence={buyer_intelligence.workflow_status}/"
         f"{len(buyer_intelligence.human_approval_queue)} "
         f"buyer_intelligence_pack={buyer_intelligence_pack.artifact_path} "
+        f"buyer_replay={buyer_workflow_replay.status}/{buyer_workflow_replay.transition_count} "
+        f"buyer_replay_pack={buyer_workflow_replay_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "
         f"compliance_packs={compliance_control_pack.artifact_path} "
         f"privacy_retention={privacy_retention.summary['high_risk_surface_count']}/"

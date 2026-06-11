@@ -75,3 +75,78 @@ def test_buyer_intelligence_is_in_smoke_dashboard_inventory_and_api_contract(cli
     assert "/proposal/buyer-intelligence-pack" not in contract["generated_artifact_endpoint_coverage"][
         "missing_paths"
     ]
+
+
+def test_buyer_workflow_replay_exposes_transition_validation_and_eval_scenarios(client, auth_headers):
+    response = client.get("/proposal/buyer-intelligence-replay", headers=auth_headers)
+
+    assert response.status_code == 200
+    replay = response.json()
+    assert replay["title"] == "Buyer Workflow Replay and Transition Audit"
+    assert replay["status"] == "pass"
+    assert replay["transition_count"] >= 6
+    assert replay["checkpoint_validation"]["status"] == "pass"
+    assert replay["checkpoint_validation"]["transition_count"] == replay["transition_count"]
+    assert [item["replay_order"] for item in replay["transitions"]] == list(range(1, replay["transition_count"] + 1))
+    assert all(item["checkpoint_key"] for item in replay["transitions"])
+    assert all(item["trace_refs"] for item in replay["transitions"])
+    assert any(item["requires_human_review"] for item in replay["route_decisions"])
+    assert {scenario["scenario_id"] for scenario in replay["eval_scenarios"]} >= {
+        "buyer-workflow-ordering",
+        "buyer-workflow-hitl-routing",
+        "buyer-workflow-checkpoints",
+        "buyer-workflow-traceability",
+    }
+    assert all(scenario["passed"] for scenario in replay["eval_scenarios"])
+    assert any("/proposal/buyer-intelligence-replay-pack" in command for command in replay["local_proof_commands"])
+
+    audit = client.get("/audit/events", headers=auth_headers).json()
+    assert any(event["action"] == "proposal.buyer_intelligence_replay_viewed" for event in audit["events"])
+
+
+def test_buyer_workflow_replay_pack_writes_artifacts_and_is_indexed(client, auth_headers):
+    response = client.post(
+        "/proposal/buyer-intelligence-replay-pack",
+        headers=auth_headers,
+        json={"write_artifact": True},
+    )
+
+    assert response.status_code == 200
+    pack = response.json()
+    assert pack["artifact_path"]
+    assert pack["json_artifact_path"]
+    assert Path(pack["artifact_path"]).exists()
+    assert Path(pack["json_artifact_path"]).exists()
+    assert "buyer_intelligence" in pack["artifact_path"]
+    assert "buyer_workflow_replay" in pack["artifact_path"]
+    assert "Buyer Workflow Replay Pack" in pack["markdown"]
+    assert "Transition Replay" in pack["markdown"]
+    assert pack["replay"]["checkpoint_validation"]["status"] == "pass"
+
+    smoke = client.get("/ops/smoke-matrix", headers=auth_headers).json()
+    paths = {row["path"]: row for row in smoke["rows"]}
+    assert "/proposal/buyer-intelligence-replay" in paths
+    assert "/proposal/buyer-intelligence-replay-pack" in paths
+    assert "storage/buyer_intelligence/*replay*.json" in paths["/proposal/buyer-intelligence-replay-pack"][
+        "required_artifact_expectations"
+    ]
+
+    dashboard_smoke = client.get("/ui/dashboard-smoke", headers=auth_headers).json()
+    endpoint_paths = {endpoint["path"] for endpoint in dashboard_smoke["endpoint_references"]}
+    assert {
+        "/proposal/buyer-intelligence-replay",
+        "/proposal/buyer-intelligence-replay-pack",
+    } <= endpoint_paths
+
+    contract = client.get("/api/contract-audit", headers=auth_headers).json()
+    proposal_endpoints = {endpoint["path"] for endpoint in contract["endpoint_inventory"]["proposal"]}
+    assert {
+        "/proposal/buyer-intelligence-replay",
+        "/proposal/buyer-intelligence-replay-pack",
+    } <= proposal_endpoints
+    assert "/proposal/buyer-intelligence-replay-pack" not in contract["generated_artifact_endpoint_coverage"][
+        "missing_paths"
+    ]
+
+    audit = client.get("/audit/events", headers=auth_headers).json()
+    assert any(event["action"] == "proposal.buyer_intelligence_replay_pack_generated" for event in audit["events"])

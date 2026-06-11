@@ -71,6 +71,8 @@ class LaunchChecklistService:
                 "POST /evidence/source-trust-pack",
                 "GET /proposal/buyer-intelligence",
                 "POST /proposal/buyer-intelligence-pack",
+                "GET /proposal/buyer-intelligence-replay",
+                "POST /proposal/buyer-intelligence-replay-pack",
                 "GET /ops/ci-doctor",
                 "POST /ops/audit-pack",
                 "GET /api/contract-audit",
@@ -232,7 +234,8 @@ class LaunchChecklistService:
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
-                    'rg "proposal/buyer-intelligence|Buyer-Grade Proposal Intelligence|'
+                    'rg "proposal/buyer-intelligence|buyer-intelligence-replay|'
+                    'Buyer-Grade Proposal Intelligence|Buyer Workflow Replay|'
                     'buyer_intelligence|storage/buyer_intelligence" '
                     "app dashboard docs README.md tests Makefile"
                 ),
@@ -1172,6 +1175,27 @@ class LaunchChecklistService:
                 200,
                 "Writes buyer-grade proposal workflow Markdown, JSON, and durable state JSON artifacts.",
                 ["storage/buyer_intelligence/*.md", "storage/buyer_intelligence/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Buyer Workflow Replay",
+                "GET",
+                "/proposal/buyer-intelligence-replay",
+                "proposal",
+                200,
+                (
+                    "Returns ordered buyer workflow transitions, conditional route decisions, checkpoint "
+                    "validation, and eval-friendly replay scenarios."
+                ),
+            ),
+            self._row(
+                "Buyer Workflow Replay Pack",
+                "POST",
+                "/proposal/buyer-intelligence-replay-pack",
+                "artifact",
+                200,
+                "Writes buyer workflow replay Markdown and JSON artifacts.",
+                ["storage/buyer_intelligence/*replay*.md", "storage/buyer_intelligence/*replay*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

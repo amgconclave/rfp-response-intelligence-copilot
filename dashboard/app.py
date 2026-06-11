@@ -2970,9 +2970,9 @@ with tabs[46]:
     st.subheader("Buyer Intelligence Pack")
     st.caption(
         "Compose durable proposal workflow checkpoints, human approvals, governance gates, provider routes, "
-        "shared state, and local trace analysis for buyer-grade RFP review."
+        "shared state, local trace analysis, and replayable transition audits for buyer-grade RFP review."
     )
-    action_cols = st.columns(2)
+    action_cols = st.columns(4)
     if action_cols[0].button("Load buyer workflow"):
         st.session_state.buyer_intelligence = get_json("/proposal/buyer-intelligence")
     if action_cols[1].button("Generate Buyer Intelligence Pack"):
@@ -2980,6 +2980,13 @@ with tabs[46]:
         st.session_state.buyer_intelligence_pack = pack
         st.session_state.buyer_intelligence = pack["workflow"]
         st.success(f"Buyer Intelligence Pack generated under buyer_intelligence: {pack['artifact_path']}")
+    if action_cols[2].button("Load workflow replay"):
+        st.session_state.buyer_workflow_replay = get_json("/proposal/buyer-intelligence-replay")
+    if action_cols[3].button("Generate Replay Pack"):
+        pack = post_json("/proposal/buyer-intelligence-replay-pack", {"write_artifact": True})
+        st.session_state.buyer_workflow_replay_pack = pack
+        st.session_state.buyer_workflow_replay = pack["replay"]
+        st.success(f"Buyer Workflow Replay Pack generated under buyer_intelligence: {pack['artifact_path']}")
 
     workflow = st.session_state.get("buyer_intelligence")
     if workflow:
@@ -3018,6 +3025,37 @@ with tabs[46]:
         st.write("Limitations")
         st.write(workflow["limitations"])
 
+    replay = st.session_state.get("buyer_workflow_replay")
+    if replay:
+        replay_cols = st.columns(4)
+        replay_cols[0].metric("Replay", replay["status"])
+        replay_cols[1].metric("Transitions", replay["transition_count"])
+        replay_cols[2].metric("Checkpoint", replay["checkpoint_validation"]["status"])
+        replay_cols[3].metric("Eval scenarios", len(replay["eval_scenarios"]))
+        st.write("Transition replay")
+        st.dataframe(
+            [
+                {
+                    "order": item["replay_order"],
+                    "from": item["from_stage_id"] or "START",
+                    "to": item["to_stage_id"],
+                    "decision": item["decision"],
+                    "status": item["status"],
+                    "checkpoint": item["checkpoint_key"],
+                }
+                for item in replay["transitions"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Route decisions")
+        st.dataframe(replay["route_decisions"], use_container_width=True)
+        st.write("Checkpoint validation")
+        st.json(replay["checkpoint_validation"])
+        st.write("Eval scenarios")
+        st.dataframe(replay["eval_scenarios"], use_container_width=True)
+        st.write("Replay proof commands")
+        st.code("\n".join(replay["local_proof_commands"]), language="powershell")
+
     pack = st.session_state.get("buyer_intelligence_pack")
     if pack:
         st.write("Generated artifact path", pack["artifact_path"])
@@ -3027,4 +3065,14 @@ with tabs[46]:
             "Download Buyer Intelligence Markdown",
             pack["markdown"],
             file_name="buyer_intelligence_pack.md",
+        )
+
+    replay_pack = st.session_state.get("buyer_workflow_replay_pack")
+    if replay_pack:
+        st.write("Replay artifact path", replay_pack["artifact_path"])
+        st.write("Replay JSON path", replay_pack["json_artifact_path"])
+        st.download_button(
+            "Download Buyer Workflow Replay Markdown",
+            replay_pack["markdown"],
+            file_name="buyer_workflow_replay_pack.md",
         )
