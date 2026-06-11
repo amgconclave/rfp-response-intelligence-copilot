@@ -677,6 +677,15 @@ async def main() -> None:
         objection_handling,
         write_artifact=True,
     )
+    objection_audit = container.objection_handling.audit_objections(
+        "demo-objection-audit",
+        objection_handling,
+    )
+    objection_audit_pack = container.objection_handling.audit_pack(
+        "demo-objection-audit-pack",
+        objection_audit,
+        write_artifact=True,
+    )
     win_loss_learning = container.win_loss_learning.learn(
         trace_id="demo-win-loss-learning",
         analysis=analysis,
@@ -1179,6 +1188,16 @@ async def main() -> None:
     print(f"Competitive Objection Handling Pack JSON: {objection_pack.json_artifact_path}")
     print("Objection packs directory: storage/objection_packs")
     print(
+        "Objection evidence audit: "
+        f"claims={objection_audit.audit_summary['claim_count']} "
+        f"status={objection_audit.audit_summary['audit_status']} "
+        f"blocked={objection_audit.audit_summary['blocked_claim_count']} "
+        f"coverage={objection_audit.audit_summary['coverage_ratio']}"
+    )
+    print(f"Competitive Objection Evidence Audit Pack: {objection_audit_pack.artifact_path}")
+    print(f"Competitive Objection Evidence Audit Pack JSON: {objection_audit_pack.json_artifact_path}")
+    print("Objection audit directory: storage/objection_audits")
+    print(
         "Win/Loss learning: "
         f"outcomes={win_loss_learning.outcome_count} "
         f"win_rate={win_loss_learning.win_rate} "
@@ -1349,6 +1368,9 @@ async def main() -> None:
         f"bid_packs={bid_roi_pack.artifact_path} "
         f"objection_handling={objection_handling.coverage_summary['coverage_ratio']} "
         f"objection_packs={objection_pack.artifact_path} "
+        f"objection_audit={objection_audit.audit_summary['audit_status']}/"
+        f"{objection_audit.audit_summary['claim_count']} "
+        f"objection_audit_pack={objection_audit_pack.artifact_path} "
         f"win_loss={win_loss_learning.win_rate}/{win_loss_learning.outcome_count} "
         f"win_loss_packs={win_loss_pack.artifact_path} "
         f"win_loss_policy={win_loss_policy.status}/{len(win_loss_policy.policy_rules)} "

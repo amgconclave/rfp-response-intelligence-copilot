@@ -1312,6 +1312,31 @@ class LaunchChecklistService:
                 '{"write_artifact":true}',
             ),
             self._row(
+                "Competitive objection evidence audit",
+                "POST",
+                "/rfp/objection-audit",
+                "enterprise",
+                200,
+                (
+                    "Audits objection response claims for evidence status, risk signals, conditional reviewer "
+                    "routing, and replayable workflow checkpoints."
+                ),
+                body='{"competitor_context":["Incumbent competitor is cheaper."],"top_k":4}',
+            ),
+            self._row(
+                "Objection Evidence Audit Pack",
+                "POST",
+                "/rfp/objection-audit-pack",
+                "artifact",
+                200,
+                (
+                    "Writes objection claim audit, reviewer routes, workflow transitions, eval assertions, "
+                    "and proof commands."
+                ),
+                ["storage/objection_audits/*.md", "storage/objection_audits/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
                 "Win/Loss Learning",
                 "POST",
                 "/learning/win-loss",

@@ -557,7 +557,12 @@ class UIVerificationService:
             },
             {
                 "label": "Objection Handling Pack",
-                "endpoint_paths": ["/rfp/objection-handling", "/rfp/objection-handling-pack"],
+                "endpoint_paths": [
+                    "/rfp/objection-handling",
+                    "/rfp/objection-handling-pack",
+                    "/rfp/objection-audit",
+                    "/rfp/objection-audit-pack",
+                ],
                 "generated_artifact_tab": True,
                 "artifact_root": "objection_packs",
             },
@@ -966,6 +971,17 @@ class UIVerificationService:
                 "path": "/rfp/objection-handling-pack",
                 "purpose": "Objection Handling generated reviewer pack.",
                 "expected_artifacts": ["storage/objection_packs/*.md", "storage/objection_packs/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/objection-audit",
+                "purpose": "Objection Handling tab claim evidence audit.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/objection-audit-pack",
+                "purpose": "Objection Handling generated evidence audit pack.",
+                "expected_artifacts": ["storage/objection_audits/*.md", "storage/objection_audits/*.json"],
             },
             {
                 "method": "POST",

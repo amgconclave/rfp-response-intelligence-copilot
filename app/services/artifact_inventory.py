@@ -804,6 +804,15 @@ class ArtifactInventoryService:
                 "Competitive objection handling responses, reviewer workflow, confidence, and citations.",
             ),
             self._spec(
+                "objection_audits",
+                "objection_audits",
+                "POST /rfp/objection-audit-pack",
+                (
+                    "Competitive objection evidence audit artifacts with claim support, route decisions, "
+                    "and workflow replay."
+                ),
+            ),
+            self._spec(
                 "win_loss_packs",
                 "win_loss_packs",
                 "POST /learning/win-loss-pack",

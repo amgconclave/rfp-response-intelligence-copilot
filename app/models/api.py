@@ -741,6 +741,55 @@ class ObjectionHandlingPackResponse(BaseModel):
     trace_id: str
 
 
+class ObjectionClaimAudit(BaseModel):
+    claim_id: str
+    objection_id: str
+    concern_type: str
+    claim_type: str
+    claim_text: str
+    evidence_status: str
+    risk_level: str
+    confidence: float
+    route_decision: str
+    reviewer_role: str
+    evidence_refs: list[str] = Field(default_factory=list)
+    risk_signals: list[str] = Field(default_factory=list)
+    mitigation: str
+    workflow_trace: list[ObjectionWorkflowTransition] = Field(default_factory=list)
+
+
+class ObjectionAuditRequest(ObjectionHandlingRequest):
+    objection_handling: ObjectionHandlingResponse | None = None
+
+
+class ObjectionAuditResponse(BaseModel):
+    title: str
+    claim_audits: list[ObjectionClaimAudit]
+    audit_summary: dict[str, Any]
+    reviewer_routes: list[dict[str, Any]] = Field(default_factory=list)
+    workflow_summary: dict[str, Any] = Field(default_factory=dict)
+    eval_assertions: list[ObjectionEvalAssertion] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ObjectionAuditPackRequest(ObjectionAuditRequest):
+    objection_audit: ObjectionAuditResponse | None = None
+    write_artifact: bool = True
+
+
+class ObjectionAuditPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    objection_audit: ObjectionAuditResponse
+    trace_id: str
+
+
 class ContractRiskClause(BaseModel):
     clause_id: str
     category: str

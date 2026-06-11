@@ -77,6 +77,25 @@ async def test_objection_service_generates_cited_confidence_and_review_workflow(
     assert pack.pack["eval_assertions"]
     assert "## Workflow Trace" in pack.markdown
     assert "## Eval Assertions" in pack.markdown
+
+    audit = container.objection_handling.audit_objections("objection-service-audit", result)
+    assert audit.title == "Competitive Objection Evidence Audit"
+    assert audit.audit_summary["claim_count"] == result.coverage_summary["objection_count"]
+    assert audit.audit_summary["coverage_ratio"] >= 0.8
+    assert audit.workflow_summary["replay_status"] == "pass"
+    assert all(claim.route_decision in {"ready", "review", "blocked"} for claim in audit.claim_audits)
+    assert all(len(claim.workflow_trace) >= 5 for claim in audit.claim_audits)
+    assert all(assertion.passed for assertion in audit.eval_assertions)
+
+    audit_pack = container.objection_handling.audit_pack("objection-service-audit-pack", audit, write_artifact=True)
+    assert audit_pack.artifact_path
+    assert audit_pack.json_artifact_path
+    assert Path(audit_pack.artifact_path).exists()
+    assert Path(audit_pack.json_artifact_path).exists()
+    assert "objection_audits" in audit_pack.artifact_path
+    assert "Competitive Objection Evidence Audit" in audit_pack.markdown
+    assert audit_pack.pack["workflow_transitions"]
+    assert audit_pack.pack["eval_assertions"]
     repository.reset()
     get_settings.cache_clear()
     get_container.cache_clear()
@@ -126,6 +145,37 @@ def test_objection_endpoints_return_catalog_and_write_pack(client, auth_headers)
     assert pack["pack"]["workflow_transitions"]
     assert pack["pack"]["eval_assertions"]
 
+    audit_response = client.post(
+        "/rfp/objection-audit",
+        headers=auth_headers,
+        json={"objection_handling": handling},
+    )
+    assert audit_response.status_code == 200
+    audit = audit_response.json()
+    assert audit["title"] == "Competitive Objection Evidence Audit"
+    assert audit["audit_summary"]["claim_count"] == handling["coverage_summary"]["objection_count"]
+    assert audit["audit_summary"]["coverage_ratio"] >= 0.8
+    assert audit["workflow_summary"]["replay_status"] == "pass"
+    assert all(claim["workflow_trace"] for claim in audit["claim_audits"])
+    assert all(assertion["passed"] for assertion in audit["eval_assertions"])
+
+    audit_pack_response = client.post(
+        "/rfp/objection-audit-pack",
+        headers=auth_headers,
+        json={"objection_audit": audit, "write_artifact": True},
+    )
+    assert audit_pack_response.status_code == 200
+    audit_pack = audit_pack_response.json()
+    assert audit_pack["artifact_path"]
+    assert audit_pack["json_artifact_path"]
+    assert Path(audit_pack["artifact_path"]).exists()
+    assert Path(audit_pack["json_artifact_path"]).exists()
+    assert "objection_audits" in audit_pack["artifact_path"]
+    assert "## Claim Audit" in audit_pack["markdown"]
+    assert audit_pack["pack"]["reviewer_routes"]
+    assert audit_pack["pack"]["workflow_transitions"]
+    assert audit_pack["pack"]["eval_assertions"]
+
 
 def test_objection_dashboard_smoke_launch_and_contract_wiring(client, auth_headers):
     smoke_response = client.get("/ui/dashboard-smoke", headers=auth_headers)
@@ -134,9 +184,13 @@ def test_objection_dashboard_smoke_launch_and_contract_wiring(client, auth_heade
     objection_view = next(view for view in smoke["expected_views"] if view["label"] == "Objection Handling Pack")
     assert objection_view["status"] == "pass"
     assert objection_view["artifact_root"] == "objection_packs"
+    assert "/rfp/objection-audit" in objection_view["endpoint_paths"]
+    assert "/rfp/objection-audit-pack" in objection_view["endpoint_paths"]
     endpoint_paths = {endpoint["path"]: endpoint for endpoint in smoke["endpoint_references"]}
     assert endpoint_paths["/rfp/objection-handling"]["status"] == "pass"
     assert endpoint_paths["/rfp/objection-handling-pack"]["status"] == "pass"
+    assert endpoint_paths["/rfp/objection-audit"]["status"] == "pass"
+    assert endpoint_paths["/rfp/objection-audit-pack"]["status"] == "pass"
 
     launch_response = client.get("/ops/smoke-matrix", headers=auth_headers)
     assert launch_response.status_code == 200
@@ -144,15 +198,24 @@ def test_objection_dashboard_smoke_launch_and_contract_wiring(client, auth_heade
     paths = {row["path"]: row for row in launch["rows"]}
     assert "/rfp/objection-handling" in paths
     assert "storage/objection_packs/*.md" in paths["/rfp/objection-handling-pack"]["required_artifact_expectations"]
+    assert "/rfp/objection-audit" in paths
+    assert "storage/objection_audits/*.md" in paths["/rfp/objection-audit-pack"]["required_artifact_expectations"]
 
     inventory_response = client.get("/artifacts/inventory", headers=auth_headers)
     assert inventory_response.status_code == 200
     inventory_keys = {item["key"] for item in inventory_response.json()["directories"]}
     assert "objection_packs" in inventory_keys
+    assert "objection_audits" in inventory_keys
 
     contract_response = client.get("/api/contract-audit", headers=auth_headers)
     assert contract_response.status_code == 200
     contract = contract_response.json()
     rfp_endpoints = {endpoint["path"] for endpoint in contract["endpoint_inventory"]["rfp_workflow"]}
-    assert {"/rfp/objection-handling", "/rfp/objection-handling-pack"} <= rfp_endpoints
+    assert {
+        "/rfp/objection-handling",
+        "/rfp/objection-handling-pack",
+        "/rfp/objection-audit",
+        "/rfp/objection-audit-pack",
+    } <= rfp_endpoints
     assert "/rfp/objection-handling-pack" not in contract["generated_artifact_endpoint_coverage"]["missing_paths"]
+    assert "/rfp/objection-audit-pack" not in contract["generated_artifact_endpoint_coverage"]["missing_paths"]

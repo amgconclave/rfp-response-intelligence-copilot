@@ -1466,6 +1466,33 @@ Writes Markdown and JSON Competitive Objection Handling Pack artifacts under `st
 
 The pack includes a summary, all cited objection responses, high-risk objections, reviewer workflow, workflow transition replay, checkpoint keys, route decisions, eval assertions, endpoint references, proof commands, limitations, and artifact paths.
 
+### `POST /rfp/objection-audit`
+
+Audits generated objection responses for evidence-supported claims, risky comparative or commercial wording, missing citations, and reviewer route decisions. The endpoint accepts the same inputs as `/rfp/objection-handling` plus an optional precomputed `objection_handling` response.
+
+```json
+{
+  "competitor_context": [
+    "Incumbent competitor is cheaper and bundling workflow tooling."
+  ],
+  "top_k": 4
+}
+```
+
+The response includes typed claim audits, evidence status, risk level, confidence, route decision, reviewer role, evidence references, risk signals, mitigation, replayable workflow transitions, eval assertions, endpoint references, proof commands, and limitations.
+
+### `POST /rfp/objection-audit-pack`
+
+Writes Markdown and JSON Competitive Objection Evidence Audit artifacts under `storage/objection_audits/` by default. The endpoint accepts the same inputs as `/rfp/objection-audit` plus an optional precomputed `objection_audit` response and `write_artifact` flag.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes claim audit rows, reviewer routes, workflow transition replay, checkpoint keys, eval assertions, endpoint references, proof commands, limitations, and artifact paths.
+
 ### `POST /rfp/contract-risk`
 
 Analyzes customer contract or procurement terms from pasted `text`, an ingested `contract_document_id`, or a local `fixture_path`. The deterministic analyzer flags liability, data processing, security obligations, SLA/service credits, audit rights, termination, indemnity, data residency, AI/data use, and pricing/payment risks.

@@ -2094,7 +2094,7 @@ with tabs[33]:
     if st.session_state.get("win_strategy"):
         payload["win_strategy"] = st.session_state.win_strategy
 
-    cols = st.columns(2)
+    cols = st.columns(4)
     if cols[0].button("Generate objection handling"):
         st.session_state.objection_handling = post_json("/rfp/objection-handling", payload)
     if cols[1].button("Export Objection Handling Pack"):
@@ -2105,6 +2105,21 @@ with tabs[33]:
         st.session_state.objection_handling_pack = pack
         st.session_state.objection_handling = pack["objection_handling"]
         st.success(f"Objection Handling Pack generated under objection_packs: {pack['artifact_path']}")
+    if cols[2].button("Audit objection claims"):
+        audit_payload = {**payload}
+        if st.session_state.get("objection_handling"):
+            audit_payload["objection_handling"] = st.session_state.objection_handling
+        st.session_state.objection_audit = post_json("/rfp/objection-audit", audit_payload)
+    if cols[3].button("Export Objection Audit Pack"):
+        audit_pack_payload = {**payload, "write_artifact": True}
+        if st.session_state.get("objection_audit"):
+            audit_pack_payload["objection_audit"] = st.session_state.objection_audit
+        elif st.session_state.get("objection_handling"):
+            audit_pack_payload["objection_handling"] = st.session_state.objection_handling
+        audit_pack = post_json("/rfp/objection-audit-pack", audit_pack_payload)
+        st.session_state.objection_audit_pack = audit_pack
+        st.session_state.objection_audit = audit_pack["objection_audit"]
+        st.success(f"Objection Audit Pack generated under objection_audits: {audit_pack['artifact_path']}")
 
     handling = st.session_state.get("objection_handling")
     if handling:
@@ -2175,6 +2190,66 @@ with tabs[33]:
             "Download Objection Handling Markdown",
             pack["markdown"],
             file_name="competitive_objection_handling_pack.md",
+        )
+
+    audit = st.session_state.get("objection_audit")
+    if audit:
+        st.write("Objection evidence audit")
+        summary = audit["audit_summary"]
+        workflow = audit.get("workflow_summary", {})
+        audit_cols = st.columns(5)
+        audit_cols[0].metric("Claims", summary["claim_count"])
+        audit_cols[1].metric("Audit status", summary["audit_status"])
+        audit_cols[2].metric("Coverage", summary["coverage_ratio"])
+        audit_cols[3].metric("Review", summary["review_required_count"])
+        audit_cols[4].metric("Blocked", summary["blocked_claim_count"])
+        st.dataframe(
+            [
+                {
+                    "claim": claim["claim_id"],
+                    "concern": claim["concern_type"],
+                    "type": claim["claim_type"],
+                    "evidence": claim["evidence_status"],
+                    "risk": claim["risk_level"],
+                    "route": claim["route_decision"],
+                    "reviewer": claim["reviewer_role"],
+                    "refs": ", ".join(claim["evidence_refs"]),
+                    "signals": ", ".join(claim["risk_signals"]),
+                }
+                for claim in audit["claim_audits"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Audit workflow replay")
+        st.dataframe(
+            [
+                {
+                    "claim": claim["claim_id"],
+                    "seq": transition["sequence"],
+                    "from": transition["from_state"] or "START",
+                    "to": transition["to_state"],
+                    "decision": transition["decision"],
+                    "status": transition["status"],
+                    "owner": transition["owner_role"],
+                    "checkpoint": transition["checkpoint_key"],
+                }
+                for claim in audit["claim_audits"]
+                for transition in claim.get("workflow_trace", [])
+            ],
+            use_container_width=True,
+        )
+        st.write("Audit eval assertions")
+        st.dataframe(audit.get("eval_assertions", []), use_container_width=True)
+        st.caption(f"Audit replay status: {workflow.get('replay_status')}")
+
+    audit_pack = st.session_state.get("objection_audit_pack")
+    if audit_pack:
+        st.write("Generated audit artifact path", audit_pack["artifact_path"])
+        st.write("Generated audit JSON path", audit_pack["json_artifact_path"])
+        st.download_button(
+            "Download Objection Audit Markdown",
+            audit_pack["markdown"],
+            file_name="competitive_objection_audit_pack.md",
         )
 
 

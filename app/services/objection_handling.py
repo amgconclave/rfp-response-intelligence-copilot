@@ -11,6 +11,9 @@ from typing import Any
 from app.core.config import Settings
 from app.models.api import (
     AnalyzeResponse,
+    ObjectionAuditPackResponse,
+    ObjectionAuditResponse,
+    ObjectionClaimAudit,
     ObjectionEvalAssertion,
     ObjectionHandlingPackResponse,
     ObjectionHandlingResponse,
@@ -112,6 +115,61 @@ class CompetitiveObjectionHandlingService:
             markdown=markdown,
             pack=pack,
             objection_handling=objection_handling,
+            trace_id=trace_id,
+        )
+
+    def audit_objections(
+        self,
+        trace_id: str,
+        objection_handling: ObjectionHandlingResponse,
+    ) -> ObjectionAuditResponse:
+        claim_audits = [
+            self._claim_audit(trace_id, item, index)
+            for index, item in enumerate(objection_handling.objections, start=1)
+        ]
+        return ObjectionAuditResponse(
+            title="Competitive Objection Evidence Audit",
+            claim_audits=claim_audits,
+            audit_summary=self._audit_summary(claim_audits),
+            reviewer_routes=self._audit_reviewer_routes(claim_audits),
+            workflow_summary=self._audit_workflow_summary(claim_audits),
+            eval_assertions=self._audit_eval_assertions(claim_audits),
+            endpoint_references=self._audit_endpoint_references(),
+            local_proof_commands=self._audit_local_proof_commands(),
+            limitations=self._audit_limitations(),
+            generated_at=datetime.now(UTC).isoformat(),
+            trace_id=trace_id,
+        )
+
+    def audit_pack(
+        self,
+        trace_id: str,
+        objection_audit: ObjectionAuditResponse,
+        write_artifact: bool = True,
+    ) -> ObjectionAuditPackResponse:
+        pack = self._audit_pack_payload(trace_id, objection_audit)
+        markdown = self._render_audit_markdown(pack)
+        artifact_path: str | None = None
+        json_artifact_path: str | None = None
+        if write_artifact:
+            pack_dir = self.settings.storage_dir / "objection_audits"
+            pack_dir.mkdir(parents=True, exist_ok=True)
+            safe_trace_id = re.sub(r"[^a-zA-Z0-9_-]+", "-", trace_id).strip("-") or "local"
+            markdown_path = pack_dir / f"competitive_objection_audit_{safe_trace_id}.md"
+            json_path = pack_dir / f"competitive_objection_audit_{safe_trace_id}.json"
+            artifact_path = str(markdown_path.resolve())
+            json_artifact_path = str(json_path.resolve())
+            pack["artifact_paths"]["objection_audit_markdown"] = artifact_path
+            pack["artifact_paths"]["objection_audit_json"] = json_artifact_path
+            markdown = self._render_audit_markdown(pack)
+            markdown_path.write_text(markdown, encoding="utf-8")
+            json_path.write_text(json.dumps(pack, indent=2), encoding="utf-8")
+        return ObjectionAuditPackResponse(
+            artifact_path=artifact_path,
+            json_artifact_path=json_artifact_path,
+            markdown=markdown,
+            pack=pack,
+            objection_audit=objection_audit,
             trace_id=trace_id,
         )
 
@@ -750,6 +808,464 @@ class CompetitiveObjectionHandlingService:
             "Confidence is based on local citation coverage, priority evidence, and known risk signals, not probabilistic model calibration.",
             "Competitor names and live pricing should be supplied by the seller and approved before external use.",
         ]
+
+    def _claim_audit(self, trace_id: str, item: ObjectionResponseItem, sequence: int) -> ObjectionClaimAudit:
+        risk_signals = self._claim_risk_signals(item)
+        evidence_status = self._claim_evidence_status(item, risk_signals)
+        risk_level = self._claim_risk_level(item, evidence_status, risk_signals)
+        route_decision = self._claim_route_decision(evidence_status, risk_level)
+        claim_id = f"claim_{sequence}_{item.objection_id}"
+        return ObjectionClaimAudit(
+            claim_id=claim_id,
+            objection_id=item.objection_id,
+            concern_type=item.concern_type,
+            claim_type=self._claim_type(item),
+            claim_text=self._claim_text(item),
+            evidence_status=evidence_status,
+            risk_level=risk_level,
+            confidence=self._claim_confidence(item, evidence_status, risk_signals),
+            route_decision=route_decision,
+            reviewer_role=item.required_reviewer_role,
+            evidence_refs=[citation.filename for citation in item.citations],
+            risk_signals=risk_signals,
+            mitigation=self._claim_mitigation(item, evidence_status, route_decision),
+            workflow_trace=self._claim_workflow_trace(
+                trace_id,
+                item,
+                claim_id,
+                evidence_status,
+                risk_level,
+                route_decision,
+                risk_signals,
+            ),
+        )
+
+    def _claim_type(self, item: ObjectionResponseItem) -> str:
+        return {
+            "competitor": "comparative_positioning",
+            "pricing": "commercial_commitment",
+            "security": "security_control_claim",
+            "compliance": "regulatory_assurance_claim",
+            "implementation": "delivery_commitment",
+        }.get(item.concern_type, "custom_buyer_claim")
+
+    def _claim_text(self, item: ObjectionResponseItem) -> str:
+        first_sentence = item.cited_response.split(". ")[0].strip()
+        if first_sentence and len(first_sentence) >= 20:
+            return first_sentence.rstrip(".") + "."
+        return item.buyer_objection
+
+    def _claim_risk_signals(self, item: ObjectionResponseItem) -> list[str]:
+        text = f"{item.buyer_objection} {item.competitor_angle} {item.cited_response}".lower()
+        signals: list[str] = []
+        if not item.citations:
+            signals.append("missing_citation")
+        if item.missing_evidence:
+            signals.append("missing_evidence")
+        if item.confidence < 0.55:
+            signals.append("low_confidence")
+        if item.concern_type == "pricing" and any(term in text for term in ["price match", "discount", "cheaper"]):
+            signals.append("commercial_commitment_review")
+        if item.concern_type == "competitor" and any(term in text for term in ["same", "broader", "stronger", "best"]):
+            signals.append("comparative_claim_review")
+        if item.concern_type == "security" and any(term in text for term in ["guarantee", "always", "zero risk"]):
+            signals.append("overstated_security_assurance")
+        if item.concern_type == "compliance" and any(term in text for term in ["certified", "fully compliant", "all regulations"]):
+            signals.append("overstated_compliance_assurance")
+        if item.concern_type == "implementation" and any(term in text for term in ["guaranteed timeline", "no effort", "instant"]):
+            signals.append("overstated_delivery_commitment")
+        if item.approval_status != "ready_with_review":
+            signals.append(f"approval_status:{item.approval_status}")
+        return self._unique(signals)
+
+    def _claim_evidence_status(self, item: ObjectionResponseItem, risk_signals: list[str]) -> str:
+        if "missing_citation" in risk_signals:
+            return "unsupported"
+        if item.missing_evidence or item.approval_status == "blocked_until_evidence":
+            return "needs_qualification"
+        if any(signal.startswith("overstated_") for signal in risk_signals):
+            return "needs_qualification"
+        if item.confidence < 0.55:
+            return "needs_qualification"
+        return "supported"
+
+    def _claim_risk_level(
+        self,
+        item: ObjectionResponseItem,
+        evidence_status: str,
+        risk_signals: list[str],
+    ) -> str:
+        if evidence_status == "unsupported":
+            return "high"
+        if item.risk_level == "high" or any(signal.startswith("overstated_") for signal in risk_signals):
+            return "high"
+        if evidence_status == "needs_qualification" or item.risk_level == "medium":
+            return "medium"
+        return "low"
+
+    def _claim_confidence(
+        self,
+        item: ObjectionResponseItem,
+        evidence_status: str,
+        risk_signals: list[str],
+    ) -> float:
+        penalty = 0.05 * len(risk_signals)
+        if evidence_status == "unsupported":
+            penalty += 0.25
+        if evidence_status == "needs_qualification":
+            penalty += 0.1
+        return round(max(0.05, min(0.95, item.confidence - penalty)), 2)
+
+    def _claim_route_decision(self, evidence_status: str, risk_level: str) -> str:
+        if evidence_status == "unsupported" or risk_level == "high":
+            return "blocked"
+        if evidence_status == "needs_qualification" or risk_level == "medium":
+            return "review"
+        return "ready"
+
+    def _claim_mitigation(
+        self,
+        item: ObjectionResponseItem,
+        evidence_status: str,
+        route_decision: str,
+    ) -> str:
+        if route_decision == "blocked":
+            return (
+                f"Hold the {item.concern_type} claim until {item.required_reviewer_role} approves evidence, "
+                "wording, and any missing proof."
+            )
+        if evidence_status == "needs_qualification":
+            return (
+                f"Keep qualified language, cite only listed sources, and route to {item.required_reviewer_role} "
+                "before customer reuse."
+            )
+        return f"Ready for controlled reuse after {item.required_reviewer_role} confirms citation alignment."
+
+    def _claim_workflow_trace(
+        self,
+        trace_id: str,
+        item: ObjectionResponseItem,
+        claim_id: str,
+        evidence_status: str,
+        risk_level: str,
+        route_decision: str,
+        risk_signals: list[str],
+    ) -> list[ObjectionWorkflowTransition]:
+        source_refs = [citation.filename for citation in item.citations]
+        rows = [
+            {
+                "from_state": None,
+                "to_state": "claim_extracted",
+                "decision": f"claim_type={self._claim_type(item)}",
+                "status": "complete",
+                "owner_role": "proposal_manager",
+                "evidence": self._claim_text(item),
+            },
+            {
+                "from_state": "claim_extracted",
+                "to_state": "evidence_checked",
+                "decision": f"evidence_status={evidence_status} citations={len(source_refs)}",
+                "status": "complete" if evidence_status != "unsupported" else "blocked",
+                "owner_role": "solutions",
+                "evidence": ", ".join(source_refs[:4]) or "No citation attached.",
+            },
+            {
+                "from_state": "evidence_checked",
+                "to_state": "risk_scored",
+                "decision": f"risk={risk_level} signals={len(risk_signals)}",
+                "status": "complete",
+                "owner_role": "proposal_manager",
+                "evidence": ", ".join(risk_signals) or "No elevated risk signal.",
+            },
+            {
+                "from_state": "risk_scored",
+                "to_state": "review_route_selected",
+                "decision": f"route={route_decision}",
+                "status": "blocked" if route_decision == "blocked" else "complete",
+                "owner_role": item.required_reviewer_role if route_decision != "ready" else "sales",
+                "evidence": f"approval_status={item.approval_status}",
+            },
+            {
+                "from_state": "review_route_selected",
+                "to_state": "audit_handoff_ready",
+                "decision": f"reviewer={item.required_reviewer_role}",
+                "status": "needs_review" if route_decision in {"review", "blocked"} else "complete",
+                "owner_role": item.required_reviewer_role,
+                "evidence": f"checkpoint=objection-audit:{claim_id}:{route_decision}",
+            },
+        ]
+        transitions: list[ObjectionWorkflowTransition] = []
+        for index, row in enumerate(rows, start=1):
+            next_state = rows[index]["to_state"] if index < len(rows) else None
+            transitions.append(
+                ObjectionWorkflowTransition(
+                    transition_id=f"{claim_id}_transition_{index}",
+                    objection_id=item.objection_id,
+                    sequence=index,
+                    from_state=row["from_state"],
+                    to_state=row["to_state"],
+                    decision=row["decision"],
+                    status=row["status"],
+                    checkpoint_key=f"{trace_id}:{claim_id}:{index}:{row['to_state']}",
+                    owner_role=row["owner_role"],
+                    evidence=row["evidence"],
+                    source_refs=source_refs,
+                    next_state=next_state,
+                )
+            )
+        return transitions
+
+    def _audit_summary(self, claim_audits: list[ObjectionClaimAudit]) -> dict[str, Any]:
+        status_counts = Counter(item.evidence_status for item in claim_audits)
+        risk_counts = Counter(item.risk_level for item in claim_audits)
+        route_counts = Counter(item.route_decision for item in claim_audits)
+        cited = sum(bool(item.evidence_refs) for item in claim_audits)
+        return {
+            "claim_count": len(claim_audits),
+            "evidence_status_counts": dict(sorted(status_counts.items())),
+            "risk_counts": dict(sorted(risk_counts.items())),
+            "route_decision_counts": dict(sorted(route_counts.items())),
+            "cited_claim_count": cited,
+            "unsupported_claim_count": status_counts.get("unsupported", 0),
+            "blocked_claim_count": route_counts.get("blocked", 0),
+            "review_required_count": route_counts.get("review", 0),
+            "coverage_ratio": round(cited / len(claim_audits), 2) if claim_audits else 0,
+            "audit_status": "blocked" if route_counts.get("blocked", 0) else "review" if route_counts.get("review", 0) else "pass",
+        }
+
+    def _audit_reviewer_routes(self, claim_audits: list[ObjectionClaimAudit]) -> list[dict[str, Any]]:
+        return [
+            {
+                "claim_id": item.claim_id,
+                "objection_id": item.objection_id,
+                "concern_type": item.concern_type,
+                "reviewer_role": item.reviewer_role,
+                "route_decision": item.route_decision,
+                "risk_level": item.risk_level,
+                "evidence_status": item.evidence_status,
+                "mitigation": item.mitigation,
+            }
+            for item in claim_audits
+        ]
+
+    def _audit_workflow_summary(self, claim_audits: list[ObjectionClaimAudit]) -> dict[str, Any]:
+        transitions = [transition for item in claim_audits for transition in item.workflow_trace]
+        return {
+            "workflow_name": "competitive_objection_claim_audit",
+            "pattern_coverage": [
+                "typed contracts",
+                "structured outputs",
+                "state machine workflow",
+                "checkpointing",
+                "conditional routing",
+                "traceable node transitions",
+                "eval-friendly design",
+            ],
+            "transition_count": len(transitions),
+            "checkpoint_count": len({transition.checkpoint_key for transition in transitions}),
+            "route_decision_counts": dict(sorted(Counter(item.route_decision for item in claim_audits).items())),
+            "replay_status": "pass" if transitions and all(len(item.workflow_trace) >= 5 for item in claim_audits) else "needs_review",
+        }
+
+    def _audit_eval_assertions(self, claim_audits: list[ObjectionClaimAudit]) -> list[ObjectionEvalAssertion]:
+        transitions = [transition for item in claim_audits for transition in item.workflow_trace]
+        return [
+            ObjectionEvalAssertion(
+                assertion_id="objection-audit-claims-have-evidence-status",
+                description="Every audited objection claim has a structured evidence status.",
+                passed=all(item.evidence_status in {"supported", "needs_qualification", "unsupported"} for item in claim_audits),
+                evidence=", ".join(f"{item.claim_id}:{item.evidence_status}" for item in claim_audits),
+                related_objection_ids=[item.objection_id for item in claim_audits],
+            ),
+            ObjectionEvalAssertion(
+                assertion_id="objection-audit-unsupported-claims-blocked",
+                description="Unsupported objection claims are routed to a blocked reviewer state.",
+                passed=all(item.route_decision == "blocked" for item in claim_audits if item.evidence_status == "unsupported"),
+                evidence=", ".join(f"{item.claim_id}:{item.route_decision}" for item in claim_audits if item.evidence_status == "unsupported") or "no unsupported claims",
+                related_objection_ids=[item.objection_id for item in claim_audits],
+            ),
+            ObjectionEvalAssertion(
+                assertion_id="objection-audit-reviewer-routes-present",
+                description="Every audited claim has a reviewer route for human approval or controlled reuse.",
+                passed=all(item.reviewer_role and item.route_decision in {"ready", "review", "blocked"} for item in claim_audits),
+                evidence=", ".join(f"{item.claim_id}:{item.reviewer_role}" for item in claim_audits),
+                related_objection_ids=[item.objection_id for item in claim_audits],
+            ),
+            ObjectionEvalAssertion(
+                assertion_id="objection-audit-transition-replay-complete",
+                description="Every claim emits extract, evidence, risk, route, and handoff transitions.",
+                passed=all(len(item.workflow_trace) >= 5 for item in claim_audits),
+                evidence=f"transitions={len(transitions)} claims={len(claim_audits)}",
+                related_objection_ids=[item.objection_id for item in claim_audits],
+            ),
+        ]
+
+    def _audit_endpoint_references(self) -> list[dict[str, Any]]:
+        return [
+            {
+                "method": "POST",
+                "path": "/rfp/objection-audit",
+                "purpose": "Audit generated objection responses for claim support, risk, and reviewer routing.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/objection-audit-pack",
+                "purpose": "Write Markdown/JSON objection evidence audit artifacts.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/objection-handling",
+                "purpose": "Generate source objection responses that can be audited.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/objection-handling-pack",
+                "purpose": "Write the cited objection response pack paired with this audit.",
+            },
+        ]
+
+    def _audit_local_proof_commands(self) -> list[str]:
+        return [
+            (
+                'curl -X POST "http://127.0.0.1:8000/rfp/objection-audit" '
+                '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
+            ),
+            (
+                'curl -X POST "http://127.0.0.1:8000/rfp/objection-audit-pack" '
+                '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
+            ),
+            "python -m pytest -q tests/test_objection_handling.py",
+            "python -m ruff check .",
+            "python scripts\\dashboard_smoke.py",
+            (
+                'rg "objection-audit|Competitive Objection Evidence Audit|objection_audits" '
+                "app dashboard docs README.md tests Makefile"
+            ),
+        ]
+
+    def _audit_limitations(self) -> list[str]:
+        return [
+            "The audit reviews deterministic local objection responses and does not validate live competitor claims or current market pricing.",
+            "Reviewer routes are governance recommendations; final customer-facing wording still requires the named business owner.",
+            "Claim confidence is a local heuristic based on citation presence, objection confidence, missing evidence, and high-risk wording signals.",
+            "The audit is designed for evidence discipline and portfolio demonstration, not legal advice or automated approval.",
+        ]
+
+    def _audit_pack_payload(self, trace_id: str, objection_audit: ObjectionAuditResponse) -> dict[str, Any]:
+        return {
+            "trace_id": trace_id,
+            "title": "Competitive Objection Evidence Audit",
+            "generated_at": datetime.now(UTC).isoformat(),
+            "summary": {
+                "audit_summary": objection_audit.audit_summary,
+                "workflow_summary": objection_audit.workflow_summary,
+            },
+            "claim_audits": [item.model_dump(mode="json") for item in objection_audit.claim_audits],
+            "reviewer_routes": objection_audit.reviewer_routes,
+            "workflow_transitions": [
+                transition.model_dump(mode="json")
+                for item in objection_audit.claim_audits
+                for transition in item.workflow_trace
+            ],
+            "eval_assertions": [assertion.model_dump(mode="json") for assertion in objection_audit.eval_assertions],
+            "endpoint_references": objection_audit.endpoint_references,
+            "local_proof_commands": objection_audit.local_proof_commands,
+            "limitations": objection_audit.limitations,
+            "artifact_paths": {},
+        }
+
+    def _render_audit_markdown(self, pack: dict[str, Any]) -> str:
+        summary = pack["summary"]["audit_summary"]
+        workflow = pack["summary"]["workflow_summary"]
+        lines = [
+            "# Competitive Objection Evidence Audit",
+            "",
+            "## Summary",
+            "",
+            f"- Claims audited: {summary['claim_count']}",
+            f"- Audit status: {summary['audit_status']}",
+            f"- Coverage ratio: {summary['coverage_ratio']}",
+            f"- Unsupported claims: {summary['unsupported_claim_count']}",
+            f"- Review required: {summary['review_required_count']}",
+            f"- Blocked claims: {summary['blocked_claim_count']}",
+            f"- Workflow transitions: {workflow['transition_count']}",
+            f"- Replay status: {workflow['replay_status']}",
+            "",
+            "## Claim Audit",
+            "",
+            "| Claim | Objection | Type | Evidence | Risk | Route | Reviewer | Mitigation |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        ]
+        for item in pack["claim_audits"]:
+            lines.append(
+                "| "
+                + " | ".join(
+                    [
+                        self._md(item["claim_id"]),
+                        self._md(item["objection_id"]),
+                        self._md(item["claim_type"]),
+                        self._md(item["evidence_status"]),
+                        self._md(item["risk_level"]),
+                        self._md(item["route_decision"]),
+                        self._md(item["reviewer_role"]),
+                        self._md(item["mitigation"]),
+                    ]
+                )
+                + " |"
+            )
+        lines.extend(["", "## Risk Signals", ""])
+        for item in pack["claim_audits"]:
+            signals = ", ".join(item["risk_signals"]) or "None"
+            refs = ", ".join(item["evidence_refs"]) or "None"
+            lines.append(f"- {item['claim_id']}: signals={signals}; refs={refs}")
+        lines.extend(["", "## Workflow Trace", ""])
+        lines.append("| Claim | Objection | Seq | From | To | Decision | Status | Checkpoint | Owner |")
+        lines.append("| --- | --- | ---: | --- | --- | --- | --- | --- | --- |")
+        claim_by_objection = {item["objection_id"]: item["claim_id"] for item in pack["claim_audits"]}
+        for row in pack["workflow_transitions"]:
+            lines.append(
+                "| "
+                + " | ".join(
+                    [
+                        self._md(claim_by_objection.get(row["objection_id"], row["objection_id"])),
+                        self._md(row["objection_id"]),
+                        self._md(row["sequence"]),
+                        self._md(row["from_state"] or "START"),
+                        self._md(row["to_state"]),
+                        self._md(row["decision"]),
+                        self._md(row["status"]),
+                        self._md(row["checkpoint_key"]),
+                        self._md(row["owner_role"]),
+                    ]
+                )
+                + " |"
+            )
+        lines.extend(["", "## Eval Assertions", ""])
+        lines.append("| Assertion | Passed | Evidence |")
+        lines.append("| --- | --- | --- |")
+        for assertion in pack["eval_assertions"]:
+            lines.append(
+                "| "
+                + " | ".join(
+                    [
+                        self._md(assertion["assertion_id"]),
+                        self._md(assertion["passed"]),
+                        self._md(assertion["evidence"]),
+                    ]
+                )
+                + " |"
+            )
+        lines.extend(["", "## Endpoint References", ""])
+        for endpoint in pack["endpoint_references"]:
+            lines.append(f"- {endpoint['method']} {endpoint['path']}: {endpoint['purpose']}")
+        lines.extend(["", "## Proof Commands", ""])
+        lines.extend(f"```powershell\n{command}\n```" for command in pack["local_proof_commands"])
+        lines.extend(["", "## Limitations", ""])
+        lines.extend(f"- {item}" for item in pack["limitations"])
+        if pack["artifact_paths"]:
+            lines.extend(["", "## Audit Artifacts", ""])
+            lines.extend(f"- {label}: {path}" for label, path in pack["artifact_paths"].items())
+        return "\n".join(lines).strip() + "\n"
 
     def _objection_specs(self, objection_notes: list[str]) -> list[dict[str, Any]]:
         specs = [

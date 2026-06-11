@@ -106,6 +106,10 @@ from app.models.api import (
     ModelRiskRegisterResponse,
     NegotiationBriefRequest,
     NegotiationBriefResponse,
+    ObjectionAuditPackRequest,
+    ObjectionAuditPackResponse,
+    ObjectionAuditRequest,
+    ObjectionAuditResponse,
     ObjectionHandlingPackRequest,
     ObjectionHandlingPackResponse,
     ObjectionHandlingRequest,
@@ -1559,6 +1563,132 @@ async def objection_handling_pack(
             "coverage_ratio": pack.objection_handling.coverage_summary["coverage_ratio"],
             "workflow_transitions": pack.objection_handling.workflow_summary.get("transition_count", 0),
             "eval_assertions": len(pack.objection_handling.eval_assertions),
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/rfp/objection-audit",
+    response_model=ObjectionAuditResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def objection_audit(
+    request: Request,
+    payload: ObjectionAuditRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ObjectionAuditResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ObjectionAuditRequest()
+    handling = request_payload.objection_handling
+    if handling is None:
+        analysis, matrix, customer_fit, readiness, memory_matches, action_plan_items = _win_strategy_inputs(
+            request_payload,
+            trace_id,
+            container,
+        )
+        strategy = container.win_strategy.create_win_strategy(
+            trace_id=f"{trace_id}-win-strategy",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            customer_fit=customer_fit,
+            readiness_scorecard=readiness,
+            response_memory_matches=memory_matches,
+            action_plan=action_plan_items,
+            review_findings=request_payload.review_findings,
+            competitor_context=request_payload.competitor_context,
+            pricing_notes=request_payload.pricing_notes,
+        )
+        handling = await container.objection_handling.objection_handling(
+            f"{trace_id}-objections",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            win_strategy=strategy,
+            response_memory_matches=memory_matches,
+            review_findings=request_payload.review_findings,
+            competitor_context=request_payload.competitor_context,
+            pricing_notes=request_payload.pricing_notes,
+            objection_notes=request_payload.objection_notes,
+            top_k=request_payload.top_k,
+        )
+    audit = container.objection_handling.audit_objections(trace_id, handling)
+    container.audit.record(
+        trace_id,
+        "rfp.objection_audit_created",
+        "objection_audit",
+        metadata={
+            "claim_count": audit.audit_summary["claim_count"],
+            "audit_status": audit.audit_summary["audit_status"],
+            "unsupported_claim_count": audit.audit_summary["unsupported_claim_count"],
+            "blocked_claim_count": audit.audit_summary["blocked_claim_count"],
+            "workflow_transitions": audit.workflow_summary.get("transition_count", 0),
+        },
+    )
+    return audit
+
+
+@router.post(
+    "/rfp/objection-audit-pack",
+    response_model=ObjectionAuditPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def objection_audit_pack(
+    request: Request,
+    payload: ObjectionAuditPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ObjectionAuditPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ObjectionAuditPackRequest()
+    audit = request_payload.objection_audit
+    if audit is None:
+        handling = request_payload.objection_handling
+        if handling is None:
+            analysis, matrix, customer_fit, readiness, memory_matches, action_plan_items = _win_strategy_inputs(
+                request_payload,
+                trace_id,
+                container,
+            )
+            strategy = container.win_strategy.create_win_strategy(
+                trace_id=f"{trace_id}-win-strategy",
+                analysis=analysis,
+                requirement_matrix=matrix,
+                customer_fit=customer_fit,
+                readiness_scorecard=readiness,
+                response_memory_matches=memory_matches,
+                action_plan=action_plan_items,
+                review_findings=request_payload.review_findings,
+                competitor_context=request_payload.competitor_context,
+                pricing_notes=request_payload.pricing_notes,
+            )
+            handling = await container.objection_handling.objection_handling(
+                f"{trace_id}-objections",
+                analysis=analysis,
+                requirement_matrix=matrix,
+                win_strategy=strategy,
+                response_memory_matches=memory_matches,
+                review_findings=request_payload.review_findings,
+                competitor_context=request_payload.competitor_context,
+                pricing_notes=request_payload.pricing_notes,
+                objection_notes=request_payload.objection_notes,
+                top_k=request_payload.top_k,
+            )
+        audit = container.objection_handling.audit_objections(f"{trace_id}-audit", handling)
+    pack = container.objection_handling.audit_pack(
+        trace_id,
+        audit,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.objection_audit_pack_exported",
+        "objection_audit_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "claim_count": pack.objection_audit.audit_summary["claim_count"],
+            "audit_status": pack.objection_audit.audit_summary["audit_status"],
+            "workflow_transitions": pack.objection_audit.workflow_summary.get("transition_count", 0),
         },
     )
     return pack
