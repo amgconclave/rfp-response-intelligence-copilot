@@ -508,6 +508,16 @@ async def main() -> None:
         reviewer_collaboration,
         write_artifact=True,
     )
+    reviewer_workflow = container.reviewer_workflow.build_workflow(
+        "demo-reviewer-workflow",
+        reviewer_collaboration,
+    )
+    reviewer_workflow_pack = container.reviewer_workflow.workflow_pack(
+        "demo-reviewer-workflow-pack",
+        reviewer_collaboration,
+        reviewer_workflow,
+        write_artifact=True,
+    )
     exception_register = container.submission_exceptions.create_register(
         trace_id="demo-exception-register",
         submission_decision=submission_decision,
@@ -854,6 +864,15 @@ async def main() -> None:
     )
     print(f"Reviewer Collaboration Pack: {reviewer_collaboration_pack.artifact_path}")
     print(f"Reviewer Collaboration Pack JSON: {reviewer_collaboration_pack.json_artifact_path}")
+    print(
+        "Reviewer workflow: "
+        f"status={reviewer_workflow.workflow_status} "
+        f"state={reviewer_workflow.current_state} "
+        f"checkpoints={len(reviewer_workflow.checkpoints)} "
+        f"transitions={len(reviewer_workflow.transitions)}"
+    )
+    print(f"Reviewer Workflow Pack: {reviewer_workflow_pack.artifact_path}")
+    print(f"Reviewer Workflow Pack JSON: {reviewer_workflow_pack.json_artifact_path}")
     print("Review boards directory: storage/review_boards")
     print(
         "Submission exceptions: "
@@ -990,7 +1009,10 @@ async def main() -> None:
         f"procurement_risk_desk_pack={procurement_risk_desk_pack.artifact_path} "
         f"reviewer_collaboration={reviewer_collaboration.board_status}/"
         f"{len(reviewer_collaboration.assignments)} "
+        f"reviewer_workflow={reviewer_workflow.workflow_status}/"
+        f"{reviewer_workflow.current_state} "
         f"review_boards={reviewer_collaboration_pack.artifact_path} "
+        f"reviewer_workflow_pack={reviewer_workflow_pack.artifact_path} "
         f"exceptions={exception_register.register_status}/"
         f"{exception_register.summary['exception_count']} "
         f"exception_pack={exception_pack.artifact_path} "

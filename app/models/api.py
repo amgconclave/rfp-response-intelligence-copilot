@@ -282,6 +282,63 @@ class ReviewerCollaborationPackResponse(BaseModel):
     trace_id: str
 
 
+class ReviewerWorkflowCheckpoint(BaseModel):
+    checkpoint_id: str
+    sequence: int
+    state: str
+    status: str
+    owner_role: str
+    decision: str
+    rationale: str
+    next_states: list[str] = Field(default_factory=list)
+    blocking_signals: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+
+
+class ReviewerWorkflowTransition(BaseModel):
+    transition_id: str
+    from_state: str
+    to_state: str
+    condition: str
+    decision: str
+    trace_note: str
+    checkpoint_id: str
+
+
+class ReviewerCollaborationWorkflowRequest(ReviewerCollaborationRequest):
+    collaboration: ReviewerCollaborationResponse | None = None
+
+
+class ReviewerCollaborationWorkflowResponse(BaseModel):
+    title: str
+    workflow_status: str
+    current_state: str
+    checkpoints: list[ReviewerWorkflowCheckpoint]
+    transitions: list[ReviewerWorkflowTransition]
+    state_summary: dict[str, Any] = Field(default_factory=dict)
+    approval_path: list[dict[str, Any]] = Field(default_factory=list)
+    replay_notes: list[str] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ReviewerCollaborationWorkflowPackRequest(ReviewerCollaborationWorkflowRequest):
+    workflow: ReviewerCollaborationWorkflowResponse | None = None
+    write_artifact: bool = True
+
+
+class ReviewerCollaborationWorkflowPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    workflow: ReviewerCollaborationWorkflowResponse
+    collaboration: ReviewerCollaborationResponse
+    trace_id: str
+
+
 class ActionPlanRequest(BaseModel):
     rfp_document_id: str | None = None
     analyzed_payload: AnalyzeResponse | None = None

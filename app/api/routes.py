@@ -141,6 +141,10 @@ from app.models.api import (
     ReviewerCollaborationPackResponse,
     ReviewerCollaborationRequest,
     ReviewerCollaborationResponse,
+    ReviewerCollaborationWorkflowPackRequest,
+    ReviewerCollaborationWorkflowPackResponse,
+    ReviewerCollaborationWorkflowRequest,
+    ReviewerCollaborationWorkflowResponse,
     ReviewerCollectionRequest,
     ReviewerCollectionResponse,
     ReviewerQuickstartResponse,
@@ -708,6 +712,84 @@ async def reviewer_collaboration_pack(
             "artifact_path": pack.artifact_path,
             "assignments": len(pack.collaboration.assignments),
             "comments": len(pack.collaboration.decision_comments),
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/rfp/reviewer-workflow",
+    response_model=ReviewerCollaborationWorkflowResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def reviewer_workflow(
+    payload: ReviewerCollaborationWorkflowRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewerCollaborationWorkflowResponse:
+    trace_id = get_trace_id(request)
+    collaboration = payload.collaboration
+    if collaboration is None:
+        inputs = _reviewer_collaboration_inputs(payload, trace_id, container)
+        collaboration = container.reviewer_collaboration.create_board(
+            trace_id=f"{trace_id}-collaboration",
+            **inputs,
+        )
+    workflow = container.reviewer_workflow.build_workflow(
+        trace_id=trace_id,
+        collaboration=collaboration,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.reviewer_workflow_created",
+        "reviewer_workflow",
+        metadata={
+            "workflow_status": workflow.workflow_status,
+            "current_state": workflow.current_state,
+            "checkpoints": len(workflow.checkpoints),
+            "transitions": len(workflow.transitions),
+        },
+    )
+    return workflow
+
+
+@router.post(
+    "/rfp/reviewer-workflow-pack",
+    response_model=ReviewerCollaborationWorkflowPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def reviewer_workflow_pack(
+    payload: ReviewerCollaborationWorkflowPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewerCollaborationWorkflowPackResponse:
+    trace_id = get_trace_id(request)
+    collaboration = payload.collaboration
+    if collaboration is None:
+        inputs = _reviewer_collaboration_inputs(payload, trace_id, container)
+        collaboration = container.reviewer_collaboration.create_board(
+            trace_id=f"{trace_id}-collaboration",
+            **inputs,
+        )
+    workflow = payload.workflow or container.reviewer_workflow.build_workflow(
+        trace_id=f"{trace_id}-workflow",
+        collaboration=collaboration,
+    )
+    pack = container.reviewer_workflow.workflow_pack(
+        trace_id=trace_id,
+        collaboration=collaboration,
+        workflow=workflow,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.reviewer_workflow_pack_created",
+        "reviewer_workflow_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "workflow_status": pack.workflow.workflow_status,
+            "checkpoints": len(pack.workflow.checkpoints),
         },
     )
     return pack
@@ -4402,7 +4484,12 @@ def _draft_from_repo_or_sample(
 
 
 def _reviewer_collaboration_inputs(
-    payload: ReviewerCollaborationRequest | ReviewerCollaborationPackRequest,
+    payload: (
+        ReviewerCollaborationRequest
+        | ReviewerCollaborationPackRequest
+        | ReviewerCollaborationWorkflowRequest
+        | ReviewerCollaborationWorkflowPackRequest
+    ),
     trace_id: str,
     container: ServiceContainer,
 ) -> dict:

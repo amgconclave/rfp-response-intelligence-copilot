@@ -332,7 +332,12 @@ class UIVerificationService:
             {"label": "Review Board / Red Team", "endpoint_paths": ["/rfp/review-answer", "/rfp/review-package"]},
             {
                 "label": "Reviewer Collaboration",
-                "endpoint_paths": ["/rfp/reviewer-collaboration", "/rfp/reviewer-collaboration-pack"],
+                "endpoint_paths": [
+                    "/rfp/reviewer-collaboration",
+                    "/rfp/reviewer-collaboration-pack",
+                    "/rfp/reviewer-workflow",
+                    "/rfp/reviewer-workflow-pack",
+                ],
                 "generated_artifact_tab": True,
                 "artifact_root": "review_boards",
             },
@@ -599,6 +604,17 @@ class UIVerificationService:
                 "method": "POST",
                 "path": "/rfp/reviewer-collaboration-pack",
                 "purpose": "Reviewer Collaboration generated pack.",
+                "expected_artifacts": ["storage/review_boards/*.md", "storage/review_boards/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/reviewer-workflow",
+                "purpose": "Reviewer Collaboration checkpoint workflow replay.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/reviewer-workflow-pack",
+                "purpose": "Reviewer Collaboration workflow generated pack.",
                 "expected_artifacts": ["storage/review_boards/*.md", "storage/review_boards/*.json"],
             },
             {

@@ -2252,7 +2252,7 @@ with tabs[35]:
     if st.session_state.get("submission_decision"):
         collaboration_payload["submission_decision"] = st.session_state.submission_decision
 
-    cols = st.columns(2)
+    cols = st.columns(4)
     if cols[0].button("Build collaboration board"):
         board = post_json("/rfp/reviewer-collaboration", collaboration_payload)
         st.session_state.reviewer_collaboration = board
@@ -2264,6 +2264,23 @@ with tabs[35]:
         st.session_state.reviewer_collaboration_pack = pack
         st.session_state.reviewer_collaboration = pack["collaboration"]
         st.success(f"Reviewer Collaboration Pack generated under review_boards: {pack['artifact_path']}")
+    if cols[2].button("Replay reviewer workflow"):
+        workflow_payload = {**collaboration_payload}
+        if st.session_state.get("reviewer_collaboration"):
+            workflow_payload["collaboration"] = st.session_state.reviewer_collaboration
+        workflow = post_json("/rfp/reviewer-workflow", workflow_payload)
+        st.session_state.reviewer_workflow = workflow
+    if cols[3].button("Export Workflow Pack"):
+        workflow_pack_payload = {**collaboration_payload, "write_artifact": True}
+        if st.session_state.get("reviewer_collaboration"):
+            workflow_pack_payload["collaboration"] = st.session_state.reviewer_collaboration
+        if st.session_state.get("reviewer_workflow"):
+            workflow_pack_payload["workflow"] = st.session_state.reviewer_workflow
+        pack = post_json("/rfp/reviewer-workflow-pack", workflow_pack_payload)
+        st.session_state.reviewer_workflow_pack = pack
+        st.session_state.reviewer_workflow = pack["workflow"]
+        st.session_state.reviewer_collaboration = pack["collaboration"]
+        st.success(f"Reviewer Workflow Pack generated under review_boards: {pack['artifact_path']}")
 
     board = st.session_state.get("reviewer_collaboration")
     if board:
@@ -2309,6 +2326,32 @@ with tabs[35]:
             "Download Reviewer Collaboration Markdown",
             pack["markdown"],
             file_name="reviewer_collaboration_pack.md",
+        )
+
+    workflow = st.session_state.get("reviewer_workflow")
+    if workflow:
+        st.write("Reviewer workflow replay")
+        workflow_cols = st.columns(4)
+        workflow_cols[0].metric("Workflow", workflow["workflow_status"])
+        workflow_cols[1].metric("State", workflow["current_state"])
+        workflow_cols[2].metric("Checkpoints", workflow["state_summary"]["checkpoint_count"])
+        workflow_cols[3].metric("Blocked", workflow["state_summary"]["blocked_checkpoint_count"])
+        st.dataframe(workflow["checkpoints"], use_container_width=True)
+        st.write("Traceable transitions")
+        st.dataframe(workflow["transitions"], use_container_width=True)
+        st.write("Approval path")
+        st.dataframe(workflow["approval_path"], use_container_width=True)
+        st.write("Replay notes")
+        st.write(workflow["replay_notes"])
+
+    workflow_pack = st.session_state.get("reviewer_workflow_pack")
+    if workflow_pack:
+        st.write("Generated workflow artifact path", workflow_pack["artifact_path"])
+        st.write("Generated workflow JSON path", workflow_pack["json_artifact_path"])
+        st.download_button(
+            "Download Reviewer Workflow Markdown",
+            workflow_pack["markdown"],
+            file_name="reviewer_workflow_pack.md",
         )
 
 

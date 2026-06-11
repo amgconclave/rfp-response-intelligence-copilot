@@ -895,6 +895,30 @@ Writes the reviewer collaboration board as Markdown and JSON under `storage/revi
 
 The pack is intended for local review-board artifacts: owner assignments, approval status, decision comments, contract/draft redlines, proof commands, and known limitations.
 
+### `POST /rfp/reviewer-workflow`
+
+Builds a deterministic reviewer workflow replay from a collaboration board. The workflow uses typed checkpoints and traceable transitions for intake, role routing, decision-comment triage, redline gate, approval gate, and final release or blocker-resolution state. If called with `{}`, it derives the local sample RFP collaboration board first.
+
+```json
+{
+  "collaboration": {}
+}
+```
+
+The response includes `workflow_status`, `current_state`, `checkpoints`, `transitions`, `approval_path`, replay notes, local proof commands, limitations, and `trace_id`.
+
+### `POST /rfp/reviewer-workflow-pack`
+
+Writes the reviewer workflow replay as Markdown and JSON under `storage/review_boards/`.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack is intended for local review-board governance: checkpoint status, blocked state, transition trace notes, approval path, replay notes, proof commands, and known limitations.
+
 ### `POST /rfp/exception-register`
 
 Creates a local submission exception register from a submission decision plus optional reviewer collaboration board. If called with `{}`, the endpoint derives sample RFP signals locally. Each exception has a waiver type, severity, owner, approver, expiry date, required evidence, linked requirements/artifacts, risk acceptance text, and escalation path.
