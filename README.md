@@ -107,6 +107,8 @@ The Model Risk Register tab and pack map groundedness, provider-change, prompt p
 ```bash
 curl -X GET "http://127.0.0.1:8000/governance/model-risk-register" -H "X-API-Key: local-demo-key"
 curl -X POST "http://127.0.0.1:8000/governance/model-risk-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
+curl -X GET "http://127.0.0.1:8000/proposal/buyer-intelligence" -H "X-API-Key: local-demo-key"
+curl -X POST "http://127.0.0.1:8000/proposal/buyer-intelligence-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 ```
 
 The Procurement Q&A tab and Approval Workflow Pack show question risk, reviewer approval status, evidence support, unsupported-claim flags, citations/snippets, blocked drafts, escalation owners, proof commands, and limitations for procurement/security/legal/commercial review:
@@ -375,6 +377,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /evidence/citation-lineage-pack`: writes a Markdown/JSON Citation Lineage Integrity Pack under `storage/citation_lineage/`.
 - `GET /evidence/source-trust`: returns source trust scores, reuse decisions, reviewer queues, retrieval policy updates, and endpoint impact by combining freshness, conflict, and citation-lineage signals.
 - `POST /evidence/source-trust-pack`: writes a Markdown/JSON Source Trust Gate Pack under `storage/source_trust/`.
+- `GET /proposal/buyer-intelligence`: returns a buyer-grade durable proposal workflow with stage checkpoints, HITL approval queue, governance gates, provider routes, shared state, and trace analysis.
+- `POST /proposal/buyer-intelligence-pack`: writes a Markdown/JSON/State Buyer-Grade Proposal Intelligence Pack under `storage/buyer_intelligence/`.
 - `GET /privacy/retention-guardrails`: returns privacy/retention surface risk, local policy evidence, missing controls, redaction rules, prompt/logging guidance, and owner actions.
 - `POST /privacy/retention-pack`: writes a Markdown/JSON Privacy Retention Guardrail Pack under `storage/privacy_packs/`.
 - `GET /governance/model-risk-register`: returns model/provider risk register items, mitigation controls, local evidence, release gates, reviewer queue, proof commands, and limitations.

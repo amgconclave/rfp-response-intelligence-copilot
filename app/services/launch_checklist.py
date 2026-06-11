@@ -69,6 +69,8 @@ class LaunchChecklistService:
                 "POST /evidence/conflict-pack",
                 "GET /evidence/source-trust",
                 "POST /evidence/source-trust-pack",
+                "GET /proposal/buyer-intelligence",
+                "POST /proposal/buyer-intelligence-pack",
                 "GET /ops/ci-doctor",
                 "POST /ops/audit-pack",
                 "GET /api/contract-audit",
@@ -227,6 +229,15 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\source_trust -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "proposal/buyer-intelligence|Buyer-Grade Proposal Intelligence|'
+                    'buyer_intelligence|storage/buyer_intelligence" '
+                    "app dashboard docs README.md tests Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\buyer_intelligence -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -413,6 +424,7 @@ class LaunchChecklistService:
             "conflict_packs": "storage/conflict_packs",
             "citation_lineage": "storage/citation_lineage",
             "source_trust": "storage/source_trust",
+            "buyer_intelligence": "storage/buyer_intelligence",
             "api_contracts": "storage/api_contracts",
             "portfolio_packs": "storage/portfolio_packs",
             "release_packs": "storage/release_packs",
@@ -1139,6 +1151,27 @@ class LaunchChecklistService:
                 200,
                 "Writes Source Trust Gate Markdown and JSON.",
                 ["storage/source_trust/*.md", "storage/source_trust/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Buyer Proposal Intelligence Workflow",
+                "GET",
+                "/proposal/buyer-intelligence",
+                "proposal",
+                200,
+                (
+                    "Returns durable proposal workflow stages, human approval queue, governance gates, "
+                    "provider routes, shared state, and trace analysis."
+                ),
+            ),
+            self._row(
+                "Buyer Intelligence Pack",
+                "POST",
+                "/proposal/buyer-intelligence-pack",
+                "artifact",
+                200,
+                "Writes buyer-grade proposal workflow Markdown, JSON, and durable state JSON artifacts.",
+                ["storage/buyer_intelligence/*.md", "storage/buyer_intelligence/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

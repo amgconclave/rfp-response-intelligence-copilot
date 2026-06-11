@@ -241,6 +241,29 @@ Writes Markdown and JSON Source Trust Gate artifacts under ignored `storage/sour
 
 The pack includes the source trust matrix, reviewer queue, retrieval policy updates, endpoint references, local proof commands, limitations, embedded source-trust JSON, Markdown, JSON, and trace ID.
 
+### `GET /proposal/buyer-intelligence`
+
+Returns the Buyer-Grade Proposal Intelligence workflow. It composes deterministic local signals from requirement analysis, review findings, source trust, model risk, procurement question risk, and cost governance into durable workflow stages, a human approval queue, governance gates, provider routes, shared state, trace analysis, proof commands, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/proposal/buyer-intelligence" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The default path auto-loads local sample evidence and stays in mock/local mode unless optional provider environment variables are configured elsewhere.
+
+### `POST /proposal/buyer-intelligence-pack`
+
+Writes Markdown, JSON, and durable local workflow state JSON artifacts under ignored `storage/buyer_intelligence/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes buyer-facing workflow checkpoints, restart keys, human-in-the-loop approvals, governance gates, provider-flexibility guidance, local trace analysis, executive controls, proof commands, limitations, embedded workflow JSON, Markdown, JSON, state JSON, and trace ID.
+
 ### `GET /compliance/evidence-matrix`
 
 Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.

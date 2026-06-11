@@ -106,6 +106,7 @@ tabs = st.tabs(
         "Model Risk Register",
         "Procurement Risk Desk",
         "Answer Reuse Library",
+        "Buyer Intelligence Pack",
     ]
 )
 
@@ -2962,4 +2963,68 @@ with tabs[45]:
             "Download Answer Reuse Library Markdown",
             pack["markdown"],
             file_name="answer_reuse_library_pack.md",
+        )
+
+
+with tabs[46]:
+    st.subheader("Buyer Intelligence Pack")
+    st.caption(
+        "Compose durable proposal workflow checkpoints, human approvals, governance gates, provider routes, "
+        "shared state, and local trace analysis for buyer-grade RFP review."
+    )
+    action_cols = st.columns(2)
+    if action_cols[0].button("Load buyer workflow"):
+        st.session_state.buyer_intelligence = get_json("/proposal/buyer-intelligence")
+    if action_cols[1].button("Generate Buyer Intelligence Pack"):
+        pack = post_json("/proposal/buyer-intelligence-pack", {"write_artifact": True})
+        st.session_state.buyer_intelligence_pack = pack
+        st.session_state.buyer_intelligence = pack["workflow"]
+        st.success(f"Buyer Intelligence Pack generated under buyer_intelligence: {pack['artifact_path']}")
+
+    workflow = st.session_state.get("buyer_intelligence")
+    if workflow:
+        readout = workflow["buyer_readout"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", workflow["workflow_status"])
+        metric_cols[1].metric("Stages", len(workflow["workflow_stages"]))
+        metric_cols[2].metric("Approvals", len(workflow["human_approval_queue"]))
+        metric_cols[3].metric("Gates", len(workflow["governance_gates"]))
+        metric_cols[4].metric("Posture", readout["recommended_posture"])
+        st.write("Durable workflow stages")
+        st.dataframe(
+            [
+                {
+                    "sequence": item["sequence"],
+                    "stage": item["name"],
+                    "owner": item["owner_role"],
+                    "status": item["status"],
+                    "durability_key": item["durability_key"],
+                    "gates": ", ".join(item["governance_gates"]),
+                }
+                for item in workflow["workflow_stages"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Human approval queue")
+        st.dataframe(workflow["human_approval_queue"], use_container_width=True)
+        st.write("Governance gates")
+        st.dataframe(workflow["governance_gates"], use_container_width=True)
+        st.write("Provider routes")
+        st.dataframe(workflow["provider_routes"], use_container_width=True)
+        st.write("Trace analysis")
+        st.json(workflow["trace_analysis"])
+        st.write("Local proof commands")
+        st.code("\n".join(workflow["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(workflow["limitations"])
+
+    pack = st.session_state.get("buyer_intelligence_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.write("Durable state path", pack["state_artifact_path"])
+        st.download_button(
+            "Download Buyer Intelligence Markdown",
+            pack["markdown"],
+            file_name="buyer_intelligence_pack.md",
         )

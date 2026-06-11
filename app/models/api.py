@@ -1265,6 +1265,83 @@ class SourceTrustPackResponse(BaseModel):
     trace_id: str
 
 
+class BuyerWorkflowStage(BaseModel):
+    stage_id: str
+    sequence: int
+    name: str
+    owner_role: str
+    status: str
+    durability_key: str
+    restart_policy: str
+    inputs: list[str] = Field(default_factory=list)
+    outputs: list[str] = Field(default_factory=list)
+    governance_gates: list[str] = Field(default_factory=list)
+    trace_refs: list[str] = Field(default_factory=list)
+
+
+class BuyerApprovalQueueItem(BaseModel):
+    approval_id: str
+    reviewer_role: str
+    decision_area: str
+    priority: str
+    status: str
+    reason: str
+    required_before: str
+    related_stage_ids: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+
+
+class BuyerGovernanceGate(BaseModel):
+    gate_id: str
+    name: str
+    status: str
+    owner_role: str
+    evidence: str
+    required_action: str
+    endpoint_refs: list[str] = Field(default_factory=list)
+
+
+class BuyerProviderRoute(BaseModel):
+    provider_mode: str
+    readiness: str
+    use_when: str
+    required_env: list[str] = Field(default_factory=list)
+    governance_notes: list[str] = Field(default_factory=list)
+
+
+class BuyerIntelligenceWorkflowResponse(BaseModel):
+    title: str
+    workflow_id: str
+    workflow_status: str
+    generated_at: str
+    durable_state: dict[str, Any]
+    shared_state: dict[str, Any]
+    workflow_stages: list[BuyerWorkflowStage]
+    human_approval_queue: list[BuyerApprovalQueueItem] = Field(default_factory=list)
+    governance_gates: list[BuyerGovernanceGate] = Field(default_factory=list)
+    provider_routes: list[BuyerProviderRoute] = Field(default_factory=list)
+    trace_analysis: dict[str, Any] = Field(default_factory=dict)
+    buyer_readout: dict[str, Any] = Field(default_factory=dict)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class BuyerIntelligencePackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class BuyerIntelligencePackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    state_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    workflow: BuyerIntelligenceWorkflowResponse
+    trace_id: str
+
+
 class ProcurementQuestionRiskItem(BaseModel):
     question_id: str
     question_type: str

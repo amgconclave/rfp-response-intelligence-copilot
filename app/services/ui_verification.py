@@ -536,6 +536,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "source_trust",
             },
+            {
+                "label": "Buyer Intelligence Pack",
+                "endpoint_paths": ["/proposal/buyer-intelligence", "/proposal/buyer-intelligence-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "buyer_intelligence",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -785,6 +791,20 @@ class UIVerificationService:
                 "path": "/evidence/source-trust-pack",
                 "purpose": "Source Trust Gate generated reviewer pack.",
                 "expected_artifacts": ["storage/source_trust/*.md", "storage/source_trust/*.json"],
+            },
+            {
+                "method": "GET",
+                "path": "/proposal/buyer-intelligence",
+                "purpose": "Buyer Intelligence Pack tab durable workflow and HITL queue view.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/buyer-intelligence-pack",
+                "purpose": "Buyer Intelligence Pack generated Markdown, JSON, and durable state artifacts.",
+                "expected_artifacts": [
+                    "storage/buyer_intelligence/*.md",
+                    "storage/buyer_intelligence/*.json",
+                ],
             },
         ]
 

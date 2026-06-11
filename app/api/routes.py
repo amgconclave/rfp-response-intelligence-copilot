@@ -23,6 +23,9 @@ from app.models.api import (
     BidRoiPackRequest,
     BidRoiPackResponse,
     BidScenarioAnalysisResponse,
+    BuyerIntelligencePackRequest,
+    BuyerIntelligencePackResponse,
+    BuyerIntelligenceWorkflowResponse,
     CiDoctorResponse,
     CitationLineageAuditResponse,
     CitationLineagePackRequest,
@@ -2825,6 +2828,67 @@ async def evidence_source_trust_pack(
 
 
 @router.get(
+    "/proposal/buyer-intelligence",
+    response_model=BuyerIntelligenceWorkflowResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def buyer_intelligence_workflow(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> BuyerIntelligenceWorkflowResponse:
+    trace_id = get_trace_id(request)
+    inputs = await _buyer_intelligence_inputs(trace_id, container)
+    result = container.buyer_intelligence.workflow(trace_id=trace_id, **inputs)
+    container.audit.record(
+        trace_id,
+        "proposal.buyer_intelligence_viewed",
+        "buyer_intelligence_workflow",
+        metadata={
+            "status": result.workflow_status,
+            "stages": len(result.workflow_stages),
+            "approvals": len(result.human_approval_queue),
+            "gates": len(result.governance_gates),
+        },
+    )
+    return result
+
+
+@router.post(
+    "/proposal/buyer-intelligence-pack",
+    response_model=BuyerIntelligencePackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def buyer_intelligence_pack(
+    request: Request,
+    payload: BuyerIntelligencePackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> BuyerIntelligencePackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or BuyerIntelligencePackRequest()
+    inputs = await _buyer_intelligence_inputs(trace_id, container)
+    workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+    pack = container.buyer_intelligence.pack(
+        trace_id,
+        workflow,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.buyer_intelligence_pack_generated",
+        "buyer_intelligence_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "state_artifact_path": pack.state_artifact_path,
+            "status": pack.workflow.workflow_status,
+            "approvals": len(pack.workflow.human_approval_queue),
+        },
+    )
+    return pack
+
+
+@router.get(
     "/compliance/evidence-matrix",
     response_model=ComplianceEvidenceMatrixResponse,
     dependencies=[Depends(require_api_key)],
@@ -3333,6 +3397,34 @@ async def _win_loss_inputs(
         "requirement_matrix": matrix or [],
         "win_strategy": win_strategy,
         "eval_metrics": payload.eval_metrics,
+    }
+
+
+async def _buyer_intelligence_inputs(trace_id: str, container: ServiceContainer) -> dict[str, object]:
+    analysis, matrix, review_findings = await _procurement_inputs(f"{trace_id}-proposal", container)
+    freshness, conflicts, lineage = await _source_trust_inputs(f"{trace_id}-source-trust", container)
+    source_trust = container.source_trust.trust_gate(
+        f"{trace_id}-source-trust",
+        freshness,
+        conflicts,
+        lineage,
+    )
+    model_risk = container.model_risk.register(f"{trace_id}-model-risk")
+    procurement_risk = await container.procurement.question_risk(
+        f"{trace_id}-procurement",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=review_findings,
+    )
+    cost_governance = container.cost_governance.report(f"{trace_id}-cost-governance")
+    return {
+        "analysis": analysis,
+        "requirement_matrix": matrix,
+        "review_findings": review_findings,
+        "cost_governance": cost_governance,
+        "source_trust": source_trust,
+        "model_risk": model_risk,
+        "procurement_risk": procurement_risk,
     }
 
 

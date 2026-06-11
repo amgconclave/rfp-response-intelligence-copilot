@@ -336,6 +336,14 @@ class ArtifactInventoryService:
                 "Get-ChildItem -Recurse -File storage\\citation_lineage -ErrorAction SilentlyContinue | "
                 "Select-Object FullName,Length,LastWriteTime"
             ),
+            (
+                'rg "proposal/buyer-intelligence|Buyer-Grade Proposal Intelligence|'
+                'buyer_intelligence|storage/buyer_intelligence" app dashboard docs README.md tests Makefile'
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\buyer_intelligence -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
         ]
 
     def _reviewer_proof_checklist(self) -> list[str]:
@@ -394,6 +402,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /evidence/citation-lineage-pack to write the Citation Lineage Integrity Pack "
                 "under storage/citation_lineage/."
+            ),
+            (
+                "Call POST /proposal/buyer-intelligence-pack to write the Buyer-Grade Proposal Intelligence Pack "
+                "under storage/buyer_intelligence/."
             ),
             (
                 "Inspect storage/artifact_indexes plus at least one Markdown/JSON artifact from each "
@@ -626,6 +638,15 @@ class ArtifactInventoryService:
                 "source_trust",
                 "POST /evidence/source-trust-pack",
                 "Source trust gate artifacts with retrieval policy, owner review, and source approval decisions.",
+            ),
+            self._spec(
+                "buyer_intelligence",
+                "buyer_intelligence",
+                "POST /proposal/buyer-intelligence-pack",
+                (
+                    "Buyer-grade proposal workflow pack with durable checkpoints, HITL approval queue, "
+                    "governance gates, provider routes, and local state JSON."
+                ),
             ),
             self._spec(
                 "audit_packs",

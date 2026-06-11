@@ -415,6 +415,21 @@ async def main() -> None:
         procurement_question_risk,
         write_artifact=True,
     )
+    buyer_intelligence = container.buyer_intelligence.workflow(
+        trace_id="demo-buyer-intelligence",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=package_review.findings,
+        cost_governance=cost_governance,
+        source_trust=source_trust,
+        model_risk=model_risk,
+        procurement_risk=procurement_question_risk,
+    )
+    buyer_intelligence_pack = container.buyer_intelligence.pack(
+        "demo-buyer-intelligence-pack",
+        buyer_intelligence,
+        write_artifact=True,
+    )
     procurement_risk_desk = await container.procurement_risk_desk.risk_desk(
         "demo-procurement-risk-desk",
         analysis=analysis,
@@ -679,6 +694,16 @@ async def main() -> None:
     print(f"Source Trust Pack JSON: {source_trust_pack.json_artifact_path}")
     print("Source trust directory: storage/source_trust")
     print(
+        "Buyer intelligence workflow: "
+        f"status={buyer_intelligence.workflow_status} "
+        f"approvals={len(buyer_intelligence.human_approval_queue)} "
+        f"gates={len(buyer_intelligence.governance_gates)}"
+    )
+    print(f"Buyer Intelligence Pack: {buyer_intelligence_pack.artifact_path}")
+    print(f"Buyer Intelligence Pack JSON: {buyer_intelligence_pack.json_artifact_path}")
+    print(f"Buyer Intelligence State: {buyer_intelligence_pack.state_artifact_path}")
+    print("Buyer intelligence directory: storage/buyer_intelligence")
+    print(
         "Compliance control coverage: "
         f"{compliance_matrix.coverage_summary['coverage_ratio']} "
         f"families={compliance_matrix.coverage_summary['control_family_count']} "
@@ -835,6 +860,9 @@ async def main() -> None:
         f"citation_lineage_pack={citation_lineage_pack.artifact_path} "
         f"source_trust={source_trust.status}/{source_trust.summary['average_trust_score']} "
         f"source_trust_pack={source_trust_pack.artifact_path} "
+        f"buyer_intelligence={buyer_intelligence.workflow_status}/"
+        f"{len(buyer_intelligence.human_approval_queue)} "
+        f"buyer_intelligence_pack={buyer_intelligence_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "
         f"compliance_packs={compliance_control_pack.artifact_path} "
         f"privacy_retention={privacy_retention.summary['high_risk_surface_count']}/"

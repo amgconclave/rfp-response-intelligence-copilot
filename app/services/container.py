@@ -9,6 +9,7 @@ from app.services.api_contracts import ApiContractService
 from app.services.artifact_inventory import ArtifactInventoryService
 from app.services.audit import AuditService
 from app.services.bid_simulator import BidScenarioSimulatorService
+from app.services.buyer_intelligence import BuyerProposalIntelligenceService
 from app.services.ci_doctor import CiDoctorService
 from app.services.citation_lineage import CitationLineageService
 from app.services.compliance import ComplianceControlMappingService
@@ -64,6 +65,7 @@ class ServiceContainer:
         self.metrics = MetricsService(self.repo, settings)
         self.cost_governance = CostGovernanceService(settings, self.metrics)
         self.model_risk = ModelRiskRegisterService(self.repo, settings)
+        self.buyer_intelligence = BuyerProposalIntelligenceService(settings)
         self.bid_simulator = BidScenarioSimulatorService(settings)
         self.customer_intelligence = CustomerIntelligenceService(settings)
         self.answer_reuse_library = AnswerReuseLibraryService(self.repo, settings)
