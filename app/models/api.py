@@ -1680,6 +1680,60 @@ class BuyerStructuredContractPackResponse(BaseModel):
     trace_id: str
 
 
+class ProposalCertificationGate(BaseModel):
+    gate_id: str
+    name: str
+    status: str
+    owner_role: str
+    severity: str
+    evidence: str
+    required_action: str
+    endpoint_refs: list[str] = Field(default_factory=list)
+
+
+class ProposalCertificationTransition(BaseModel):
+    transition_id: str
+    sequence: int
+    from_state: str | None = None
+    to_state: str
+    condition: str
+    decision: str
+    checkpoint_key: str
+    gate_refs: list[str] = Field(default_factory=list)
+
+
+class ProposalSubmissionCertificationResponse(BaseModel):
+    title: str
+    certification_id: str
+    status: str
+    generated_at: str
+    recommendation: str
+    readiness_score: int
+    injected_dependencies: dict[str, Any]
+    source_artifacts: dict[str, Any]
+    gates: list[ProposalCertificationGate]
+    transitions: list[ProposalCertificationTransition]
+    reviewer_queue: list[dict[str, Any]] = Field(default_factory=list)
+    eval_assertions: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ProposalSubmissionCertificationPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class ProposalSubmissionCertificationPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    certification: ProposalSubmissionCertificationResponse
+    trace_id: str
+
+
 class ProposalCouncilAgent(BaseModel):
     agent_id: str
     role: str

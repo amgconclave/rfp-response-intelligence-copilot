@@ -385,6 +385,14 @@ class ArtifactInventoryService:
                     "Get-ChildItem -Recurse -File storage\\decision_provenance -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
+                (
+                    'rg "proposal/submission-certification|Proposal Submission Certification|'
+                    'submission_certifications" app dashboard docs README.md tests Makefile'
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\submission_certifications "
+                    "-ErrorAction SilentlyContinue | Select-Object FullName,Length,LastWriteTime"
+                ),
         ]
 
     def _reviewer_proof_checklist(self) -> list[str]:
@@ -471,6 +479,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /proposal/decision-provenance-pack to write the Proposal Decision Provenance Pack "
                 "under storage/decision_provenance/."
+            ),
+            (
+                "Call POST /proposal/submission-certification-pack to write the Proposal Submission "
+                "Certification Pack under storage/submission_certifications/."
             ),
             (
                 "Call POST /ops/proposal-observability-pack to write the Proposal Observability Pack "
@@ -760,6 +772,15 @@ class ArtifactInventoryService:
                 (
                     "Decision provenance artifacts with typed graph nodes, traceable edges, controls, "
                     "and eval assertions."
+                ),
+            ),
+            self._spec(
+                "submission_certifications",
+                "submission_certifications",
+                "POST /proposal/submission-certification-pack",
+                (
+                    "Final proposal certification artifacts with typed gates, checkpointed route decisions, "
+                    "reviewer queue, source artifact links, and eval assertions."
                 ),
             ),
             self._spec(

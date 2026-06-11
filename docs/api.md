@@ -382,6 +382,29 @@ Writes Markdown and JSON artifacts under ignored `storage/decision_provenance/` 
 
 The pack includes the typed provenance graph, node and edge tables, decision controls, eval assertions, reviewer controls, proof commands, limitations, embedded provenance JSON, Markdown, JSON, and trace ID.
 
+### `GET /proposal/submission-certification`
+
+Returns the Proposal Submission Certification Gate. It consolidates the buyer workflow, checkpoint replay, agent council, decision provenance graph, and structured contract audit into typed final gates, reviewer queue items, checkpointed certification transitions, injected dependency metadata, eval assertions, proof commands, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/proposal/submission-certification" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The certification is deterministic and local-only; it does not submit proposals or call external approval, CRM, procurement, GRC, OpenAI, or Azure services.
+
+### `POST /proposal/submission-certification-pack`
+
+Writes Markdown and JSON artifacts under ignored `storage/submission_certifications/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes certification gates, state transitions, reviewer queue, eval assertions, reviewer controls, proof commands, limitations, embedded certification JSON, Markdown, JSON, and trace ID.
+
 ### `GET /compliance/evidence-matrix`
 
 Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.

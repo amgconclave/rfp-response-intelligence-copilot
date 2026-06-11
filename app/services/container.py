@@ -52,6 +52,7 @@ from app.services.reviewer_workflow import ReviewerWorkflowService
 from app.services.rfp_analysis import RfpAnalysisService
 from app.services.runtime_demo import RuntimeDemoService
 from app.services.source_trust import SourceTrustGateService
+from app.services.submission_certification import ProposalSubmissionCertificationService
 from app.services.submission_decision import SubmissionDecisionService
 from app.services.submission_exceptions import SubmissionExceptionService
 from app.services.submission_regression import SubmissionRegressionService
@@ -77,6 +78,7 @@ class ServiceContainer:
         self.buyer_contracts = BuyerStructuredContractService(settings)
         self.proposal_agent_council = ProposalAgentCouncilService(settings)
         self.decision_provenance = ProposalDecisionProvenanceService(settings)
+        self.submission_certification = ProposalSubmissionCertificationService(settings)
         self.proposal_observability = ProposalObservabilityService(settings)
         self.bid_simulator = BidScenarioSimulatorService(settings)
         self.customer_intelligence = CustomerIntelligenceService(settings)

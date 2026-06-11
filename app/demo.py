@@ -499,6 +499,19 @@ async def main() -> None:
         buyer_structured_contracts,
         write_artifact=True,
     )
+    submission_certification = container.submission_certification.certify(
+        trace_id="demo-submission-certification",
+        workflow=buyer_intelligence,
+        replay=buyer_workflow_replay,
+        council=agent_council,
+        provenance=decision_provenance,
+        contract_audit=buyer_structured_contracts,
+    )
+    submission_certification_pack = container.submission_certification.pack(
+        "demo-submission-certification-pack",
+        submission_certification,
+        write_artifact=True,
+    )
     procurement_risk_desk = await container.procurement_risk_desk.risk_desk(
         "demo-procurement-risk-desk",
         analysis=analysis,
@@ -867,6 +880,16 @@ async def main() -> None:
     print(f"Buyer Structured Contract Pack JSON: {buyer_structured_contracts_pack.json_artifact_path}")
     print("Buyer contracts directory: storage/buyer_contracts")
     print(
+        "Submission certification: "
+        f"status={submission_certification.status} "
+        f"score={submission_certification.readiness_score} "
+        f"gates={len(submission_certification.gates)} "
+        f"reviews={len(submission_certification.reviewer_queue)}"
+    )
+    print(f"Submission Certification Pack: {submission_certification_pack.artifact_path}")
+    print(f"Submission Certification Pack JSON: {submission_certification_pack.json_artifact_path}")
+    print("Submission certification directory: storage/submission_certifications")
+    print(
         "Compliance control coverage: "
         f"{compliance_matrix.coverage_summary['coverage_ratio']} "
         f"families={compliance_matrix.coverage_summary['control_family_count']} "
@@ -1069,6 +1092,8 @@ async def main() -> None:
         f"decision_provenance_pack={decision_provenance_pack.artifact_path} "
         f"buyer_contracts={buyer_structured_contracts.status}/{buyer_structured_contracts.score} "
         f"buyer_contracts_pack={buyer_structured_contracts_pack.artifact_path} "
+        f"submission_certification={submission_certification.status}/{submission_certification.readiness_score} "
+        f"submission_certification_pack={submission_certification_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "
         f"compliance_packs={compliance_control_pack.artifact_path} "
         f"privacy_retention={privacy_retention.summary['high_risk_surface_count']}/"

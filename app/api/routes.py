@@ -128,6 +128,9 @@ from app.models.api import (
     ProposalObservabilityResponse,
     ProposalReadinessScorePackRequest,
     ProposalReadinessScorePackResponse,
+    ProposalSubmissionCertificationPackRequest,
+    ProposalSubmissionCertificationPackResponse,
+    ProposalSubmissionCertificationResponse,
     PublishPackRequest,
     PublishPackResponse,
     QueryRequest,
@@ -3524,6 +3527,66 @@ async def buyer_structured_contracts_pack(
 
 
 @router.get(
+    "/proposal/submission-certification",
+    response_model=ProposalSubmissionCertificationResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_submission_certification(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalSubmissionCertificationResponse:
+    trace_id = get_trace_id(request)
+    outputs = await _proposal_submission_certification_outputs(trace_id, container)
+    certification = container.submission_certification.certify(trace_id=trace_id, **outputs)
+    container.audit.record(
+        trace_id,
+        "proposal.submission_certification_viewed",
+        "proposal_submission_certification",
+        metadata={
+            "status": certification.status,
+            "score": certification.readiness_score,
+            "gates": len(certification.gates),
+            "reviewer_queue": len(certification.reviewer_queue),
+        },
+    )
+    return certification
+
+
+@router.post(
+    "/proposal/submission-certification-pack",
+    response_model=ProposalSubmissionCertificationPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_submission_certification_pack(
+    request: Request,
+    payload: ProposalSubmissionCertificationPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalSubmissionCertificationPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProposalSubmissionCertificationPackRequest()
+    outputs = await _proposal_submission_certification_outputs(trace_id, container)
+    certification = container.submission_certification.certify(trace_id=f"{trace_id}-certification", **outputs)
+    pack = container.submission_certification.pack(
+        trace_id,
+        certification,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.submission_certification_pack_generated",
+        "proposal_submission_certification_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.certification.status,
+            "score": pack.certification.readiness_score,
+        },
+    )
+    return pack
+
+
+@router.get(
     "/compliance/evidence-matrix",
     response_model=ComplianceEvidenceMatrixResponse,
     dependencies=[Depends(require_api_key)],
@@ -4199,6 +4262,18 @@ async def _buyer_structured_contract_outputs(trace_id: str, container: ServiceCo
         "replay": replay,
         "council": council,
         "provenance": provenance,
+    }
+
+
+async def _proposal_submission_certification_outputs(
+    trace_id: str,
+    container: ServiceContainer,
+) -> dict[str, object]:
+    outputs = await _buyer_structured_contract_outputs(trace_id, container)
+    contract_audit = container.buyer_contracts.audit(trace_id=f"{trace_id}-contracts", **outputs)
+    return {
+        **outputs,
+        "contract_audit": contract_audit,
     }
 
 

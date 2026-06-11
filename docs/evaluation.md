@@ -43,6 +43,8 @@ The v0.2 API also exposes proof-oriented coverage endpoints:
 - `POST /proposal/agent-council-pack`: writes the Proposal Agent Council Pack under `storage/agent_council/`.
 - `GET /proposal/decision-provenance`: returns graph-level eval assertions for node/edge integrity, checkpoint pass-through, and council eval pass-through.
 - `POST /proposal/decision-provenance-pack`: writes the Proposal Decision Provenance Pack under `storage/decision_provenance/`.
+- `GET /proposal/submission-certification`: returns final certification gate assertions, checkpointed transitions, and reviewer routing checks.
+- `POST /proposal/submission-certification-pack`: writes the Proposal Submission Certification Pack under `storage/submission_certifications/`.
 - `GET /ops/proposal-observability`: returns trace analysis, retrieval diagnostics, experiment comparison, provider posture, governance findings, and HITL signals.
 - `POST /ops/proposal-observability-pack`: writes the Proposal Observability Pack under `storage/proposal_observability/`.
 - `GET /handoff/final-audit`: returns the README Consistency final audit.

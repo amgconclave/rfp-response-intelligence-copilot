@@ -112,6 +112,7 @@ tabs = st.tabs(
         "Governed Retrieval",
         "Retrieval Experiments",
         "Proposal Observability",
+        "Submission Certification",
     ]
 )
 
@@ -3602,4 +3603,57 @@ with tabs[51]:
             "Download Proposal Observability Markdown",
             pack["markdown"],
             file_name="proposal_observability_pack.md",
+        )
+
+
+with tabs[52]:
+    st.subheader("Submission Certification")
+    st.caption(
+        "Certify the buyer workflow, replay, role council, decision provenance, and structured contracts "
+        "before a final proposal submission."
+    )
+    action_cols = st.columns(2)
+    if action_cols[0].button("Load certification gate"):
+        st.session_state.submission_certification = get_json("/proposal/submission-certification")
+    if action_cols[1].button("Generate Certification Pack"):
+        pack = post_json("/proposal/submission-certification-pack", {"write_artifact": True})
+        st.session_state.submission_certification_pack = pack
+        st.session_state.submission_certification = pack["certification"]
+        st.success(f"Submission Certification Pack generated: {pack['artifact_path']}")
+
+    certification = st.session_state.get("submission_certification")
+    if certification:
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", certification["status"])
+        metric_cols[1].metric("Score", certification["readiness_score"])
+        metric_cols[2].metric("Gates", len(certification["gates"]))
+        metric_cols[3].metric("Reviews", len(certification["reviewer_queue"]))
+        metric_cols[4].metric("Transitions", len(certification["transitions"]))
+        st.write("Recommendation")
+        st.write(certification["recommendation"])
+        st.write("Certification gates")
+        st.dataframe(certification["gates"], use_container_width=True)
+        st.write("State transitions")
+        st.dataframe(certification["transitions"], use_container_width=True)
+        st.write("Reviewer queue")
+        st.dataframe(certification["reviewer_queue"], use_container_width=True)
+        st.write("Eval assertions")
+        st.dataframe(certification["eval_assertions"], use_container_width=True)
+        st.write("Source artifacts")
+        st.json(certification["source_artifacts"])
+        st.write("Injected dependencies")
+        st.json(certification["injected_dependencies"])
+        st.write("Local proof commands")
+        st.code("\n".join(certification["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(certification["limitations"])
+
+    pack = st.session_state.get("submission_certification_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Submission Certification Markdown",
+            pack["markdown"],
+            file_name="proposal_submission_certification_pack.md",
         )

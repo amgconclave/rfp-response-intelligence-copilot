@@ -590,6 +590,15 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "decision_provenance",
             },
+            {
+                "label": "Submission Certification",
+                "endpoint_paths": [
+                    "/proposal/submission-certification",
+                    "/proposal/submission-certification-pack",
+                ],
+                "generated_artifact_tab": True,
+                "artifact_root": "submission_certifications",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -969,6 +978,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/decision_provenance/*.md",
                     "storage/decision_provenance/*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/proposal/submission-certification",
+                "purpose": "Submission Certification tab final typed proposal gate view.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/submission-certification-pack",
+                "purpose": "Submission Certification generated Markdown and JSON artifacts.",
+                "expected_artifacts": [
+                    "storage/submission_certifications/*.md",
+                    "storage/submission_certifications/*.json",
                 ],
             },
         ]

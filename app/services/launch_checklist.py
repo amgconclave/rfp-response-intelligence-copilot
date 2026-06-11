@@ -85,6 +85,8 @@ class LaunchChecklistService:
                 "POST /proposal/agent-council-pack",
                 "GET /proposal/decision-provenance",
                 "POST /proposal/decision-provenance-pack",
+                "GET /proposal/submission-certification",
+                "POST /proposal/submission-certification-pack",
                 "GET /ops/ci-doctor",
                 "POST /ops/audit-pack",
                 "GET /api/contract-audit",
@@ -296,6 +298,14 @@ class LaunchChecklistService:
                 (
                     "Get-ChildItem -Recurse -File storage\\runtime_packs -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "proposal/submission-certification|Proposal Submission Certification|'
+                    'submission_certifications" app dashboard docs README.md tests Makefile'
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\submission_certifications "
+                    "-ErrorAction SilentlyContinue | Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
                     'rg "ops/ci-doctor|ops/audit-pack|CI Doctor|Audit Pack|'
@@ -1420,6 +1430,27 @@ class LaunchChecklistService:
                 200,
                 "Writes proposal decision provenance Markdown and JSON artifacts.",
                 ["storage/decision_provenance/*.md", "storage/decision_provenance/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Proposal Submission Certification",
+                "GET",
+                "/proposal/submission-certification",
+                "proposal",
+                200,
+                (
+                    "Returns typed final certification gates, checkpointed state transitions, reviewer queue, "
+                    "source artifacts, injected dependencies, and eval assertions."
+                ),
+            ),
+            self._row(
+                "Proposal Submission Certification Pack",
+                "POST",
+                "/proposal/submission-certification-pack",
+                "artifact",
+                200,
+                "Writes proposal submission certification Markdown and JSON artifacts.",
+                ["storage/submission_certifications/*.md", "storage/submission_certifications/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(
