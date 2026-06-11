@@ -850,7 +850,9 @@ async def main() -> None:
         "Procurement Risk Desk: "
         f"risks={procurement_risk_desk.summary['risk_count']} "
         f"blocked={procurement_risk_desk.summary['blocked_count']} "
-        f"avg={procurement_risk_desk.summary['average_risk_score']}"
+        f"avg={procurement_risk_desk.summary['average_risk_score']} "
+        f"governance={procurement_risk_desk.governance_summary['workflow_status']} "
+        f"review_queue={procurement_risk_desk.governance_summary['human_review_queue_count']}"
     )
     print(f"Procurement Risk Desk Pack: {procurement_risk_desk_pack.artifact_path}")
     print(f"Procurement Risk Desk Pack JSON: {procurement_risk_desk_pack.json_artifact_path}")

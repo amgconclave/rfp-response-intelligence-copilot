@@ -57,6 +57,10 @@ class ProcurementRiskDeskService:
             risks=risks,
             summary=self._summary(risks),
             owner_routing=self._owner_routing(risks),
+            workflow_stages=self._workflow_stages(risks),
+            human_review_queue=self._human_review_queue(risks),
+            trace_spans=self._trace_spans(trace_id, risks),
+            governance_summary=self._governance_summary(risks),
             packet_sources=self._packet_sources(analysis, contract_risk),
             local_proof_commands=self._local_proof_commands(),
             limitations=self._limitations(),
@@ -242,6 +246,110 @@ class ProcurementRiskDeskService:
             for owner, rows in sorted(grouped.items())
         ]
 
+    def _workflow_stages(self, risks: list[ProcurementRiskDeskItem]) -> list[dict[str, Any]]:
+        blocked = [risk.risk_id for risk in risks if risk.status == "blocked" or risk.severity == "critical"]
+        owner_review = [risk.risk_id for risk in risks if risk.status == "needs_owner_review"]
+        ready = [risk.risk_id for risk in risks if risk.status == "monitor"]
+        return [
+            {
+                "stage_id": "prd_stage_1_packet_scan",
+                "name": "Packet risk scan",
+                "status": "complete",
+                "checkpoint_id": "procurement-risk-desk.packet-scan.v1",
+                "resumable": True,
+                "blocked_risks": [],
+                "governance_pattern": "durable_workflow",
+                "exit_criteria": "All risk categories scored with source signals and citation diagnostics.",
+            },
+            {
+                "stage_id": "prd_stage_2_owner_review",
+                "name": "Owner review and evidence closure",
+                "status": "blocked" if blocked else "in_progress" if owner_review else "complete",
+                "checkpoint_id": "procurement-risk-desk.owner-review.v1",
+                "resumable": True,
+                "blocked_risks": blocked,
+                "governance_pattern": "human_in_the_loop",
+                "exit_criteria": "Every high or critical risk has an owner decision, cited support, or explicit exception.",
+            },
+            {
+                "stage_id": "prd_stage_3_submission_release",
+                "name": "Procurement submission release gate",
+                "status": "blocked" if blocked else "waiting" if owner_review else "ready",
+                "checkpoint_id": "procurement-risk-desk.release-gate.v1",
+                "resumable": True,
+                "blocked_risks": blocked or owner_review,
+                "governance_pattern": "governance",
+                "exit_criteria": "No blocked risk remains and reviewer approvals are attached to customer-facing commitments.",
+                "ready_risks": ready,
+            },
+        ]
+
+    def _human_review_queue(self, risks: list[ProcurementRiskDeskItem]) -> list[dict[str, Any]]:
+        queue = []
+        for risk in risks:
+            if risk.status == "monitor" and risk.severity == "low":
+                continue
+            queue.append(
+                {
+                    "risk_id": risk.risk_id,
+                    "category": risk.category,
+                    "owner_role": risk.owner_role,
+                    "reviewer_role": risk.reviewer_role,
+                    "priority": self._review_priority(risk),
+                    "approval_gate": self._approval_gate(risk),
+                    "sla_hint": risk.due_hint,
+                    "evidence_gap_count": len(risk.evidence_gaps),
+                    "citation_count": len(risk.citations),
+                    "required_decision": self._required_decision(risk),
+                }
+            )
+        return sorted(queue, key=lambda row: (row["priority"], row["risk_id"]))
+
+    def _trace_spans(self, trace_id: str, risks: list[ProcurementRiskDeskItem]) -> list[dict[str, Any]]:
+        return [
+            {
+                "span_id": f"{trace_id}.procurement-risk-desk.scan",
+                "operation": "packet_category_scan",
+                "status": "ok",
+                "risk_count": len(risks),
+                "evidence_gap_count": sum(len(risk.evidence_gaps) for risk in risks),
+                "citation_count": sum(len(risk.citations) for risk in risks),
+                "pattern": "trace_analysis",
+            },
+            {
+                "span_id": f"{trace_id}.procurement-risk-desk.owner-routing",
+                "operation": "owner_review_routing",
+                "status": "blocked" if any(risk.status == "blocked" for risk in risks) else "ok",
+                "risk_count": sum(risk.status != "monitor" for risk in risks),
+                "evidence_gap_count": sum(len(risk.evidence_gaps) for risk in risks if risk.status != "monitor"),
+                "citation_count": sum(len(risk.citations) for risk in risks if risk.status != "monitor"),
+                "pattern": "human_in_the_loop",
+            },
+            {
+                "span_id": f"{trace_id}.procurement-risk-desk.release-gate",
+                "operation": "submission_release_gate",
+                "status": "blocked" if any(risk.status == "blocked" for risk in risks) else "ready",
+                "risk_count": sum(risk.severity in {"critical", "high"} for risk in risks),
+                "evidence_gap_count": sum(len(risk.evidence_gaps) for risk in risks if risk.severity in {"critical", "high"}),
+                "citation_count": sum(len(risk.citations) for risk in risks if risk.severity in {"critical", "high"}),
+                "pattern": "governance",
+            },
+        ]
+
+    def _governance_summary(self, risks: list[ProcurementRiskDeskItem]) -> dict[str, Any]:
+        queue = self._human_review_queue(risks)
+        blocked = [risk.risk_id for risk in risks if risk.status == "blocked"]
+        approval_required = [risk.risk_id for risk in risks if risk.status in {"blocked", "needs_owner_review"}]
+        return {
+            "workflow_status": "blocked" if blocked else "ready_for_owner_review" if approval_required else "ready",
+            "implemented_patterns": ["durable_workflows", "human_in_the_loop", "trace_analysis", "governance"],
+            "approval_required_count": len(approval_required),
+            "human_review_queue_count": len(queue),
+            "blocked_risk_ids": blocked,
+            "release_gate": "hold_submission" if blocked else "owner_review_required" if approval_required else "can_submit",
+            "state_storage": "storage/procurement_risk_desk/*.json",
+        }
+
     def _pack_payload(self, trace_id: str, risk_desk: ProcurementRiskDeskResponse) -> dict[str, Any]:
         return {
             "trace_id": trace_id,
@@ -250,6 +358,10 @@ class ProcurementRiskDeskService:
             "summary": risk_desk.summary,
             "risks": [risk.model_dump(mode="json") for risk in risk_desk.risks],
             "owner_routing": risk_desk.owner_routing,
+            "workflow_stages": risk_desk.workflow_stages,
+            "human_review_queue": risk_desk.human_review_queue,
+            "trace_spans": risk_desk.trace_spans,
+            "governance_summary": risk_desk.governance_summary,
             "packet_sources": risk_desk.packet_sources,
             "executive_notes": self._executive_notes(risk_desk),
             "local_proof_commands": risk_desk.local_proof_commands,
@@ -298,6 +410,27 @@ class ProcurementRiskDeskService:
                 f"- {owner['owner_role']}: {owner['risk_count']} risks, blocked={owner['blocked_count']}, "
                 f"highest={owner['highest_severity']}, next={owner['next_action']}"
             )
+        lines.extend(["", "## Governance Summary", ""])
+        for key, value in pack["governance_summary"].items():
+            lines.append(f"- {self._md(key)}: {self._md(value)}")
+        lines.extend(["", "## Durable Workflow Gates", ""])
+        self._append_dict_table(
+            lines,
+            pack["workflow_stages"],
+            ["stage_id", "name", "status", "checkpoint_id", "resumable", "blocked_risks"],
+        )
+        lines.extend(["", "## Human Review Queue", ""])
+        self._append_dict_table(
+            lines,
+            pack["human_review_queue"],
+            ["risk_id", "owner_role", "reviewer_role", "priority", "approval_gate", "sla_hint"],
+        )
+        lines.extend(["", "## Trace Analysis", ""])
+        self._append_dict_table(
+            lines,
+            pack["trace_spans"],
+            ["span_id", "operation", "status", "risk_count", "evidence_gap_count", "citation_count"],
+        )
         lines.extend(["", "## Detailed Risks", ""])
         for risk in pack["risks"]:
             lines.extend(
@@ -462,6 +595,26 @@ class ProcurementRiskDeskService:
             return f"{owner} must clear blocked commitments or record an exception."
         return f"{owner} should review routed risks and confirm response wording."
 
+    def _review_priority(self, risk: ProcurementRiskDeskItem) -> int:
+        severity_rank = {"critical": 1, "high": 2, "medium": 3, "low": 4}
+        return severity_rank.get(risk.severity, 4)
+
+    def _approval_gate(self, risk: ProcurementRiskDeskItem) -> str:
+        if risk.status == "blocked":
+            return "submission_blocker"
+        if risk.severity == "high":
+            return "pre_submission_approval"
+        if risk.severity == "medium":
+            return "owner_attestation"
+        return "monitor"
+
+    def _required_decision(self, risk: ProcurementRiskDeskItem) -> str:
+        if risk.status == "blocked":
+            return "approve_exception_or_attach_evidence"
+        if risk.status == "needs_owner_review":
+            return "approve_wording_or_request_source"
+        return "monitor_for_change"
+
     def _executive_notes(self, risk_desk: ProcurementRiskDeskResponse) -> list[str]:
         notes = [
             "Use this desk before procurement submission to prevent unsupported legal, commercial, residency, insurance, or delivery commitments.",
@@ -523,3 +676,12 @@ class ProcurementRiskDeskService:
 
     def _unique(self, values: list[str]) -> list[str]:
         return [value for value in dict.fromkeys(values) if value]
+
+    def _append_dict_table(self, lines: list[str], rows: list[dict[str, Any]], fields: list[str]) -> None:
+        if not rows:
+            lines.append("No rows.")
+            return
+        lines.append("| " + " | ".join(fields) + " |")
+        lines.append("| " + " | ".join("---" for _ in fields) + " |")
+        for row in rows:
+            lines.append("| " + " | ".join(self._md(row.get(field, "")) for field in fields) + " |")

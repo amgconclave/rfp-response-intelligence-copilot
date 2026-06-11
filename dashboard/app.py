@@ -2915,6 +2915,14 @@ with tabs[44]:
         )
         st.write("Owner routing")
         st.dataframe(desk["owner_routing"], use_container_width=True)
+        st.write("Governance summary")
+        st.json(desk.get("governance_summary", {}))
+        st.write("Durable workflow gates")
+        st.dataframe(desk.get("workflow_stages", []), use_container_width=True)
+        st.write("Human review queue")
+        st.dataframe(desk.get("human_review_queue", []), use_container_width=True)
+        st.write("Trace analysis")
+        st.dataframe(desk.get("trace_spans", []), use_container_width=True)
         st.write("Evidence snippets")
         st.dataframe(
             [

@@ -82,6 +82,20 @@ async def test_procurement_risk_desk_service_routes_packet_risks(tmp_path, monke
     }
     assert desk.summary["citation_count"] > 0
     assert desk.owner_routing
+    assert desk.workflow_stages
+    assert desk.workflow_stages[0]["checkpoint_id"] == "procurement-risk-desk.packet-scan.v1"
+    assert set(desk.governance_summary["implemented_patterns"]) >= {
+        "durable_workflows",
+        "human_in_the_loop",
+        "trace_analysis",
+    }
+    assert desk.human_review_queue
+    assert all(row["required_decision"] for row in desk.human_review_queue)
+    assert {span["operation"] for span in desk.trace_spans} >= {
+        "packet_category_scan",
+        "owner_review_routing",
+        "submission_release_gate",
+    }
     assert any(item.owner_role == "Legal Counsel" for item in desk.risks)
     assert any(item.category == "insurance" for item in desk.risks)
 
@@ -92,7 +106,13 @@ async def test_procurement_risk_desk_service_routes_packet_risks(tmp_path, monke
     assert Path(pack.json_artifact_path).exists()
     assert "procurement_risk_desk" in pack.artifact_path
     assert "## Owner Routing" in pack.markdown
+    assert "## Durable Workflow Gates" in pack.markdown
+    assert "## Human Review Queue" in pack.markdown
+    assert "## Trace Analysis" in pack.markdown
     assert pack.pack["risks"]
+    assert pack.pack["workflow_stages"]
+    assert pack.pack["human_review_queue"]
+    assert pack.pack["trace_spans"]
     repository.reset()
     get_settings.cache_clear()
     get_container.cache_clear()
@@ -108,6 +128,14 @@ def test_procurement_risk_desk_endpoints_and_repo_wiring(client, auth_headers):
     assert desk["summary"]["citation_count"] > 0
     assert {item["category"] for item in desk["risks"]} >= {"legal", "pricing", "data_residency"}
     assert desk["owner_routing"]
+    assert desk["workflow_stages"]
+    assert desk["human_review_queue"]
+    assert desk["trace_spans"]
+    assert desk["governance_summary"]["release_gate"] in {
+        "hold_submission",
+        "owner_review_required",
+        "can_submit",
+    }
 
     pack_response = client.post(
         "/procurement/risk-desk-pack",
@@ -122,6 +150,11 @@ def test_procurement_risk_desk_endpoints_and_repo_wiring(client, auth_headers):
     assert Path(pack["json_artifact_path"]).exists()
     assert "procurement_risk_desk" in pack["artifact_path"]
     assert "Procurement Risk Desk Pack" in pack["markdown"]
+    assert "Durable Workflow Gates" in pack["markdown"]
+    assert pack["pack"]["governance_summary"]["implemented_patterns"][:2] == [
+        "durable_workflows",
+        "human_in_the_loop",
+    ]
 
     smoke_response = client.get("/ui/dashboard-smoke", headers=auth_headers)
     assert smoke_response.status_code == 200

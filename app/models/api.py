@@ -1748,6 +1748,10 @@ class ProcurementRiskDeskResponse(BaseModel):
     risks: list[ProcurementRiskDeskItem]
     summary: dict[str, Any]
     owner_routing: list[dict[str, Any]] = Field(default_factory=list)
+    workflow_stages: list[dict[str, Any]] = Field(default_factory=list)
+    human_review_queue: list[dict[str, Any]] = Field(default_factory=list)
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    governance_summary: dict[str, Any] = Field(default_factory=dict)
     packet_sources: list[str] = Field(default_factory=list)
     local_proof_commands: list[str] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)

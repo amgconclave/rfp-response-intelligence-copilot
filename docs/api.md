@@ -451,7 +451,7 @@ The pack includes high-risk questions, approved/blocked draft answers, reviewer 
 
 ### `GET /procurement/risk-desk`
 
-Returns the Procurement Risk Desk packet view for legal, pricing, data residency, insurance, and implementation risk. Each row includes severity, risk score, status, owner role, reviewer role, due hint, packet signals, recommended actions, evidence gaps, related requirement IDs, related contract clause IDs, citations/snippets, owner routing, proof commands, and limitations.
+Returns the Procurement Risk Desk packet view for legal, pricing, data residency, insurance, and implementation risk. Each row includes severity, risk score, status, owner role, reviewer role, due hint, packet signals, recommended actions, evidence gaps, related requirement IDs, related contract clause IDs, citations/snippets, owner routing, proof commands, and limitations. The response also includes durable workflow checkpoints, a human-review queue, trace spans, and a governance summary so procurement risks can be resumed, approved, or blocked before submission.
 
 ```bash
 curl -X GET "http://127.0.0.1:8000/procurement/risk-desk" \
@@ -468,7 +468,7 @@ Writes Markdown and JSON Procurement Risk Desk Pack artifacts under ignored `sto
 }
 ```
 
-The pack includes owner routing, detailed desk risks, executive notes, packet sources, proof commands, limitations, embedded risk desk JSON, Markdown, JSON, and trace ID.
+The pack includes owner routing, durable workflow gates, human-review queue, trace analysis, detailed desk risks, executive notes, packet sources, proof commands, limitations, embedded risk desk JSON, Markdown, JSON, and trace ID.
 
 ### `GET /bid/scenario-analysis`
 

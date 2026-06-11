@@ -124,7 +124,7 @@ curl -X GET "http://127.0.0.1:8000/procurement/question-risk" -H "X-API-Key: loc
 curl -X POST "http://127.0.0.1:8000/procurement/approval-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 ```
 
-The Procurement Risk Desk tab and pack detect legal, pricing, data residency, insurance, and implementation risks across the local RFP packet. The desk routes owners, reviewers, due hints, evidence gaps, citations, related requirements, and contract clauses into `storage/procurement_risk_desk/` artifacts:
+The Procurement Risk Desk tab and pack detect legal, pricing, data residency, insurance, and implementation risks across the local RFP packet. The desk routes owners, reviewers, due hints, evidence gaps, citations, related requirements, contract clauses, durable workflow checkpoints, human-review queues, trace spans, and submission governance gates into `storage/procurement_risk_desk/` artifacts:
 
 ```bash
 curl -X GET "http://127.0.0.1:8000/procurement/risk-desk" -H "X-API-Key: local-demo-key"
