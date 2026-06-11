@@ -47,6 +47,26 @@ class DealReadinessService:
             owner_bottlenecks,
             eval_metrics,
         )
+        score_trace = self._score_trace(
+            matrix,
+            missing_evidence,
+            evidence_coverage,
+            review_risk_count,
+            customer_fit,
+            owner_bottlenecks,
+            eval_metrics,
+        )
+        approval_workflow = self._approval_workflow(
+            matrix,
+            missing_evidence,
+            evidence_coverage,
+            review_risk_count,
+            customer_fit,
+            owner_bottlenecks,
+            eval_metrics,
+            blockers,
+        )
+        human_review_queue = self._human_review_queue(approval_workflow, owner_bottlenecks, blockers)
         return DealReadinessScorecardResponse(
             readiness_score=score,
             readiness_level=self._readiness_level(score, blockers),
@@ -55,6 +75,10 @@ class DealReadinessService:
             review_risk_count=review_risk_count,
             customer_fit_score=customer_fit.fit_score if customer_fit else None,
             owner_bottlenecks=owner_bottlenecks,
+            score_trace=score_trace,
+            approval_workflow=approval_workflow,
+            human_review_queue=human_review_queue,
+            governance_summary=self._governance_summary(score, score_trace, approval_workflow, human_review_queue),
             recommended_next_actions=self._next_actions(
                 blockers,
                 matrix,
@@ -181,6 +205,10 @@ class DealReadinessService:
             "evidence_coverage": evidence_coverage,
             "compliance_risk": compliance_risk,
             "reviewer_bottlenecks": reviewer_bottlenecks,
+            "score_trace_analysis": self._score_trace_analysis(scorecard.score_trace),
+            "durable_approval_workflow": scorecard.approval_workflow,
+            "human_review_queue": scorecard.human_review_queue,
+            "governance_summary": scorecard.governance_summary,
             "executive_readiness_artifacts": self._executive_readiness_artifacts(
                 scorecard,
                 report,
@@ -259,6 +287,392 @@ class DealReadinessService:
             if eval_metrics.citation_coverage < 0.75:
                 score -= int(round((0.75 - eval_metrics.citation_coverage) * 20))
         return max(0, min(100, int(round(score))))
+
+    def _score_trace(
+        self,
+        matrix: list[RequirementMatrixRow],
+        missing_evidence: list[str],
+        evidence_coverage: float,
+        review_risk_count: int,
+        customer_fit: CustomerFitResponse | None,
+        owner_bottlenecks: list[dict[str, Any]],
+        eval_metrics: EvaluationMetrics | None,
+    ) -> list[dict[str, Any]]:
+        blocked_rows = [row for row in matrix if row.status == "blocked"]
+        high_risk_rows = [row for row in matrix if row.risk_level == "high"]
+        running_score = 100.0
+        trace: list[dict[str, Any]] = [
+            {
+                "component": "base_readiness",
+                "category": "baseline",
+                "impact": 100,
+                "running_score": 100,
+                "signal_count": len(matrix),
+                "rationale": "Start from a complete, evidence-ready proposal package and subtract deterministic risks.",
+                "evidence": [row.requirement_id for row in matrix[:8]],
+                "governance_control": "All deductions are deterministic and inspectable in local/mock mode.",
+            }
+        ]
+
+        def apply(
+            component: str,
+            category: str,
+            deduction: float,
+            signal_count: int,
+            rationale: str,
+            evidence: list[str],
+        ) -> None:
+            nonlocal running_score
+            if deduction <= 0:
+                return
+            running_score = max(0.0, running_score - deduction)
+            trace.append(
+                {
+                    "component": component,
+                    "category": category,
+                    "impact": -int(round(deduction)),
+                    "running_score": int(round(running_score)),
+                    "signal_count": signal_count,
+                    "rationale": rationale,
+                    "evidence": evidence[:8],
+                    "governance_control": "Requires owner review or explicit exception before executive approval.",
+                }
+            )
+
+        apply(
+            "blocked_requirements",
+            "section_completeness",
+            min(30, len(blocked_rows) * 8),
+            len(blocked_rows),
+            "Blocked requirement rows reduce submit readiness.",
+            [f"{row.requirement_id}: {row.requirement_text}" for row in blocked_rows],
+        )
+        apply(
+            "high_risk_requirements",
+            "compliance_and_delivery_risk",
+            min(15, len(high_risk_rows) * 3),
+            len(high_risk_rows),
+            "High-risk requirements need reviewer approval even when some evidence exists.",
+            [f"{row.requirement_id}: {row.category}" for row in high_risk_rows],
+        )
+        apply(
+            "missing_evidence",
+            "evidence_coverage",
+            min(20, len(missing_evidence) * 4),
+            len(missing_evidence),
+            "Open missing-evidence items are treated as hallucination-prevention blockers.",
+            missing_evidence,
+        )
+        apply(
+            "coverage_shortfall",
+            "evidence_coverage",
+            min(25, int(round((1 - evidence_coverage) * 25))),
+            len(matrix),
+            f"Evidence coverage is {evidence_coverage}; target is 1.0 for a submission-ready package.",
+            [row.requirement_id for row in matrix if not row.evidence_refs or row.missing_evidence],
+        )
+        apply(
+            "review_board_risk",
+            "human_review",
+            min(25, review_risk_count * 7),
+            review_risk_count,
+            "Critical/high review findings and unsupported-claim risks reduce readiness.",
+            [f"review_risk_count={review_risk_count}"],
+        )
+        if customer_fit and customer_fit.fit_score < 70:
+            apply(
+                "customer_fit_risk",
+                "buyer_fit",
+                min(16, int(round((70 - customer_fit.fit_score) * 0.4))),
+                len(customer_fit.requirements_needing_review),
+                f"Customer fit score is {customer_fit.fit_score}; target is at least 70.",
+                customer_fit.profile_risks
+                + [item.requirement_text for item in customer_fit.requirements_needing_review],
+            )
+        if owner_bottlenecks and owner_bottlenecks[0]["open_items"] >= 4:
+            apply(
+                "reviewer_bottleneck",
+                "human_review",
+                6,
+                owner_bottlenecks[0]["open_items"],
+                f"Largest owner queue is {owner_bottlenecks[0]['owner_role']}.",
+                [f"{item['owner_role']}: open={item['open_items']}" for item in owner_bottlenecks],
+            )
+        if eval_metrics:
+            apply(
+                "eval_quality_gate",
+                "evaluation",
+                10 if not eval_metrics.passed else 0,
+                eval_metrics.question_count,
+                "Standard evaluation did not pass the configured local quality gate.",
+                [f"questions={eval_metrics.question_count}", f"details={len(eval_metrics.details)}"],
+            )
+            citation_deduction = 0
+            if eval_metrics.citation_coverage < 0.75:
+                citation_deduction = int(round((0.75 - eval_metrics.citation_coverage) * 20))
+            apply(
+                "citation_eval_shortfall",
+                "evaluation",
+                citation_deduction,
+                eval_metrics.question_count,
+                f"Citation coverage is {eval_metrics.citation_coverage}; minimum gate is 0.75.",
+                [f"retrieval_precision_at_k={eval_metrics.retrieval_precision_at_k}"],
+            )
+        trace.append(
+            {
+                "component": "final_readiness_score",
+                "category": "summary",
+                "impact": 0,
+                "running_score": max(0, min(100, int(round(running_score)))),
+                "signal_count": len(trace) - 1,
+                "rationale": "Final score after deterministic deductions.",
+                "evidence": [],
+                "governance_control": "Use this trace when approving exceptions or explaining score movement.",
+            }
+        )
+        return trace
+
+    def _approval_workflow(
+        self,
+        matrix: list[RequirementMatrixRow],
+        missing_evidence: list[str],
+        evidence_coverage: float,
+        review_risk_count: int,
+        customer_fit: CustomerFitResponse | None,
+        owner_bottlenecks: list[dict[str, Any]],
+        eval_metrics: EvaluationMetrics | None,
+        blockers: list[str],
+    ) -> list[dict[str, Any]]:
+        compliance_rows = [
+            row
+            for row in matrix
+            if self._row_has_terms(
+                row,
+                {"compliance", "security", "privacy", "legal", "soc", "gdpr", "hipaa", "fedramp", "dpa"},
+            )
+        ]
+        compliance_blockers = [
+            row
+            for row in compliance_rows
+            if row.status == "blocked" or row.risk_level == "high" or row.missing_evidence
+        ]
+        workflow = [
+            self._workflow_checkpoint(
+                sequence=1,
+                state="requirements_intake",
+                owner_role="proposal_manager",
+                blocked=not matrix,
+                review_required=not matrix,
+                decision="requirement_matrix_ready" if matrix else "build_requirement_matrix",
+                signals=[f"requirements={len(matrix)}"],
+                next_state="evidence_coverage_gate",
+            ),
+            self._workflow_checkpoint(
+                sequence=2,
+                state="evidence_coverage_gate",
+                owner_role="solutions",
+                blocked=bool(missing_evidence) or evidence_coverage < 0.85,
+                review_required=bool(missing_evidence) or evidence_coverage < 0.95,
+                decision=(
+                    "evidence_ready"
+                    if evidence_coverage >= 0.95 and not missing_evidence
+                    else "close_evidence_gaps"
+                ),
+                signals=[
+                    f"coverage={evidence_coverage}",
+                    f"missing_evidence={len(missing_evidence)}",
+                ],
+                evidence_refs=sorted({ref for row in matrix for ref in row.evidence_refs})[:8],
+                next_state="compliance_gate",
+            ),
+            self._workflow_checkpoint(
+                sequence=3,
+                state="compliance_gate",
+                owner_role="legal_security",
+                blocked=bool(compliance_blockers),
+                review_required=bool(compliance_rows),
+                decision="compliance_approved" if not compliance_blockers else "approve_exception_or_hold",
+                signals=[f"regulated_requirements={len(compliance_rows)}", f"blockers={len(compliance_blockers)}"],
+                evidence_refs=[row.requirement_id for row in compliance_blockers[:8]],
+                next_state="review_board_gate",
+            ),
+            self._workflow_checkpoint(
+                sequence=4,
+                state="review_board_gate",
+                owner_role="review_board",
+                blocked=review_risk_count > 0,
+                review_required=review_risk_count > 0,
+                decision="review_passed" if review_risk_count == 0 else "resolve_findings",
+                signals=[f"review_risk_count={review_risk_count}"],
+                next_state="eval_quality_gate",
+            ),
+            self._workflow_checkpoint(
+                sequence=5,
+                state="eval_quality_gate",
+                owner_role="ai_quality",
+                blocked=bool(eval_metrics and not eval_metrics.passed),
+                review_required=eval_metrics is None or bool(eval_metrics and not eval_metrics.passed),
+                decision="eval_passed" if eval_metrics and eval_metrics.passed else "run_or_fix_eval",
+                signals=self._eval_workflow_signals(eval_metrics),
+                next_state="executive_submission_gate",
+            ),
+            self._workflow_checkpoint(
+                sequence=6,
+                state="executive_submission_gate",
+                owner_role="executive_sponsor",
+                blocked=bool(blockers),
+                review_required=True,
+                decision="submit" if not blockers else "approve_exception_or_no_submit",
+                signals=blockers[:8] or ["no_blockers"],
+                next_state="submitted_or_held",
+            ),
+        ]
+        if owner_bottlenecks:
+            workflow.append(
+                self._workflow_checkpoint(
+                    sequence=7,
+                    state="owner_bottleneck_followup",
+                    owner_role=owner_bottlenecks[0]["owner_role"],
+                    blocked=owner_bottlenecks[0]["blocked_items"] > 0,
+                    review_required=True,
+                    decision="clear_owner_queue",
+                    signals=[
+                        f"{item['owner_role']}: open={item['open_items']} blocked={item['blocked_items']}"
+                        for item in owner_bottlenecks
+                    ],
+                    next_state="executive_submission_gate",
+                )
+            )
+        return workflow
+
+    def _workflow_checkpoint(
+        self,
+        sequence: int,
+        state: str,
+        owner_role: str,
+        blocked: bool,
+        review_required: bool,
+        decision: str,
+        signals: list[str],
+        next_state: str,
+        evidence_refs: list[str] | None = None,
+    ) -> dict[str, Any]:
+        status = "blocked" if blocked else "human_review_required" if review_required else "complete"
+        return {
+            "checkpoint_id": f"readiness_{sequence:02d}_{state}",
+            "sequence": sequence,
+            "state": state,
+            "status": status,
+            "owner_role": owner_role,
+            "decision": decision,
+            "human_review_required": review_required,
+            "blocking_signals": signals[:8] if blocked else [],
+            "source_signals": signals[:8],
+            "evidence_refs": evidence_refs or [],
+            "next_state": next_state,
+            "durability_key": f"proposal_readiness:{state}:{sequence}",
+        }
+
+    def _eval_workflow_signals(self, eval_metrics: EvaluationMetrics | None) -> list[str]:
+        if not eval_metrics:
+            return ["eval_metrics=not_supplied", "expected_dataset=sample_data/eval_dataset.json"]
+        failed_details = sum(1 for item in eval_metrics.details if item.get("passed") is False)
+        return [
+            f"passed={eval_metrics.passed}",
+            f"questions={eval_metrics.question_count}",
+            f"citation_coverage={eval_metrics.citation_coverage}",
+            f"failed_details={failed_details}",
+            f"average_latency_ms={eval_metrics.average_latency_ms}",
+        ]
+
+    def _human_review_queue(
+        self,
+        workflow: list[dict[str, Any]],
+        owner_bottlenecks: list[dict[str, Any]],
+        blockers: list[str],
+    ) -> list[dict[str, Any]]:
+        queue = [
+            {
+                "queue_id": f"queue_{item['checkpoint_id']}",
+                "owner_role": item["owner_role"],
+                "priority": "high" if item["status"] == "blocked" else "medium",
+                "required_decision": item["decision"],
+                "status": item["status"],
+                "reason": "; ".join(item["blocking_signals"] or item["source_signals"]),
+                "source_checkpoint_id": item["checkpoint_id"],
+            }
+            for item in workflow
+            if item["human_review_required"] or item["status"] == "blocked"
+        ]
+        for item in owner_bottlenecks[:4]:
+            queue.append(
+                {
+                    "queue_id": f"queue_owner_{item['owner_role']}",
+                    "owner_role": item["owner_role"],
+                    "priority": "high" if item["blocked_items"] else "medium",
+                    "required_decision": "clear_owner_queue",
+                    "status": "blocked" if item["blocked_items"] else "human_review_required",
+                    "reason": (
+                        f"open={item['open_items']} blocked={item['blocked_items']} "
+                        f"high_priority={item['high_priority_items']}"
+                    ),
+                    "source_checkpoint_id": "readiness_07_owner_bottleneck_followup",
+                }
+            )
+        if blockers and not queue:
+            queue.append(
+                {
+                    "queue_id": "queue_executive_exception",
+                    "owner_role": "executive_sponsor",
+                    "priority": "high",
+                    "required_decision": "approve_exception_or_no_submit",
+                    "status": "blocked",
+                    "reason": "; ".join(blockers[:3]),
+                    "source_checkpoint_id": "readiness_06_executive_submission_gate",
+                }
+            )
+        return queue[:10]
+
+    def _governance_summary(
+        self,
+        score: int,
+        score_trace: list[dict[str, Any]],
+        workflow: list[dict[str, Any]],
+        human_review_queue: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        blocked_checkpoints = [item for item in workflow if item["status"] == "blocked"]
+        return {
+            "provider_mode": self.settings.provider_mode,
+            "local_mock_default": self.settings.provider_mode == "mock",
+            "score_trace_steps": len(score_trace),
+            "blocked_checkpoint_count": len(blocked_checkpoints),
+            "human_review_queue_count": len(human_review_queue),
+            "approval_required": bool(human_review_queue) or score < 85,
+            "controls": [
+                "deterministic_score_trace",
+                "durable_checkpoint_ids",
+                "human_in_the_loop_exception_gate",
+                "local_artifact_export",
+            ],
+            "blocked_checkpoint_ids": [item["checkpoint_id"] for item in blocked_checkpoints],
+        }
+
+    def _score_trace_analysis(self, score_trace: list[dict[str, Any]]) -> dict[str, Any]:
+        deductions = [item for item in score_trace if item.get("impact", 0) < 0]
+        by_category: dict[str, int] = {}
+        for item in deductions:
+            by_category[item["category"]] = by_category.get(item["category"], 0) + abs(item["impact"])
+        return {
+            "deduction_count": len(deductions),
+            "largest_deductions": sorted(
+                deductions,
+                key=lambda item: (abs(item["impact"]), item["component"]),
+                reverse=True,
+            )[:5],
+            "deductions_by_category": dict(sorted(by_category.items())),
+            "final_score": score_trace[-1]["running_score"] if score_trace else None,
+            "traceability_note": "Each score movement links to deterministic signals for audit and reviewer replay.",
+        }
 
     def _section_completeness(
         self,
@@ -756,8 +1170,11 @@ class DealReadinessService:
                 "Which proposal sections are incomplete or missing evidence?",
                 "Which compliance/security risks can block submission?",
                 "Which reviewer owners are creating the longest bottleneck?",
+                "Which score deductions changed the readiness posture?",
+                "Which durable approval checkpoints require human action?",
                 "What proof commands can a local reviewer run without external services?",
             ],
+            "governance_controls": scorecard.governance_summary.get("controls", []),
             "approval_gate": (
                 "Proceed to executive sign-off."
                 if scorecard.readiness_level == "ready"
@@ -1018,6 +1435,62 @@ class DealReadinessService:
                 )
         else:
             lines.append("| None | 0 | 0 | 0 | 0 | False | No bottleneck detected. |")
+        lines.extend(
+            [
+                "",
+                "## Score Trace Analysis",
+                "",
+                f"- Deduction count: {pack['score_trace_analysis']['deduction_count']}",
+                f"- Final traced score: {pack['score_trace_analysis']['final_score']}",
+                f"- Traceability note: {pack['score_trace_analysis']['traceability_note']}",
+                "",
+                "| Component | Category | Impact | Running Score | Rationale |",
+                "| --- | --- | ---: | ---: | --- |",
+            ]
+        )
+        for item in pack["score_trace_analysis"]["largest_deductions"]:
+            row = {**item, "rationale": self._md_cell(item["rationale"])}
+            lines.append(
+                "| {component} | {category} | {impact} | {running_score} | {rationale} |".format(
+                    **row,
+                )
+            )
+        lines.extend(
+            [
+                "",
+                "## Durable Approval Workflow",
+                "",
+                "| Checkpoint | Owner | Status | Decision | Human Review | Next State |",
+                "| --- | --- | --- | --- | --- | --- |",
+            ]
+        )
+        for item in pack["durable_approval_workflow"]:
+            lines.append(
+                "| {checkpoint_id} | {owner_role} | {status} | {decision} | {human_review_required} | "
+                "{next_state} |".format(**item)
+            )
+        lines.extend(
+            [
+                "",
+                "## Human Review Queue",
+                "",
+                "| Queue ID | Owner | Priority | Status | Required Decision | Reason |",
+                "| --- | --- | --- | --- | --- | --- |",
+            ]
+        )
+        if pack["human_review_queue"]:
+            for item in pack["human_review_queue"]:
+                row = {**item, "reason": self._md_cell(item["reason"])}
+                lines.append(
+                    "| {queue_id} | {owner_role} | {priority} | {status} | {required_decision} | {reason} |".format(
+                        **row,
+                    )
+                )
+        else:
+            lines.append("| None | proposal_manager | low | complete | no_action | No human queue items. |")
+        lines.extend(["", "## Governance Summary", ""])
+        for key, value in pack["governance_summary"].items():
+            lines.append(f"- {self._md_cell(key)}: {self._md_cell(value)}")
         lines.extend(["", "## Executive Readiness Artifacts", ""])
         for label, path in pack["artifact_paths"].items():
             lines.append(f"- {label}: {path}")

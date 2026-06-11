@@ -245,8 +245,8 @@ flowchart LR
 - Reviewer Collaboration Workflow via `POST /rfp/reviewer-workflow` and `POST /rfp/reviewer-workflow-pack`, writing checkpointed Markdown/JSON under `storage/review_boards/` with state-machine gates, traceable transitions, approval path, replay notes, proof commands, and limitations.
 - Stakeholder action plans that assign tasks to `sales`, `solutions`, `security`, `legal`, `product`, and `engineering`.
 - Markdown/JSON handoff boards with blocked items, high-risk requirements, customer-fit notes, missing evidence, review findings, and next meeting agenda.
-- Deal readiness scorecards with deterministic 0-100 scoring, blocker summaries, evidence coverage, customer fit, owner bottlenecks, and next actions.
-- Proposal Readiness Score Packs via `POST /rfp/proposal-readiness-score-pack`, writing Markdown/JSON under `storage/readiness_packs/` with section completeness, evidence coverage by category, compliance/security/privacy risk, reviewer bottlenecks, endpoint references, proof commands, and limitations.
+- Deal readiness scorecards with deterministic 0-100 scoring, blocker summaries, evidence coverage, customer fit, owner bottlenecks, score trace analysis, durable approval checkpoints, human-review queues, governance controls, and next actions.
+- Proposal Readiness Score Packs via `POST /rfp/proposal-readiness-score-pack`, writing Markdown/JSON under `storage/readiness_packs/` with section completeness, evidence coverage by category, compliance/security/privacy risk, reviewer bottlenecks, score deductions, durable approval workflow state, human-in-the-loop queue items, endpoint references, proof commands, and limitations.
 - Competitive win strategy simulator with deterministic win score, competitor pressure profile, pricing risk, cited proof points, response posture, red flags, assumptions, and owner actions.
 - Pricing risk memos under `storage/pricing_memos/` with pricing assumptions, discount/packaging risks, compliance blockers, competitor framing, cited proof points, leadership recommendation, local commands, JD skills, and five interviewer talking points.
 - Competitive Objection Handling Pack via `POST /rfp/objection-handling` and `POST /rfp/objection-handling-pack`, writing Markdown/JSON under `storage/objection_packs/` with competitor, pricing, security, compliance, and implementation responses, citations, confidence, checkpointed workflow replay, route decisions, eval assertions, reviewer workflow, endpoint references, and limitations.
@@ -383,9 +383,9 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /rfp/exception-pack`: writes Markdown/JSON Submission Exception Register artifacts under `storage/exception_registers/`.
 - `POST /rfp/action-plan`: creates deterministic cross-functional stakeholder tasks from analysis, matrix, customer fit/profile, and review findings.
 - `POST /rfp/handoff-board`: writes a local Markdown/JSON handoff board under `storage/handoffs/`.
-- `POST /rfp/readiness-scorecard`: scores whether the team is ready to submit using analysis, matrix, review, customer fit, action-plan, and optional eval inputs.
+- `POST /rfp/readiness-scorecard`: scores whether the team is ready to submit using analysis, matrix, review, customer fit, action-plan, and optional eval inputs, with score trace analysis, durable approval checkpoints, and human-review queue output.
 - `POST /rfp/executive-risk-report`: writes a leadership Markdown/JSON risk report under `storage/reports/`.
-- `POST /rfp/proposal-readiness-score-pack`: writes a Markdown/JSON Proposal Readiness Score Pack under `storage/readiness_packs/`.
+- `POST /rfp/proposal-readiness-score-pack`: writes a Markdown/JSON Proposal Readiness Score Pack under `storage/readiness_packs/`, including score deductions, durable approval workflow state, and HITL governance controls.
 - `POST /rfp/win-strategy`: returns win score, competitor risk profile, pricing risk, cited proof points, posture, red flags, assumptions, and owner actions.
 - `POST /rfp/pricing-risk-memo`: writes a Markdown/JSON pricing risk memo under `storage/pricing_memos/`.
 - `POST /rfp/objection-handling`: returns cited objection responses with concern type, confidence, reviewer status, citations, missing evidence, recommended follow-ups, workflow checkpoints, route decisions, eval assertions, endpoint references, and proof commands.

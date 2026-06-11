@@ -498,6 +498,12 @@ with tabs[10]:
         st.write("Blockers", scorecard["blockers"])
         st.write("Recommended next actions", scorecard["recommended_next_actions"])
         st.dataframe(scorecard["owner_bottlenecks"], use_container_width=True)
+        st.write("Score trace")
+        st.dataframe(scorecard["score_trace"], use_container_width=True)
+        st.write("Approval workflow")
+        st.dataframe(scorecard["approval_workflow"], use_container_width=True)
+        st.write("Human review queue")
+        st.dataframe(scorecard["human_review_queue"], use_container_width=True)
 
     if cols[1].button("Export executive risk report", disabled=not bool(payload)):
         report = post_json("/rfp/executive-risk-report", {**payload, "write_artifact": True})
@@ -517,7 +523,10 @@ with tabs[10]:
         st.success(f"Exported readiness score pack: {score_pack['artifact_path']}")
         st.metric("Pack status", score_pack["status"])
         st.json(score_pack["pack"]["section_completeness"])
+        st.json(score_pack["pack"]["score_trace_analysis"])
         st.dataframe(score_pack["pack"]["reviewer_bottlenecks"], use_container_width=True)
+        st.dataframe(score_pack["pack"]["durable_approval_workflow"], use_container_width=True)
+        st.dataframe(score_pack["pack"]["human_review_queue"], use_container_width=True)
         st.download_button(
             "Download Readiness Score Pack Markdown",
             score_pack["markdown"],

@@ -340,6 +340,11 @@ def test_deal_readiness_scorecard_scoring(tmp_path, monkeypatch):
     assert scorecard.review_risk_count == 1
     assert scorecard.blockers
     assert scorecard.owner_bottlenecks[0]["blocked_items"] == 1
+    assert scorecard.score_trace[-1]["component"] == "final_readiness_score"
+    assert any(item["component"] == "eval_quality_gate" for item in scorecard.score_trace)
+    assert any(item["state"] == "executive_submission_gate" for item in scorecard.approval_workflow)
+    assert scorecard.human_review_queue
+    assert "durable_checkpoint_ids" in scorecard.governance_summary["controls"]
     assert "Attach approved evidence" in scorecard.recommended_next_actions[0]
     get_settings.cache_clear()
 
@@ -491,7 +496,14 @@ def test_proposal_readiness_score_pack_exports_section_and_reviewer_metrics(tmp_
     assert pack.pack["evidence_coverage"]["overall_coverage"] == 0.5
     assert pack.pack["compliance_risk"]["risk_level"] in {"high", "critical"}
     assert pack.pack["reviewer_bottlenecks"][0]["escalation_required"] is True
+    assert pack.pack["score_trace_analysis"]["deduction_count"] >= 1
+    assert pack.pack["durable_approval_workflow"]
+    assert pack.pack["human_review_queue"]
+    assert pack.pack["governance_summary"]["approval_required"] is True
     assert "## Section Completeness" in pack.markdown
+    assert "## Score Trace Analysis" in pack.markdown
+    assert "## Durable Approval Workflow" in pack.markdown
+    assert "## Human Review Queue" in pack.markdown
     assert "POST /rfp/proposal-readiness-score-pack" in pack.markdown
     get_settings.cache_clear()
 

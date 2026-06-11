@@ -251,6 +251,12 @@ def test_requirement_matrix_and_export_package(client, auth_headers):
     assert scorecard["readiness_level"] in {"mostly_ready", "at_risk", "not_ready"}
     assert scorecard["blockers"]
     assert scorecard["owner_bottlenecks"]
+    assert scorecard["score_trace"]
+    assert scorecard["score_trace"][-1]["component"] == "final_readiness_score"
+    assert scorecard["approval_workflow"]
+    assert any(item["human_review_required"] for item in scorecard["approval_workflow"])
+    assert scorecard["human_review_queue"]
+    assert "human_in_the_loop_exception_gate" in scorecard["governance_summary"]["controls"]
 
     report_response = client.post(
         "/rfp/executive-risk-report",
@@ -298,7 +304,11 @@ def test_requirement_matrix_and_export_package(client, auth_headers):
     assert readiness_pack["pack"]["evidence_coverage"]["uncovered_requirement_count"] >= 1
     assert readiness_pack["pack"]["compliance_risk"]["risk_level"] in {"low", "medium", "high", "critical"}
     assert readiness_pack["pack"]["reviewer_bottlenecks"]
+    assert readiness_pack["pack"]["score_trace_analysis"]["largest_deductions"]
+    assert readiness_pack["pack"]["durable_approval_workflow"]
+    assert readiness_pack["pack"]["human_review_queue"]
     assert "POST /rfp/proposal-readiness-score-pack" in readiness_pack["markdown"]
+    assert "## Durable Approval Workflow" in readiness_pack["markdown"]
 
     contract_text = Path("sample_data/customer_contract_terms.md").read_text(encoding="utf-8")
     contract_risk = client.post(

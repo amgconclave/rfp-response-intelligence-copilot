@@ -449,6 +449,10 @@ class DealReadinessScorecardResponse(BaseModel):
     review_risk_count: int
     customer_fit_score: float | None = None
     owner_bottlenecks: list[dict[str, Any]] = Field(default_factory=list)
+    score_trace: list[dict[str, Any]] = Field(default_factory=list)
+    approval_workflow: list[dict[str, Any]] = Field(default_factory=list)
+    human_review_queue: list[dict[str, Any]] = Field(default_factory=list)
+    governance_summary: dict[str, Any] = Field(default_factory=dict)
     recommended_next_actions: list[str] = Field(default_factory=list)
     trace_id: str
 

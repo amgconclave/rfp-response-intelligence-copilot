@@ -1018,9 +1018,9 @@ Creates a deterministic local deal readiness scorecard from any combination of a
 }
 ```
 
-The response includes `readiness_score` from 0 to 100, `readiness_level`, `blockers`, `evidence_coverage`, `review_risk_count`, `customer_fit_score`, `owner_bottlenecks`, `recommended_next_actions`, and `trace_id`.
+The response includes `readiness_score` from 0 to 100, `readiness_level`, `blockers`, `evidence_coverage`, `review_risk_count`, `customer_fit_score`, `owner_bottlenecks`, `score_trace`, `approval_workflow`, `human_review_queue`, `governance_summary`, `recommended_next_actions`, and `trace_id`.
 
-Scoring is deterministic. It starts at 100 and applies fixed penalties for blocked rows, high-risk rows, missing evidence, evidence coverage gaps, high-severity review findings, low customer fit, concentrated owner bottlenecks, failed evals, and low eval citation coverage.
+Scoring is deterministic. It starts at 100 and applies fixed penalties for blocked rows, high-risk rows, missing evidence, evidence coverage gaps, high-severity review findings, low customer fit, concentrated owner bottlenecks, failed evals, and low eval citation coverage. The score trace explains each deduction, while the approval workflow exposes durable checkpoint IDs and human-in-the-loop exception gates for local reviewer replay.
 
 ### `POST /rfp/executive-risk-report`
 
@@ -1065,7 +1065,7 @@ Writes Markdown/JSON Proposal Readiness Score Pack artifacts under `storage/read
 }
 ```
 
-The pack includes the base readiness scorecard, section completeness by proposal section, evidence coverage by category, compliance/security/privacy risk, reviewer bottleneck routing, executive artifact links, endpoint references, local proof commands, limitations, Markdown, JSON, and trace ID.
+The pack includes the base readiness scorecard, section completeness by proposal section, evidence coverage by category, compliance/security/privacy risk, reviewer bottleneck routing, score trace analysis, durable approval workflow checkpoints, human-review queue items, governance controls, executive artifact links, endpoint references, local proof commands, limitations, Markdown, JSON, and trace ID.
 
 ### `POST /rfp/win-strategy`
 
