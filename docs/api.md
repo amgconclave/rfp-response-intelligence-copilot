@@ -645,6 +645,30 @@ Searches local approved response snippets from `sample_data/approved_responses.j
 }
 ```
 
+### `POST /rfp/answer-reuse-library`
+
+Builds the governed Answer Reuse Library from accepted local snippets. The response includes owner, expiry, approval status, reuse decision, confidence, citation lineage, owner queue, endpoint references, proof commands, and limitations.
+
+```json
+{
+  "category": "security",
+  "customer_profile_id": "regulated_healthcare",
+  "include_expired": true
+}
+```
+
+### `POST /rfp/answer-reuse-library-pack`
+
+Writes a Markdown and JSON Answer Reuse Library Pack under `storage/answer_reuse_library/`. The pack converts accepted answers into governed reusable snippets with reviewer checklist, owner queue, expiry state, source files, and citation lineage.
+
+```json
+{
+  "category": "security",
+  "customer_profile_id": "regulated_healthcare",
+  "write_artifact": true
+}
+```
+
 ### `POST /rfp/export-package`
 
 Creates an interview-ready response package from an analyzed RFP payload or ingested RFP document ID plus an optional draft response. By default, artifacts are written under `storage/exports/` and the response also includes Markdown and structured JSON.

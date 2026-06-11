@@ -322,6 +322,12 @@ class UIVerificationService:
                 "label": "Customer Fit / Response Memory",
                 "endpoint_paths": ["/rfp/customer-fit", "/rfp/response-memory/search"],
             },
+            {
+                "label": "Answer Reuse Library",
+                "endpoint_paths": ["/rfp/answer-reuse-library", "/rfp/answer-reuse-library-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "answer_reuse_library",
+            },
             {"label": "Action Plan / Handoff Board", "endpoint_paths": ["/rfp/action-plan", "/rfp/handoff-board"]},
             {"label": "Review Board / Red Team", "endpoint_paths": ["/rfp/review-answer", "/rfp/review-package"]},
             {
@@ -564,6 +570,17 @@ class UIVerificationService:
                 "path": "/rfp/exception-pack",
                 "purpose": "Submission Exceptions generated register pack.",
                 "expected_artifacts": ["storage/exception_registers/*.md", "storage/exception_registers/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/answer-reuse-library",
+                "purpose": "Answer Reuse Library governed snippets panel.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/answer-reuse-library-pack",
+                "purpose": "Answer Reuse Library generated governance pack.",
+                "expected_artifacts": ["storage/answer_reuse_library/*.md", "storage/answer_reuse_library/*.json"],
             },
             {"method": "GET", "path": "/api/contract-audit", "purpose": "API Contract tab audit snapshot."},
             {

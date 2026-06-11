@@ -58,6 +58,8 @@ class LaunchChecklistService:
                 "POST /bid/roi-pack",
                 "POST /rfp/objection-handling",
                 "POST /rfp/objection-handling-pack",
+                "POST /rfp/answer-reuse-library",
+                "POST /rfp/answer-reuse-library-pack",
                 "POST /learning/win-loss",
                 "POST /learning/win-loss-pack",
                 "GET /evidence/freshness",
@@ -168,6 +170,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\exception_registers -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "answer-reuse-library|Answer Reuse Library|answer_reuse_library|governed snippets" '
+                    "app dashboard docs README.md tests sample_data Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\answer_reuse_library -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -393,6 +403,7 @@ class LaunchChecklistService:
             "procurement_risk_desk": "storage/procurement_risk_desk",
             "review_boards": "storage/review_boards",
             "exception_registers": "storage/exception_registers",
+            "answer_reuse_library": "storage/answer_reuse_library",
             "bid_packs": "storage/bid_packs",
             "objection_packs": "storage/objection_packs",
             "win_loss_packs": "storage/win_loss_packs",
@@ -511,6 +522,25 @@ class LaunchChecklistService:
                 200,
                 "Returns approved reusable local snippets with confidence and citations.",
                 body='{"query":"SSO encryption SOC 2 controls","top_k":3}',
+            ),
+            self._row(
+                "Answer reuse library",
+                "POST",
+                "/rfp/answer-reuse-library",
+                "enterprise",
+                200,
+                "Returns governed accepted snippets with owner, expiry, reuse decision, and citation lineage.",
+                body='{"customer_profile_id":"regulated_healthcare"}',
+            ),
+            self._row(
+                "Answer reuse library pack",
+                "POST",
+                "/rfp/answer-reuse-library-pack",
+                "artifact",
+                200,
+                "Writes governed Answer Reuse Library Markdown and JSON artifacts.",
+                ["storage/answer_reuse_library/*.md", "storage/answer_reuse_library/*.json"],
+                '{"write_artifact":true}',
             ),
             self._row(
                 "Export package",

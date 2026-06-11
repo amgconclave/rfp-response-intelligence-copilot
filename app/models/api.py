@@ -112,6 +112,58 @@ class ResponseMemorySearchResponse(BaseModel):
     trace_id: str
 
 
+class AnswerReuseLibraryRequest(BaseModel):
+    category: str | None = None
+    customer_profile_id: str | None = None
+    include_expired: bool = True
+
+
+class AnswerReuseSnippet(BaseModel):
+    snippet_id: str
+    title: str
+    category: str
+    reusable_text: str
+    owner: str
+    expires_at: str
+    expiry_status: str
+    approval_status: str
+    reuse_decision: str
+    confidence: float
+    tags: list[str] = Field(default_factory=list)
+    customer_profile_ids: list[str] = Field(default_factory=list)
+    citation_refs: list[str] = Field(default_factory=list)
+    citation_lineage: list[dict[str, Any]] = Field(default_factory=list)
+    source_files: list[str] = Field(default_factory=list)
+    reviewer_notes: list[str] = Field(default_factory=list)
+
+
+class AnswerReuseLibraryResponse(BaseModel):
+    title: str
+    status: str
+    snippets: list[AnswerReuseSnippet]
+    summary: dict[str, Any]
+    owner_queue: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class AnswerReuseLibraryPackRequest(AnswerReuseLibraryRequest):
+    library: AnswerReuseLibraryResponse | None = None
+    write_artifact: bool = True
+
+
+class AnswerReuseLibraryPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    library: AnswerReuseLibraryResponse
+    trace_id: str
+
+
 class ExportPackageRequest(BaseModel):
     rfp_document_id: str | None = None
     analyzed_payload: AnalyzeResponse | None = None

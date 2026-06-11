@@ -105,6 +105,7 @@ tabs = st.tabs(
         "Source Trust Gate",
         "Model Risk Register",
         "Procurement Risk Desk",
+        "Answer Reuse Library",
     ]
 )
 
@@ -2851,4 +2852,98 @@ with tabs[44]:
             "Download Risk Desk Markdown",
             pack["markdown"],
             file_name="procurement_risk_desk_pack.md",
+        )
+
+
+with tabs[45]:
+    st.subheader("Answer Reuse Library")
+    st.caption(
+        "Review accepted response snippets as governed reusable language with owners, expiry, reuse decisions, "
+        "and citation lineage."
+    )
+    profiles = get_json("/customers/profiles")["profiles"]
+    profile_names = {profile["name"]: profile["id"] for profile in profiles}
+    action_cols = st.columns(2)
+    reuse_category = st.selectbox(
+        "Category",
+        ["Any", "security", "compliance", "implementation", "pricing"],
+        key="answer_reuse_category",
+    )
+    reuse_profile_name = st.selectbox(
+        "Customer profile",
+        ["Any"] + list(profile_names),
+        key="answer_reuse_profile",
+    )
+    include_expired = st.checkbox("Include expired snippets", value=True)
+    payload = {"include_expired": include_expired}
+    if reuse_category != "Any":
+        payload["category"] = reuse_category
+    if reuse_profile_name != "Any":
+        payload["customer_profile_id"] = profile_names[reuse_profile_name]
+    if action_cols[0].button("Load reuse library"):
+        st.session_state.answer_reuse_library = post_json("/rfp/answer-reuse-library", payload)
+    if action_cols[1].button("Generate Reuse Library Pack"):
+        pack = post_json("/rfp/answer-reuse-library-pack", {**payload, "write_artifact": True})
+        st.session_state.answer_reuse_library_pack = pack
+        st.session_state.answer_reuse_library = pack["library"]
+        st.success(f"Answer Reuse Library Pack generated under answer_reuse_library: {pack['artifact_path']}")
+
+    library = st.session_state.get("answer_reuse_library")
+    if library:
+        summary = library["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", library["status"])
+        metric_cols[1].metric("Snippets", summary["snippet_count"])
+        metric_cols[2].metric("Approved", summary["approved_count"])
+        metric_cols[3].metric("Review", summary["review_required_count"])
+        metric_cols[4].metric("Lineage issues", summary["lineage_issue_count"])
+        st.write("Governed snippets")
+        st.dataframe(
+            [
+                {
+                    "id": item["snippet_id"],
+                    "title": item["title"],
+                    "category": item["category"],
+                    "owner": item["owner"],
+                    "expiry": item["expires_at"],
+                    "status": item["expiry_status"],
+                    "decision": item["reuse_decision"],
+                    "confidence": item["confidence"],
+                    "citations": ", ".join(item["citation_refs"]),
+                }
+                for item in library["snippets"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Owner queue")
+        st.dataframe(library["owner_queue"], use_container_width=True)
+        st.write("Citation lineage")
+        st.dataframe(
+            [
+                {
+                    "snippet_id": item["snippet_id"],
+                    "source": lineage["filename"],
+                    "status": lineage["lineage_status"],
+                    "risk": lineage["risk_level"],
+                    "overlap": lineage["evidence_overlap"],
+                    "citation": lineage["citation_ref"],
+                }
+                for item in library["snippets"]
+                for lineage in item["citation_lineage"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Proof commands")
+        st.code("\n".join(library["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(library["limitations"])
+
+    pack = st.session_state.get("answer_reuse_library_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Answer Reuse Library Markdown",
+            pack["markdown"],
+            file_name="answer_reuse_library_pack.md",
         )

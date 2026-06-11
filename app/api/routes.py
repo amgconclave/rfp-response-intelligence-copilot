@@ -11,6 +11,10 @@ from app.models.api import (
     ActionPlanResponse,
     AnalyzeRequest,
     AnalyzeResponse,
+    AnswerReuseLibraryPackRequest,
+    AnswerReuseLibraryPackResponse,
+    AnswerReuseLibraryRequest,
+    AnswerReuseLibraryResponse,
     ApiContractAuditResponse,
     ArtifactInventoryResponse,
     AuditPackRequest,
@@ -391,6 +395,73 @@ async def response_memory_search(
         metadata={"matches": len(matches), "category": payload.category},
     )
     return ResponseMemorySearchResponse(matches=matches, trace_id=trace_id)
+
+
+@router.post(
+    "/rfp/answer-reuse-library",
+    response_model=AnswerReuseLibraryResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def answer_reuse_library(
+    payload: AnswerReuseLibraryRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> AnswerReuseLibraryResponse:
+    trace_id = get_trace_id(request)
+    try:
+        library = container.answer_reuse_library.library(
+            trace_id,
+            category=payload.category,
+            customer_profile_id=payload.customer_profile_id,
+            include_expired=payload.include_expired,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    container.audit.record(
+        trace_id,
+        "rfp.answer_reuse_library_viewed",
+        "answer_reuse_library",
+        resource_id=payload.customer_profile_id,
+        metadata={
+            "snippets": library.summary["snippet_count"],
+            "approved": library.summary["approved_count"],
+            "review_required": library.summary["review_required_count"],
+        },
+    )
+    return library
+
+
+@router.post(
+    "/rfp/answer-reuse-library-pack",
+    response_model=AnswerReuseLibraryPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def answer_reuse_library_pack(
+    payload: AnswerReuseLibraryPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> AnswerReuseLibraryPackResponse:
+    trace_id = get_trace_id(request)
+    pack = container.answer_reuse_library.pack(
+        trace_id,
+        library=payload.library,
+        category=payload.category,
+        customer_profile_id=payload.customer_profile_id,
+        include_expired=payload.include_expired,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.answer_reuse_library_pack_created",
+        "answer_reuse_library_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "snippets": pack.library.summary["snippet_count"],
+            "approved": pack.library.summary["approved_count"],
+        },
+    )
+    return pack
 
 
 @router.post(

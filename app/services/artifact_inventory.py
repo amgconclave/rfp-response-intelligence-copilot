@@ -571,6 +571,12 @@ class ArtifactInventoryService:
                 "Submission exception register with waiver type, approver, expiry, and required evidence.",
             ),
             self._spec(
+                "answer_reuse_library",
+                "answer_reuse_library",
+                "POST /rfp/answer-reuse-library-pack",
+                "Governed accepted-answer snippets with owners, expiry, citation lineage, and reuse decisions.",
+            ),
+            self._spec(
                 "bid_packs",
                 "bid_packs",
                 "POST /bid/roi-pack",

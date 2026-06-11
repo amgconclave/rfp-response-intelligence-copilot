@@ -58,6 +58,15 @@ async def main() -> None:
         customer_profile_id="regulated_healthcare",
         top_k=3,
     )
+    answer_reuse_library = container.answer_reuse_library.library(
+        "demo-answer-reuse-library",
+        customer_profile_id="regulated_healthcare",
+    )
+    answer_reuse_library_pack = container.answer_reuse_library.pack(
+        "demo-answer-reuse-library-pack",
+        answer_reuse_library,
+        write_artifact=True,
+    )
     export = container.workbench.export_package(
         analysis,
         draft,
@@ -494,6 +503,16 @@ async def main() -> None:
     print(f"Customer fit score: {customer_fit.fit_score}")
     print(f"Customer fit risks: {len(customer_fit.profile_risks)}")
     print(f"Response memory matches: {', '.join(match.title for match in memory_matches)}")
+    print(
+        "Answer reuse library: "
+        f"status={answer_reuse_library.status} "
+        f"snippets={answer_reuse_library.summary['snippet_count']} "
+        f"approved={answer_reuse_library.summary['approved_count']} "
+        f"review={answer_reuse_library.summary['review_required_count']}"
+    )
+    print(f"Answer Reuse Library Pack: {answer_reuse_library_pack.artifact_path}")
+    print(f"Answer Reuse Library Pack JSON: {answer_reuse_library_pack.json_artifact_path}")
+    print("Answer reuse library directory: storage/answer_reuse_library")
     print(f"Answer confidence: {answer.confidence}")
     print(f"Citations: {', '.join(c.filename for c in answer.citations)}")
     print(f"Draft sections: {len(draft.sections)}")
@@ -752,6 +771,8 @@ async def main() -> None:
         f"docs={documents_loaded} requirements={len(analysis.requirements)} "
         f"coverage={scorecard.evidence_coverage} citations={leadership_brief.brief['metrics']['citations']} "
         f"fit={customer_fit.fit_score} tasks={len(action_plan)} "
+        f"answer_reuse={answer_reuse_library.status}/{answer_reuse_library.summary['snippet_count']} "
+        f"answer_reuse_library={answer_reuse_library_pack.artifact_path} "
         f"readiness={scorecard.readiness_score}/{scorecard.readiness_level} "
         f"win score={win_strategy.win_score}/{win_strategy.win_level} "
         f"pricing_memo={pricing_memo.artifact_path} "

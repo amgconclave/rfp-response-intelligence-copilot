@@ -3,7 +3,7 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8000
 DASHBOARD_PORT ?= 8501
 
-.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack model-risk model-risk-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack source-trust source-trust-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack exception-register exception-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
+.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack model-risk model-risk-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack source-trust source-trust-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack exception-register exception-pack answer-reuse answer-reuse-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
 
 install:
 	$(PYTHON) -m pip install -e .
@@ -90,6 +90,12 @@ exception-register:
 
 exception-pack:
 	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/rfp/exception-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
+
+answer-reuse:
+	$(PYTHON) -c "import httpx; r=httpx.post('http://127.0.0.1:8000/rfp/answer-reuse-library', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json(); print({'status': r['status'], 'snippets': r['summary']['snippet_count'], 'approved': r['summary']['approved_count'], 'review': r['summary']['review_required_count']})"
+
+answer-reuse-pack:
+	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/rfp/answer-reuse-library-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
 
 bid-scenarios:
 	$(PYTHON) -c "import httpx; r=httpx.get('http://127.0.0.1:8000/bid/scenario-analysis', headers={'X-API-Key': 'local-demo-key'}, timeout=30).json(); print({'scenarios': r['coverage_summary']['scenario_count'], 'recommended': r['recommended_scenario_id'], 'best_roi': r['coverage_summary']['best_risk_adjusted_roi']})"

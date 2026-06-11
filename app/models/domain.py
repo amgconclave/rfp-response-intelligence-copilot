@@ -98,6 +98,9 @@ class ApprovedResponseSnippet(BaseModel):
     tags: list[str] = Field(default_factory=list)
     citations: list[str] = Field(default_factory=list)
     customer_profile_ids: list[str] = Field(default_factory=list)
+    owner: str | None = None
+    expires_at: str | None = None
+    approval_status: str = "accepted"
 
 
 class ResponseMemoryMatch(ApprovedResponseSnippet):
