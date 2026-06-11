@@ -109,6 +109,9 @@ from app.models.api import (
     ProposalAgentCouncilPackRequest,
     ProposalAgentCouncilPackResponse,
     ProposalAgentCouncilResponse,
+    ProposalDecisionProvenancePackRequest,
+    ProposalDecisionProvenancePackResponse,
+    ProposalDecisionProvenanceResponse,
     ProposalReadinessScorePackRequest,
     ProposalReadinessScorePackResponse,
     PublishPackRequest,
@@ -3029,6 +3032,105 @@ async def proposal_agent_council_pack(
             "status": pack.council.status,
             "agents": len(pack.council.agents),
             "turns": len(pack.council.conversation),
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/proposal/decision-provenance",
+    response_model=ProposalDecisionProvenanceResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_decision_provenance(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalDecisionProvenanceResponse:
+    trace_id = get_trace_id(request)
+    inputs = await _buyer_intelligence_inputs(trace_id, container)
+    workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+    replay = container.buyer_intelligence.replay(f"{trace_id}-replay", workflow)
+    council = container.proposal_agent_council.council(
+        trace_id=f"{trace_id}-council",
+        workflow=workflow,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    provenance = container.decision_provenance.provenance(
+        trace_id=trace_id,
+        workflow=workflow,
+        replay=replay,
+        council=council,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.decision_provenance_viewed",
+        "proposal_decision_provenance",
+        metadata={
+            "status": provenance.status,
+            "nodes": len(provenance.nodes),
+            "edges": len(provenance.edges),
+            "controls": len(provenance.decision_controls),
+        },
+    )
+    return provenance
+
+
+@router.post(
+    "/proposal/decision-provenance-pack",
+    response_model=ProposalDecisionProvenancePackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_decision_provenance_pack(
+    request: Request,
+    payload: ProposalDecisionProvenancePackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalDecisionProvenancePackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProposalDecisionProvenancePackRequest()
+    inputs = await _buyer_intelligence_inputs(trace_id, container)
+    workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+    replay = container.buyer_intelligence.replay(f"{trace_id}-replay", workflow)
+    council = container.proposal_agent_council.council(
+        trace_id=f"{trace_id}-council",
+        workflow=workflow,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    provenance = container.decision_provenance.provenance(
+        trace_id=f"{trace_id}-provenance",
+        workflow=workflow,
+        replay=replay,
+        council=council,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    pack = container.decision_provenance.pack(
+        trace_id,
+        provenance,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.decision_provenance_pack_generated",
+        "proposal_decision_provenance_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.provenance.status,
+            "nodes": len(pack.provenance.nodes),
+            "edges": len(pack.provenance.edges),
         },
     )
     return pack

@@ -452,6 +452,21 @@ async def main() -> None:
         agent_council,
         write_artifact=True,
     )
+    decision_provenance = container.decision_provenance.provenance(
+        trace_id="demo-decision-provenance",
+        workflow=buyer_intelligence,
+        replay=buyer_workflow_replay,
+        council=agent_council,
+        cost_governance=cost_governance,
+        source_trust=source_trust,
+        model_risk=model_risk,
+        procurement_risk=procurement_question_risk,
+    )
+    decision_provenance_pack = container.decision_provenance.pack(
+        "demo-decision-provenance-pack",
+        decision_provenance,
+        write_artifact=True,
+    )
     procurement_risk_desk = await container.procurement_risk_desk.risk_desk(
         "demo-procurement-risk-desk",
         analysis=analysis,
@@ -744,6 +759,15 @@ async def main() -> None:
     print(f"Proposal Agent Council Transcript: {agent_council_pack.transcript_artifact_path}")
     print("Agent council directory: storage/agent_council")
     print(
+        "Decision provenance: "
+        f"status={decision_provenance.status} "
+        f"nodes={decision_provenance.summary['node_count']} "
+        f"edges={decision_provenance.summary['edge_count']}"
+    )
+    print(f"Decision Provenance Pack: {decision_provenance_pack.artifact_path}")
+    print(f"Decision Provenance Pack JSON: {decision_provenance_pack.json_artifact_path}")
+    print("Decision provenance directory: storage/decision_provenance")
+    print(
         "Compliance control coverage: "
         f"{compliance_matrix.coverage_summary['coverage_ratio']} "
         f"families={compliance_matrix.coverage_summary['control_family_count']} "
@@ -907,6 +931,8 @@ async def main() -> None:
         f"buyer_replay_pack={buyer_workflow_replay_pack.artifact_path} "
         f"agent_council={agent_council.status}/{len(agent_council.agents)} "
         f"agent_council_pack={agent_council_pack.artifact_path} "
+        f"decision_provenance={decision_provenance.status}/{decision_provenance.summary['node_count']} "
+        f"decision_provenance_pack={decision_provenance_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "
         f"compliance_packs={compliance_control_pack.artifact_path} "
         f"privacy_retention={privacy_retention.summary['high_risk_surface_count']}/"

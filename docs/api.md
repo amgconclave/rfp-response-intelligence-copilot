@@ -308,6 +308,29 @@ Writes Markdown, JSON, and transcript JSON artifacts under ignored `storage/agen
 
 The pack includes the role-based transcript, shared state, cross-functional handoffs, tool governance policy, budget ledger, eval scenarios, reviewer controls, proof commands, limitations, embedded council JSON, Markdown, JSON, transcript JSON, and trace ID.
 
+### `GET /proposal/decision-provenance`
+
+Returns the Proposal Decision Provenance Graph. It composes buyer workflow replay, agent council turns, human handoffs, governance gates, provider/cost policy, source trust, model-risk policy, procurement approvals, typed graph nodes, traceable graph edges, decision controls, eval assertions, proof commands, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/proposal/decision-provenance" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The graph is deterministic local provenance and does not call external tracing, CRM, procurement, GRC, or model providers.
+
+### `POST /proposal/decision-provenance-pack`
+
+Writes Markdown and JSON artifacts under ignored `storage/decision_provenance/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes the typed provenance graph, node and edge tables, decision controls, eval assertions, reviewer controls, proof commands, limitations, embedded provenance JSON, Markdown, JSON, and trace ID.
+
 ### `GET /compliance/evidence-matrix`
 
 Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.

@@ -199,6 +199,8 @@ class ApiContractService:
             "/proposal/buyer-intelligence-replay-pack",
             "/proposal/agent-council",
             "/proposal/agent-council-pack",
+            "/proposal/decision-provenance",
+            "/proposal/decision-provenance-pack",
             "/ops/smoke-matrix",
             "/ops/launch-checklist",
             "/ui/dashboard-smoke",
@@ -309,6 +311,8 @@ class ApiContractService:
             "storage/buyer_intelligence": "buyer_intelligence",
             "/proposal/agent-council-pack": "agent_council_pack",
             "storage/agent_council": "agent_council",
+            "/proposal/decision-provenance-pack": "decision_provenance_pack",
+            "storage/decision_provenance": "decision_provenance",
         }
         missing = [path for path, token in required.items() if token not in demo]
         return ApiContractCheck(
@@ -575,6 +579,7 @@ class ApiContractService:
             "/proposal/buyer-intelligence-pack": '{"write_artifact":true}',
             "/proposal/buyer-intelligence-replay-pack": '{"write_artifact":true}',
             "/proposal/agent-council-pack": '{"write_artifact":true}',
+            "/proposal/decision-provenance-pack": '{"write_artifact":true}',
         }
         no_body_paths = {"/health", "/documents", "/metrics/usage", "/audit/events"}
         return bodies.get(path, "{}" if path not in no_body_paths else None)

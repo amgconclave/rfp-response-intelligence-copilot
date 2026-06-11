@@ -553,6 +553,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "agent_council",
             },
+            {
+                "label": "Decision Provenance",
+                "endpoint_paths": ["/proposal/decision-provenance", "/proposal/decision-provenance-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "decision_provenance",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -843,6 +849,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/agent_council/*.md",
                     "storage/agent_council/*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/proposal/decision-provenance",
+                "purpose": "Decision Provenance tab typed graph, controls, and eval assertion view.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/decision-provenance-pack",
+                "purpose": "Decision Provenance generated Markdown and JSON artifacts.",
+                "expected_artifacts": [
+                    "storage/decision_provenance/*.md",
+                    "storage/decision_provenance/*.json",
                 ],
             },
         ]

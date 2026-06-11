@@ -1451,6 +1451,56 @@ class ProposalAgentCouncilPackResponse(BaseModel):
     trace_id: str
 
 
+class ProposalProvenanceNode(BaseModel):
+    node_id: str
+    node_type: str
+    label: str
+    owner_role: str | None = None
+    status: str
+    evidence: str
+    source_refs: list[str] = Field(default_factory=list)
+    depends_on: list[str] = Field(default_factory=list)
+    endpoint_refs: list[str] = Field(default_factory=list)
+
+
+class ProposalProvenanceEdge(BaseModel):
+    edge_id: str
+    from_node_id: str
+    to_node_id: str
+    relation: str
+    condition: str
+    trace_refs: list[str] = Field(default_factory=list)
+
+
+class ProposalDecisionProvenanceResponse(BaseModel):
+    title: str
+    provenance_id: str
+    status: str
+    generated_at: str
+    nodes: list[ProposalProvenanceNode]
+    edges: list[ProposalProvenanceEdge]
+    summary: dict[str, Any] = Field(default_factory=dict)
+    decision_controls: list[dict[str, Any]] = Field(default_factory=list)
+    eval_assertions: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ProposalDecisionProvenancePackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class ProposalDecisionProvenancePackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    provenance: ProposalDecisionProvenanceResponse
+    trace_id: str
+
+
 class ProcurementQuestionRiskItem(BaseModel):
     question_id: str
     question_type: str

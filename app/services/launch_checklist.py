@@ -75,6 +75,8 @@ class LaunchChecklistService:
                 "POST /proposal/buyer-intelligence-replay-pack",
                 "GET /proposal/agent-council",
                 "POST /proposal/agent-council-pack",
+                "GET /proposal/decision-provenance",
+                "POST /proposal/decision-provenance-pack",
                 "GET /ops/ci-doctor",
                 "POST /ops/audit-pack",
                 "GET /api/contract-audit",
@@ -1228,6 +1230,27 @@ class LaunchChecklistService:
                 200,
                 "Writes proposal agent council Markdown, JSON, and transcript JSON artifacts.",
                 ["storage/agent_council/*.md", "storage/agent_council/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Proposal Decision Provenance",
+                "GET",
+                "/proposal/decision-provenance",
+                "proposal",
+                200,
+                (
+                    "Returns a typed decision provenance graph linking workflow checkpoints, agent turns, "
+                    "handoffs, governance gates, provider/source/model/procurement policies, and eval assertions."
+                ),
+            ),
+            self._row(
+                "Proposal Decision Provenance Pack",
+                "POST",
+                "/proposal/decision-provenance-pack",
+                "artifact",
+                200,
+                "Writes proposal decision provenance Markdown and JSON artifacts.",
+                ["storage/decision_provenance/*.md", "storage/decision_provenance/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

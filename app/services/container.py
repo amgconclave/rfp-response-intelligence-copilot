@@ -18,6 +18,7 @@ from app.services.corpus_coverage import CorpusCoverageService
 from app.services.cost_governance import CostGovernanceService
 from app.services.customer_intelligence import CustomerIntelligenceService
 from app.services.deal_readiness import DealReadinessService
+from app.services.decision_provenance import ProposalDecisionProvenanceService
 from app.services.demo_script import DemoScriptService
 from app.services.draft_generation import DraftGenerationService
 from app.services.evaluation import EvaluationService
@@ -68,6 +69,7 @@ class ServiceContainer:
         self.model_risk = ModelRiskRegisterService(self.repo, settings)
         self.buyer_intelligence = BuyerProposalIntelligenceService(settings)
         self.proposal_agent_council = ProposalAgentCouncilService(settings)
+        self.decision_provenance = ProposalDecisionProvenanceService(settings)
         self.bid_simulator = BidScenarioSimulatorService(settings)
         self.customer_intelligence = CustomerIntelligenceService(settings)
         self.answer_reuse_library = AnswerReuseLibraryService(self.repo, settings)

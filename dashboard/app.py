@@ -108,6 +108,7 @@ tabs = st.tabs(
         "Answer Reuse Library",
         "Buyer Intelligence Pack",
         "Agent Council",
+        "Decision Provenance",
     ]
 )
 
@@ -3155,4 +3156,65 @@ with tabs[47]:
             "Download Agent Council Markdown",
             pack["markdown"],
             file_name="proposal_agent_council_pack.md",
+        )
+
+
+with tabs[48]:
+    st.subheader("Decision Provenance")
+    st.caption(
+        "Inspect the typed decision graph that links buyer workflow checkpoints, agent turns, handoffs, "
+        "governance gates, provider policy, source trust, model risk, procurement approvals, and eval assertions."
+    )
+    action_cols = st.columns(2)
+    if action_cols[0].button("Load provenance graph"):
+        st.session_state.decision_provenance = get_json("/proposal/decision-provenance")
+    if action_cols[1].button("Generate Provenance Pack"):
+        pack = post_json("/proposal/decision-provenance-pack", {"write_artifact": True})
+        st.session_state.decision_provenance_pack = pack
+        st.session_state.decision_provenance = pack["provenance"]
+        st.success(f"Decision Provenance Pack generated under decision_provenance: {pack['artifact_path']}")
+
+    provenance = st.session_state.get("decision_provenance")
+    if provenance:
+        summary = provenance["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", provenance["status"])
+        metric_cols[1].metric("Nodes", summary["node_count"])
+        metric_cols[2].metric("Edges", summary["edge_count"])
+        metric_cols[3].metric("Approvals", summary["approval_items"])
+        metric_cols[4].metric("Provider", summary["provider_mode"])
+        st.write("Provenance nodes")
+        st.dataframe(
+            [
+                {
+                    "node": item["node_id"],
+                    "type": item["node_type"],
+                    "owner": item["owner_role"],
+                    "status": item["status"],
+                    "refs": ", ".join(item["source_refs"][:3]),
+                    "evidence": item["evidence"],
+                }
+                for item in provenance["nodes"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Provenance edges")
+        st.dataframe(provenance["edges"], use_container_width=True)
+        st.write("Decision controls")
+        st.dataframe(provenance["decision_controls"], use_container_width=True)
+        st.write("Eval assertions")
+        st.dataframe(provenance["eval_assertions"], use_container_width=True)
+        st.write("Proof commands")
+        st.code("\n".join(provenance["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(provenance["limitations"])
+
+    pack = st.session_state.get("decision_provenance_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Decision Provenance Markdown",
+            pack["markdown"],
+            file_name="proposal_decision_provenance_pack.md",
         )

@@ -353,6 +353,14 @@ class ArtifactInventoryService:
                     "Get-ChildItem -Recurse -File storage\\agent_council -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
+                (
+                    'rg "proposal/decision-provenance|Decision Provenance|decision_provenance|'
+                    'storage/decision_provenance" app dashboard docs README.md tests Makefile'
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\decision_provenance -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
         ]
 
     def _reviewer_proof_checklist(self) -> list[str]:
@@ -423,6 +431,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /proposal/agent-council-pack to write the Proposal Agent Council Pack "
                 "under storage/agent_council/."
+            ),
+            (
+                "Call POST /proposal/decision-provenance-pack to write the Proposal Decision Provenance Pack "
+                "under storage/decision_provenance/."
             ),
             (
                 "Inspect storage/artifact_indexes plus at least one Markdown/JSON artifact from each "
@@ -672,6 +684,15 @@ class ArtifactInventoryService:
                 (
                     "Proposal agent council artifacts with role-based transcript, shared state, tool governance, "
                     "handoffs, and token budget ledger."
+                ),
+            ),
+            self._spec(
+                "decision_provenance",
+                "decision_provenance",
+                "POST /proposal/decision-provenance-pack",
+                (
+                    "Decision provenance artifacts with typed graph nodes, traceable edges, controls, "
+                    "and eval assertions."
                 ),
             ),
             self._spec(
