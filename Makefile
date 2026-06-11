@@ -3,7 +3,7 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8000
 DASHBOARD_PORT ?= 8501
 
-.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack model-risk model-risk-pack access-policy access-policy-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack source-trust source-trust-pack buyer-intelligence buyer-intelligence-pack buyer-replay buyer-replay-pack buyer-contracts buyer-contracts-pack decision-provenance decision-provenance-pack submission-certification submission-certification-pack quality-benchmark quality-benchmark-pack amendment-impact amendment-impact-pack proposal-observability proposal-observability-pack verification-evidence verification-evidence-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack reviewer-signoff reviewer-signoff-pack exception-register exception-pack answer-reuse answer-reuse-pack answer-reuse-drift answer-reuse-drift-pack answer-reuse-approval answer-reuse-approval-pack readiness-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack provider-resilience provider-resilience-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
+.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack model-risk model-risk-pack access-policy access-policy-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack source-trust source-trust-pack proposal-intake proposal-intake-pack buyer-intelligence buyer-intelligence-pack buyer-replay buyer-replay-pack buyer-contracts buyer-contracts-pack decision-provenance decision-provenance-pack submission-certification submission-certification-pack quality-benchmark quality-benchmark-pack amendment-impact amendment-impact-pack proposal-observability proposal-observability-pack verification-evidence verification-evidence-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack reviewer-signoff reviewer-signoff-pack exception-register exception-pack answer-reuse answer-reuse-pack answer-reuse-drift answer-reuse-drift-pack answer-reuse-approval answer-reuse-approval-pack readiness-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack provider-resilience provider-resilience-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
 
 install:
 	$(PYTHON) -m pip install -e .
@@ -78,6 +78,12 @@ source-trust:
 
 source-trust-pack:
 	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/evidence/source-trust-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
+
+proposal-intake:
+	$(PYTHON) -c "import httpx; c=httpx.get('http://127.0.0.1:8000/proposal/intake-triage', headers={'X-API-Key': 'local-demo-key'}, timeout=30).json(); print({'status': c['status'], 'score': c['readiness_score'], 'route': c['recommended_route'], 'signals': len(c['signals']), 'tasks': len(c['owner_tasks'])})"
+
+proposal-intake-pack:
+	$(PYTHON) -c "import httpx; p=httpx.post('http://127.0.0.1:8000/proposal/intake-triage-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json(); print({'artifact': p['artifact_path'], 'json': p['json_artifact_path']})"
 
 buyer-intelligence:
 	$(PYTHON) -c "import httpx; w=httpx.get('http://127.0.0.1:8000/proposal/buyer-intelligence', headers={'X-API-Key': 'local-demo-key'}, timeout=30).json(); print({'status': w['workflow_status'], 'stages': len(w['workflow_stages']), 'approvals': len(w['human_approval_queue'])})"

@@ -83,6 +83,8 @@ class LaunchChecklistService:
                 "POST /evidence/source-trust-pack",
                 "POST /evidence/governed-retrieval",
                 "POST /evidence/governed-retrieval-pack",
+                "GET /proposal/intake-triage",
+                "POST /proposal/intake-triage-pack",
                 "GET /proposal/buyer-intelligence",
                 "POST /proposal/buyer-intelligence-pack",
                 "GET /proposal/buyer-intelligence-replay",
@@ -316,6 +318,14 @@ class LaunchChecklistService:
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
+                    'rg "proposal/intake-triage|Proposal Intake Triage|proposal_intake" '
+                    "app dashboard docs README.md tests Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\proposal_intake -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
                     'rg "proposal/buyer-intelligence|buyer-intelligence-replay|'
                     'proposal/buyer-contracts|Buyer-Grade Proposal Intelligence|'
                     'Buyer Workflow Replay|Buyer Structured Output Contract|'
@@ -536,6 +546,7 @@ class LaunchChecklistService:
             "source_trust": "storage/source_trust",
             "governed_retrieval": "storage/governed_retrieval",
             "access_policy": "storage/access_policy",
+            "proposal_intake": "storage/proposal_intake",
             "buyer_intelligence": "storage/buyer_intelligence",
             "buyer_contracts": "storage/buyer_contracts",
             "agent_council": "storage/agent_council",
@@ -1451,6 +1462,27 @@ class LaunchChecklistService:
                 200,
                 "Writes Governed Retrieval Markdown and JSON.",
                 ["storage/governed_retrieval/*.md", "storage/governed_retrieval/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Proposal Intake Triage",
+                "GET",
+                "/proposal/intake-triage",
+                "proposal",
+                200,
+                (
+                    "Returns structured proposal intake signals, owner task delegation, conditional routing, "
+                    "checkpointed transitions, dependency contract, and eval assertions."
+                ),
+            ),
+            self._row(
+                "Proposal Intake Triage Pack",
+                "POST",
+                "/proposal/intake-triage-pack",
+                "artifact",
+                200,
+                "Writes proposal intake triage Markdown and JSON artifacts.",
+                ["storage/proposal_intake/*.md", "storage/proposal_intake/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

@@ -393,6 +393,14 @@ class ArtifactInventoryService:
                 "Select-Object FullName,Length,LastWriteTime"
             ),
                 (
+                    'rg "proposal/intake-triage|Proposal Intake Triage|proposal_intake" '
+                    "app dashboard docs README.md tests Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\proposal_intake -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
                     'rg "proposal/buyer-intelligence|buyer-intelligence-replay|'
                     'Buyer-Grade Proposal Intelligence|Buyer Workflow Replay|'
                     'buyer_intelligence|storage/buyer_intelligence" app dashboard docs README.md tests Makefile'
@@ -836,6 +844,15 @@ class ArtifactInventoryService:
                 "governed_retrieval",
                 "POST /evidence/governed-retrieval-pack",
                 "Governed retrieval artifacts with citation policy actions, HITL review queue, and trace analysis.",
+            ),
+            self._spec(
+                "proposal_intake",
+                "proposal_intake",
+                "POST /proposal/intake-triage-pack",
+                (
+                    "Proposal intake triage artifacts with structured signals, owner-routed tasks, "
+                    "conditional route decisions, checkpoint transitions, and eval assertions."
+                ),
             ),
             self._spec(
                 "buyer_intelligence",

@@ -1783,6 +1783,70 @@ class BuyerWorkflowTransition(BaseModel):
     trace_refs: list[str] = Field(default_factory=list)
 
 
+class ProposalIntakeSignal(BaseModel):
+    signal_id: str
+    category: str
+    severity: str
+    owner_role: str
+    evidence: str
+    route_hint: str
+
+
+class ProposalIntakeOwnerTask(BaseModel):
+    task_id: str
+    owner_role: str
+    priority: str
+    action: str
+    due_hint: str
+    evidence_refs: list[str] = Field(default_factory=list)
+    depends_on: list[str] = Field(default_factory=list)
+
+
+class ProposalIntakeTransition(BaseModel):
+    transition_id: str
+    sequence: int
+    from_state: str | None = None
+    to_state: str
+    condition: str
+    decision: str
+    checkpoint_key: str
+    owner_role: str
+    trace_refs: list[str] = Field(default_factory=list)
+
+
+class ProposalIntakeTriageResponse(BaseModel):
+    title: str
+    intake_id: str
+    status: str
+    generated_at: str
+    readiness_score: int
+    recommended_route: str
+    summary: dict[str, Any]
+    signals: list[ProposalIntakeSignal]
+    owner_tasks: list[ProposalIntakeOwnerTask]
+    state_transitions: list[ProposalIntakeTransition]
+    dependency_contract: dict[str, Any] = Field(default_factory=dict)
+    eval_assertions: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ProposalIntakeTriagePackRequest(BaseModel):
+    triage: ProposalIntakeTriageResponse | None = None
+    write_artifact: bool = True
+
+
+class ProposalIntakeTriagePackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    triage: ProposalIntakeTriageResponse
+    trace_id: str
+
+
 class BuyerIntelligenceWorkflowResponse(BaseModel):
     title: str
     workflow_id: str

@@ -134,6 +134,9 @@ from app.models.api import (
     ProposalDecisionProvenancePackRequest,
     ProposalDecisionProvenancePackResponse,
     ProposalDecisionProvenanceResponse,
+    ProposalIntakeTriagePackRequest,
+    ProposalIntakeTriagePackResponse,
+    ProposalIntakeTriageResponse,
     ProposalObservabilityPackRequest,
     ProposalObservabilityPackResponse,
     ProposalObservabilityResponse,
@@ -3637,6 +3640,66 @@ async def evidence_governed_retrieval_pack(
 
 
 @router.get(
+    "/proposal/intake-triage",
+    response_model=ProposalIntakeTriageResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_intake_triage(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalIntakeTriageResponse:
+    trace_id = get_trace_id(request)
+    triage = _proposal_intake_triage(trace_id, container)
+    container.audit.record(
+        trace_id,
+        "proposal.intake_triage_viewed",
+        "proposal_intake_triage",
+        metadata={
+            "status": triage.status,
+            "readiness_score": triage.readiness_score,
+            "route": triage.recommended_route,
+            "signals": len(triage.signals),
+            "tasks": len(triage.owner_tasks),
+        },
+    )
+    return triage
+
+
+@router.post(
+    "/proposal/intake-triage-pack",
+    response_model=ProposalIntakeTriagePackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_intake_triage_pack(
+    request: Request,
+    payload: ProposalIntakeTriagePackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalIntakeTriagePackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProposalIntakeTriagePackRequest()
+    triage = request_payload.triage or _proposal_intake_triage(f"{trace_id}-triage", container)
+    pack = container.proposal_intake.pack(
+        trace_id,
+        triage,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.intake_triage_pack_generated",
+        "proposal_intake_triage_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.triage.status,
+            "readiness_score": pack.triage.readiness_score,
+            "route": pack.triage.recommended_route,
+        },
+    )
+    return pack
+
+
+@router.get(
     "/proposal/buyer-intelligence",
     response_model=BuyerIntelligenceWorkflowResponse,
     dependencies=[Depends(require_api_key)],
@@ -4998,6 +5061,19 @@ async def _access_policy_report(
         certification=certification,
         cost_governance=inputs["cost_governance"],
         model_risk=inputs["model_risk"],
+    )
+
+
+def _proposal_intake_triage(trace_id: str, container: ServiceContainer) -> ProposalIntakeTriageResponse:
+    sample_path = container.settings.sample_data_dir / "acme_enterprise_rfp.md"
+    if not sample_path.exists():
+        raise HTTPException(status_code=404, detail="Sample RFP fixture not found: acme_enterprise_rfp.md")
+    analysis = container.analysis.analyze(sample_path.read_text(encoding="utf-8"), f"{trace_id}-analysis")
+    matrix = container.workbench.create_requirement_matrix(analysis)
+    return container.proposal_intake.triage(
+        trace_id=trace_id,
+        analysis=analysis,
+        requirement_matrix=matrix,
     )
 
 

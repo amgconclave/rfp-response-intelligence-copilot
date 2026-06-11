@@ -481,6 +481,16 @@ async def main() -> None:
         procurement_question_risk,
         write_artifact=True,
     )
+    proposal_intake = container.proposal_intake.triage(
+        trace_id="demo-proposal-intake",
+        analysis=analysis,
+        requirement_matrix=matrix,
+    )
+    proposal_intake_pack = container.proposal_intake.pack(
+        "demo-proposal-intake-pack",
+        proposal_intake,
+        write_artifact=True,
+    )
     buyer_intelligence = container.buyer_intelligence.workflow(
         trace_id="demo-buyer-intelligence",
         analysis=analysis,
@@ -965,6 +975,17 @@ async def main() -> None:
     print(f"Governed Retrieval Pack JSON: {governed_retrieval_pack.json_artifact_path}")
     print("Governed retrieval directory: storage/governed_retrieval")
     print(
+        "Proposal intake triage: "
+        f"status={proposal_intake.status} "
+        f"score={proposal_intake.readiness_score} "
+        f"route={proposal_intake.recommended_route} "
+        f"signals={len(proposal_intake.signals)} "
+        f"tasks={len(proposal_intake.owner_tasks)}"
+    )
+    print(f"Proposal Intake Triage Pack: {proposal_intake_pack.artifact_path}")
+    print(f"Proposal Intake Triage Pack JSON: {proposal_intake_pack.json_artifact_path}")
+    print("Proposal intake directory: storage/proposal_intake")
+    print(
         "Buyer intelligence workflow: "
         f"status={buyer_intelligence.workflow_status} "
         f"approvals={len(buyer_intelligence.human_approval_queue)} "
@@ -1280,6 +1301,8 @@ async def main() -> None:
         f"source_trust_pack={source_trust_pack.artifact_path} "
         f"governed_retrieval={governed_retrieval.status}/{governed_retrieval.summary['allowed_count']} "
         f"governed_retrieval_pack={governed_retrieval_pack.artifact_path} "
+        f"proposal_intake={proposal_intake.status}/{proposal_intake.readiness_score} "
+        f"proposal_intake_pack={proposal_intake_pack.artifact_path} "
         f"buyer_intelligence={buyer_intelligence.workflow_status}/"
         f"{len(buyer_intelligence.human_approval_queue)} "
         f"buyer_intelligence_pack={buyer_intelligence_pack.artifact_path} "

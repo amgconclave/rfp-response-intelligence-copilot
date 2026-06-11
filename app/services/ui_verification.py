@@ -609,6 +609,12 @@ class UIVerificationService:
                 "artifact_root": "retrieval_experiments",
             },
             {
+                "label": "Proposal Intake Triage",
+                "endpoint_paths": ["/proposal/intake-triage", "/proposal/intake-triage-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "proposal_intake",
+            },
+            {
                 "label": "Buyer Intelligence Pack",
                 "endpoint_paths": [
                     "/proposal/buyer-intelligence",
@@ -1092,6 +1098,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/approval_simulations/*.md",
                     "storage/approval_simulations/*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/proposal/intake-triage",
+                "purpose": "Proposal Intake Triage tab structured signal, owner routing, and transition view.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/intake-triage-pack",
+                "purpose": "Proposal Intake Triage generated Markdown and JSON artifacts.",
+                "expected_artifacts": [
+                    "storage/proposal_intake/*.md",
+                    "storage/proposal_intake/*.json",
                 ],
             },
             {

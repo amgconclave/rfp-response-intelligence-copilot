@@ -117,6 +117,7 @@ tabs = st.tabs(
         "Provider Resilience",
         "Amendment Impact",
         "Access Policy",
+        "Proposal Intake Triage",
     ]
 )
 
@@ -4149,4 +4150,57 @@ with tabs[56]:
             "Download Access Policy Markdown",
             pack["markdown"],
             file_name="access_policy_pack.md",
+        )
+
+
+with tabs[57]:
+    st.subheader("Proposal Intake Triage")
+    st.caption(
+        "Classify a new RFP packet before drafting: structured intake signals, owner task delegation, "
+        "conditional routing, checkpointed transitions, and eval-friendly assertions."
+    )
+    action_cols = st.columns(2)
+    if action_cols[0].button("Load intake triage"):
+        st.session_state.proposal_intake_triage = get_json("/proposal/intake-triage")
+    if action_cols[1].button("Generate Intake Triage Pack"):
+        pack = post_json("/proposal/intake-triage-pack", {"write_artifact": True})
+        st.session_state.proposal_intake_triage_pack = pack
+        st.session_state.proposal_intake_triage = pack["triage"]
+        st.success(f"Proposal Intake Triage Pack generated under proposal_intake: {pack['artifact_path']}")
+
+    triage = st.session_state.get("proposal_intake_triage")
+    if triage:
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", triage["status"])
+        metric_cols[1].metric("Score", triage["readiness_score"])
+        metric_cols[2].metric("Route", triage["recommended_route"])
+        metric_cols[3].metric("Signals", len(triage["signals"]))
+        metric_cols[4].metric("Tasks", len(triage["owner_tasks"]))
+        st.write("Summary")
+        st.json(triage["summary"])
+        st.write("Intake signals")
+        st.dataframe(triage["signals"], use_container_width=True)
+        st.write("Owner task delegation")
+        st.dataframe(triage["owner_tasks"], use_container_width=True)
+        st.write("State transitions")
+        st.dataframe(triage["state_transitions"], use_container_width=True)
+        st.write("Dependency contract")
+        st.json(triage["dependency_contract"])
+        st.write("Eval assertions")
+        st.dataframe(triage["eval_assertions"], use_container_width=True)
+        st.write("Endpoint references")
+        st.dataframe(triage["endpoint_references"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(triage["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(triage["limitations"])
+
+    pack = st.session_state.get("proposal_intake_triage_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Proposal Intake Triage Markdown",
+            pack["markdown"],
+            file_name="proposal_intake_triage_pack.md",
         )

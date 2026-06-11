@@ -116,6 +116,8 @@ curl -X GET "http://127.0.0.1:8000/governance/model-risk-register" -H "X-API-Key
 curl -X POST "http://127.0.0.1:8000/governance/model-risk-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 curl -X GET "http://127.0.0.1:8000/governance/access-policy" -H "X-API-Key: local-demo-key"
 curl -X POST "http://127.0.0.1:8000/governance/access-policy-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
+curl -X GET "http://127.0.0.1:8000/proposal/intake-triage" -H "X-API-Key: local-demo-key"
+curl -X POST "http://127.0.0.1:8000/proposal/intake-triage-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 curl -X GET "http://127.0.0.1:8000/proposal/buyer-intelligence" -H "X-API-Key: local-demo-key"
 curl -X POST "http://127.0.0.1:8000/proposal/buyer-intelligence-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 curl -X GET "http://127.0.0.1:8000/proposal/buyer-intelligence-replay" -H "X-API-Key: local-demo-key"
@@ -292,6 +294,7 @@ flowchart LR
 - Citation Lineage + Integrity Audit via `GET /evidence/citation-lineage` and `POST /evidence/citation-lineage-pack`, writing Markdown/JSON under `storage/citation_lineage/` with repository document/chunk verification, stale citation flags, generated-claim flags, owner follow-ups, endpoint impact, and proof commands.
 - Source Trust Gate via `GET /evidence/source-trust` and `POST /evidence/source-trust-pack`, writing Markdown/JSON under `storage/source_trust/` with source trust scores, retrieval policy updates, reviewer queues, approval decisions, endpoint impact, proof commands, and limitations.
 - Governed Retrieval via `POST /evidence/governed-retrieval` and `POST /evidence/governed-retrieval-pack`, writing Markdown/JSON under `storage/governed_retrieval/` with policy-aware citation decisions, blocked/suppressed rows, HITL reviewer queue, trace spans, proof commands, and limitations.
+- Proposal Intake Triage Gate via `GET /proposal/intake-triage` and `POST /proposal/intake-triage-pack`, writing Markdown/JSON under `storage/proposal_intake/` with typed intake signals, owner task delegation, conditional routing, checkpointed transitions, dependency contracts, and eval assertions.
 - Contract Redline Risk Analyzer via `POST /rfp/contract-risk` that detects liability, data processing, security obligations, SLA/service credits, audit rights, termination, indemnity, data residency, AI/data-use, and pricing/payment risk.
 - Negotiation briefs under `storage/negotiation_briefs/` with contract risk summary, win strategy/pricing context, clause-by-clause redlines, fallback positions, owner actions, cited proof points, local commands, JD skills, and five interviewer talking points.
 - Evidence Gap Remediation Planner via `POST /rfp/evidence-gaps` that ranks missing sources, SMEs, approvals, impacted RFP/contract sections, due recommendations, citations, and closure criteria.
@@ -453,6 +456,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /evidence/source-trust-pack`: writes a Markdown/JSON Source Trust Gate Pack under `storage/source_trust/`.
 - `POST /evidence/governed-retrieval`: returns policy-aware retrieval results, allowed citations, blocked/suppressed rows, reviewer queue items, and trace spans.
 - `POST /evidence/governed-retrieval-pack`: writes a Markdown/JSON Governed Retrieval Pack under `storage/governed_retrieval/`.
+- `GET /proposal/intake-triage`: returns structured proposal intake signals, owner task delegation, conditional route decisions, checkpointed transitions, dependency contract, and eval assertions.
+- `POST /proposal/intake-triage-pack`: writes a Markdown/JSON Proposal Intake Triage Pack under `storage/proposal_intake/`.
 - `GET /proposal/buyer-intelligence`: returns a buyer-grade durable proposal workflow with stage checkpoints, HITL approval queue, governance gates, provider routes, shared state, and trace analysis.
 - `POST /proposal/buyer-intelligence-pack`: writes a Markdown/JSON/State Buyer-Grade Proposal Intelligence Pack under `storage/buyer_intelligence/`.
 - `GET /proposal/buyer-intelligence-replay`: returns ordered workflow transitions, conditional route decisions, checkpoint validation, trace refs, and eval-friendly replay scenarios.
@@ -564,6 +569,7 @@ Run the API and dashboard, then capture:
 - Submission Exceptions tab showing waiver records, approvers, expiry, evidence requirements, approval queue, proof commands, and generated `storage/exception_registers/` artifact path.
 - Win/Loss Learning tab showing outcome count, win rate, winning evidence patterns, losing risk patterns, retrieval/eval recommendations, response guidance updates, policy activation state machine, owner review queue, rollback plan, proof commands, limitations, and generated `storage/win_loss_packs/` plus `storage/win_loss_policy/` artifact paths.
 - Retrieval Experiments tab showing policy comparison scores, per-question diagnostics, local trace spans, governance decision, proof commands, limitations, and generated `storage/retrieval_experiments/` artifact path.
+- Proposal Intake Triage tab showing intake signals, owner task delegation, conditional route, checkpointed transitions, dependency contract, eval assertions, and generated `storage/proposal_intake/` artifact path.
 - Proposal Observability tab showing trace map, retrieval diagnostics, experiment comparison, provider/cost signals, governance findings, HITL signals, proof commands, limitations, and generated `storage/proposal_observability/` artifact path.
 - Evidence Conflicts tab showing conflict counts, blocked/needs-review status, reviewer queue, cited claims, endpoint impact, and generated `storage/conflict_packs/` artifact path.
 - Citation Lineage tab showing citation integrity score, verified/missing/stale references, generated claim flags, owner follow-ups, endpoint impact, proof commands, and generated `storage/citation_lineage/` artifact path.

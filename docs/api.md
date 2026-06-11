@@ -290,6 +290,29 @@ Writes Markdown and JSON Governed Retrieval artifacts under ignored `storage/gov
 
 The pack includes governed retrieval results, allowed citations, blocked/suppressed rows, reviewer decisions, trace spans, local proof commands, limitations, embedded governed-retrieval JSON, Markdown, JSON, and trace ID.
 
+### `GET /proposal/intake-triage`
+
+Returns the Proposal Intake Triage Gate. It classifies the sample RFP into structured intake signals, owner task delegation, conditional route decisions, checkpointed state transitions, dependency-injection contract details, eval assertions, proof commands, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/proposal/intake-triage" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The default path uses local sample data, keeps external providers optional, and is designed to run before the deeper buyer workflow or evidence-gap planning.
+
+### `POST /proposal/intake-triage-pack`
+
+Writes Markdown and JSON Proposal Intake Triage artifacts under ignored `storage/proposal_intake/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes readiness score, recommended route, intake signals, owner tasks, state transitions, dependency contract, eval assertions, reviewer controls, local proof commands, limitations, embedded triage JSON, Markdown, JSON, and trace ID.
+
 ### `GET /proposal/buyer-intelligence`
 
 Returns the Buyer-Grade Proposal Intelligence workflow. It composes deterministic local signals from requirement analysis, review findings, source trust, model risk, procurement question risk, and cost governance into durable workflow stages, a human approval queue, governance gates, provider routes, shared state, trace analysis, proof commands, limitations, and trace ID.
