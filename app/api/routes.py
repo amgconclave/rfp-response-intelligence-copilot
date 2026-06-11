@@ -124,6 +124,10 @@ from app.models.api import (
     ProposalAgentCouncilPackRequest,
     ProposalAgentCouncilPackResponse,
     ProposalAgentCouncilResponse,
+    ProposalApprovalSimulationPackRequest,
+    ProposalApprovalSimulationPackResponse,
+    ProposalApprovalSimulationRequest,
+    ProposalApprovalSimulationResponse,
     ProposalDecisionProvenancePackRequest,
     ProposalDecisionProvenancePackResponse,
     ProposalDecisionProvenanceResponse,
@@ -3781,6 +3785,87 @@ async def proposal_agent_council(
         },
     )
     return council
+
+
+@router.post(
+    "/proposal/approval-simulation",
+    response_model=ProposalApprovalSimulationResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_approval_simulation(
+    request: Request,
+    payload: ProposalApprovalSimulationRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalApprovalSimulationResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProposalApprovalSimulationRequest()
+    workflow = request_payload.workflow
+    if workflow is None:
+        inputs = await _buyer_intelligence_inputs(trace_id, container)
+        workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+    simulation = container.approval_simulation.simulate(
+        trace_id=trace_id,
+        workflow=workflow,
+        requested_by=request_payload.requested_by,
+        decisions=request_payload.decisions,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.approval_simulation_created",
+        "proposal_approval_simulation",
+        metadata={
+            "status": simulation.status,
+            "decisions": len(simulation.decision_records),
+            "unresolved": simulation.unresolved_approval_count,
+            "simulated_workflow_status": simulation.simulated_workflow_status,
+        },
+    )
+    return simulation
+
+
+@router.post(
+    "/proposal/approval-simulation-pack",
+    response_model=ProposalApprovalSimulationPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_approval_simulation_pack(
+    request: Request,
+    payload: ProposalApprovalSimulationPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalApprovalSimulationPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProposalApprovalSimulationPackRequest()
+    simulation = request_payload.simulation
+    if simulation is None:
+        workflow = request_payload.workflow
+        if workflow is None:
+            inputs = await _buyer_intelligence_inputs(trace_id, container)
+            workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+        simulation = container.approval_simulation.simulate(
+            trace_id=f"{trace_id}-simulation",
+            workflow=workflow,
+            requested_by=request_payload.requested_by,
+            decisions=request_payload.decisions,
+        )
+    pack = container.approval_simulation.pack(
+        trace_id,
+        simulation,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.approval_simulation_pack_generated",
+        "proposal_approval_simulation_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "state_artifact_path": pack.state_artifact_path,
+            "status": pack.simulation.status,
+            "decisions": len(pack.simulation.decision_records),
+        },
+    )
+    return pack
 
 
 @router.post(

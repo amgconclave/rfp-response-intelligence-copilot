@@ -1814,6 +1814,74 @@ class BuyerWorkflowReplayPackResponse(BaseModel):
     trace_id: str
 
 
+class ProposalApprovalDecisionInput(BaseModel):
+    approval_id: str
+    decision: str = "approve"
+    reviewer_role: str | None = None
+    rationale: str = "Local reviewer simulation."
+    expires_at: str | None = None
+
+
+class ProposalApprovalSimulationRecord(BaseModel):
+    approval_id: str
+    reviewer_role: str
+    decision_area: str
+    priority: str
+    original_status: str
+    simulated_decision: str
+    simulated_status: str
+    rationale: str
+    required_before: str
+    related_stage_ids: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(default_factory=list)
+    checkpoint_key: str
+    trace_refs: list[str] = Field(default_factory=list)
+
+
+class ProposalApprovalSimulationRequest(BaseModel):
+    requested_by: str = "proposal_manager"
+    decisions: list[ProposalApprovalDecisionInput] = Field(default_factory=list)
+    workflow: BuyerIntelligenceWorkflowResponse | None = None
+
+
+class ProposalApprovalSimulationResponse(BaseModel):
+    title: str
+    simulation_id: str
+    status: str
+    generated_at: str
+    requested_by: str
+    workflow_id: str
+    original_workflow_status: str
+    simulated_workflow_status: str
+    unresolved_approval_count: int
+    decision_records: list[ProposalApprovalSimulationRecord]
+    stage_impacts: list[dict[str, Any]] = Field(default_factory=list)
+    gate_impacts: list[dict[str, Any]] = Field(default_factory=list)
+    durable_state_update: dict[str, Any] = Field(default_factory=dict)
+    trace_analysis: dict[str, Any] = Field(default_factory=dict)
+    provider_policy: dict[str, Any] = Field(default_factory=dict)
+    eval_assertions: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ProposalApprovalSimulationPackRequest(ProposalApprovalSimulationRequest):
+    simulation: ProposalApprovalSimulationResponse | None = None
+    write_artifact: bool = True
+
+
+class ProposalApprovalSimulationPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    state_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    simulation: ProposalApprovalSimulationResponse
+    trace_id: str
+
+
 class BuyerContractRoleCoverage(BaseModel):
     role: str
     contract_id: str

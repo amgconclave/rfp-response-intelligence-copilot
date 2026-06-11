@@ -334,6 +334,29 @@ Writes Markdown and JSON replay artifacts under ignored `storage/buyer_intellige
 
 The pack includes the replay transition table, conditional routing decisions, checkpoint validation, eval scenarios, reviewer controls, local proof commands, limitations, embedded replay JSON, Markdown, JSON, and trace ID.
 
+### `POST /proposal/approval-simulation`
+
+Simulates human approval decisions against the Buyer-Grade Proposal Intelligence queue. It returns decision records, stage and gate impacts, durable state updates, local trace analysis, provider policy, eval assertions, proof commands, limitations, and trace ID. Empty input uses deterministic local defaults and does not call external approval systems.
+
+```json
+{
+  "requested_by": "proposal_manager",
+  "decisions": []
+}
+```
+
+### `POST /proposal/approval-simulation-pack`
+
+Writes Markdown, JSON, and durable local simulation state JSON artifacts under ignored `storage/approval_simulations/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes HITL decision records, stage/gate impact tables, state transition metadata, provider guardrails, eval assertions, reviewer controls, proof commands, limitations, embedded simulation JSON, Markdown, JSON, state JSON, and trace ID.
+
 ### `GET /proposal/buyer-contracts`
 
 Returns the Buyer Structured Output Contract Audit. It validates the buyer workflow, replay, agent council, and decision provenance as Pydantic structured outputs, then reports role contracts for sales, presales, compliance, procurement, and proposal management, schema snapshots, dependency-injection notes, eval assertions, proof commands, limitations, and trace ID.

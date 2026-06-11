@@ -609,6 +609,8 @@ class UIVerificationService:
                     "/proposal/buyer-intelligence-pack",
                     "/proposal/buyer-intelligence-replay",
                     "/proposal/buyer-intelligence-replay-pack",
+                    "/proposal/approval-simulation",
+                    "/proposal/approval-simulation-pack",
                     "/proposal/buyer-contracts",
                     "/proposal/buyer-contracts-pack",
                 ],
@@ -1053,6 +1055,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/buyer_intelligence/*replay*.md",
                     "storage/buyer_intelligence/*replay*.json",
+                ],
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/approval-simulation",
+                "purpose": "Buyer Intelligence Pack tab approval decision simulation and gate impact view.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/approval-simulation-pack",
+                "purpose": "Buyer Intelligence Pack generated approval simulation Markdown, JSON, and state artifacts.",
+                "expected_artifacts": [
+                    "storage/approval_simulations/*.md",
+                    "storage/approval_simulations/*.json",
                 ],
             },
             {

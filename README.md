@@ -118,6 +118,8 @@ curl -X GET "http://127.0.0.1:8000/proposal/buyer-intelligence" -H "X-API-Key: l
 curl -X POST "http://127.0.0.1:8000/proposal/buyer-intelligence-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 curl -X GET "http://127.0.0.1:8000/proposal/buyer-intelligence-replay" -H "X-API-Key: local-demo-key"
 curl -X POST "http://127.0.0.1:8000/proposal/buyer-intelligence-replay-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
+curl -X POST "http://127.0.0.1:8000/proposal/approval-simulation" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
+curl -X POST "http://127.0.0.1:8000/proposal/approval-simulation-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 curl -X GET "http://127.0.0.1:8000/proposal/buyer-contracts" -H "X-API-Key: local-demo-key"
 curl -X POST "http://127.0.0.1:8000/proposal/buyer-contracts-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 curl -X GET "http://127.0.0.1:8000/proposal/agent-council" -H "X-API-Key: local-demo-key"
@@ -450,6 +452,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /proposal/buyer-intelligence-pack`: writes a Markdown/JSON/State Buyer-Grade Proposal Intelligence Pack under `storage/buyer_intelligence/`.
 - `GET /proposal/buyer-intelligence-replay`: returns ordered workflow transitions, conditional route decisions, checkpoint validation, trace refs, and eval-friendly replay scenarios.
 - `POST /proposal/buyer-intelligence-replay-pack`: writes a Markdown/JSON Buyer Workflow Replay Pack under `storage/buyer_intelligence/`.
+- `POST /proposal/approval-simulation`: simulates HITL approval decisions against the buyer workflow queue with durable state updates, stage/gate impacts, provider policy, trace analysis, and eval assertions.
+- `POST /proposal/approval-simulation-pack`: writes a Markdown/JSON/State Proposal Approval Simulation Pack under `storage/approval_simulations/`.
 - `GET /proposal/buyer-contracts`: validates buyer workflow, replay, council, and decision provenance as typed structured outputs with role coverage and eval assertions.
 - `POST /proposal/buyer-contracts-pack`: writes a Markdown/JSON Buyer Structured Output Contract Pack under `storage/buyer_contracts/`.
 - `GET /proposal/agent-council`: returns a deterministic sales, presales, compliance, procurement, and proposal-manager council with shared state, governed tool access, handoffs, budget ledger, and eval scenarios.

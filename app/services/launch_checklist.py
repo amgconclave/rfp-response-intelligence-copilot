@@ -1464,6 +1464,31 @@ class LaunchChecklistService:
                 '{"write_artifact":true}',
             ),
             self._row(
+                "Proposal Approval Simulation",
+                "POST",
+                "/proposal/approval-simulation",
+                "proposal",
+                200,
+                (
+                    "Simulates human approval decisions against the buyer workflow queue and returns "
+                    "durable state updates, gate impacts, trace analysis, provider policy, and eval assertions."
+                ),
+                body='{"decisions":[]}',
+            ),
+            self._row(
+                "Proposal Approval Simulation Pack",
+                "POST",
+                "/proposal/approval-simulation-pack",
+                "artifact",
+                200,
+                "Writes approval simulation Markdown, JSON, and durable state JSON artifacts.",
+                [
+                    "storage/approval_simulations/*.md",
+                    "storage/approval_simulations/*.json",
+                ],
+                '{"write_artifact":true}',
+            ),
+            self._row(
                 "Buyer Structured Contracts",
                 "GET",
                 "/proposal/buyer-contracts",

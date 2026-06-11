@@ -3289,7 +3289,7 @@ with tabs[46]:
         "Compose durable proposal workflow checkpoints, human approvals, governance gates, provider routes, "
         "shared state, local trace analysis, and replayable transition audits for buyer-grade RFP review."
     )
-    action_cols = st.columns(6)
+    action_cols = st.columns(8)
     if action_cols[0].button("Load buyer workflow"):
         st.session_state.buyer_intelligence = get_json("/proposal/buyer-intelligence")
     if action_cols[1].button("Generate Buyer Intelligence Pack"):
@@ -3304,9 +3304,17 @@ with tabs[46]:
         st.session_state.buyer_workflow_replay_pack = pack
         st.session_state.buyer_workflow_replay = pack["replay"]
         st.success(f"Buyer Workflow Replay Pack generated under buyer_intelligence: {pack['artifact_path']}")
-    if action_cols[4].button("Audit contracts"):
+    if action_cols[4].button("Simulate approvals"):
+        simulation = post_json("/proposal/approval-simulation", {})
+        st.session_state.approval_simulation = simulation
+    if action_cols[5].button("Generate Approval Pack"):
+        pack = post_json("/proposal/approval-simulation-pack", {"write_artifact": True})
+        st.session_state.approval_simulation_pack = pack
+        st.session_state.approval_simulation = pack["simulation"]
+        st.success(f"Approval Simulation Pack generated under approval_simulations: {pack['artifact_path']}")
+    if action_cols[6].button("Audit contracts"):
         st.session_state.buyer_structured_contracts = get_json("/proposal/buyer-contracts")
-    if action_cols[5].button("Generate Contract Pack"):
+    if action_cols[7].button("Generate Contract Pack"):
         pack = post_json("/proposal/buyer-contracts-pack", {"write_artifact": True})
         st.session_state.buyer_structured_contracts_pack = pack
         st.session_state.buyer_structured_contracts = pack["contract_audit"]
@@ -3380,6 +3388,41 @@ with tabs[46]:
         st.write("Replay proof commands")
         st.code("\n".join(replay["local_proof_commands"]), language="powershell")
 
+    simulation = st.session_state.get("approval_simulation")
+    if simulation:
+        simulation_cols = st.columns(5)
+        simulation_cols[0].metric("Simulation", simulation["status"])
+        simulation_cols[1].metric("Workflow", simulation["simulated_workflow_status"])
+        simulation_cols[2].metric("Decisions", len(simulation["decision_records"]))
+        simulation_cols[3].metric("Unresolved", simulation["unresolved_approval_count"])
+        simulation_cols[4].metric("Provider", simulation["provider_policy"]["active_provider_mode"])
+        st.write("Approval decision records")
+        st.dataframe(
+            [
+                {
+                    "approval": item["approval_id"],
+                    "reviewer": item["reviewer_role"],
+                    "decision": item["simulated_decision"],
+                    "status": item["simulated_status"],
+                    "priority": item["priority"],
+                    "checkpoint": item["checkpoint_key"],
+                    "area": item["decision_area"],
+                }
+                for item in simulation["decision_records"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Stage impacts")
+        st.dataframe(simulation["stage_impacts"], use_container_width=True)
+        st.write("Gate impacts")
+        st.dataframe(simulation["gate_impacts"], use_container_width=True)
+        st.write("Durable state update")
+        st.json(simulation["durable_state_update"])
+        st.write("Eval assertions")
+        st.dataframe(simulation["eval_assertions"], use_container_width=True)
+        st.write("Approval simulation proof commands")
+        st.code("\n".join(simulation["local_proof_commands"]), language="powershell")
+
     contracts = st.session_state.get("buyer_structured_contracts")
     if contracts:
         contract_cols = st.columns(5)
@@ -3420,6 +3463,17 @@ with tabs[46]:
             "Download Buyer Workflow Replay Markdown",
             replay_pack["markdown"],
             file_name="buyer_workflow_replay_pack.md",
+        )
+
+    simulation_pack = st.session_state.get("approval_simulation_pack")
+    if simulation_pack:
+        st.write("Approval simulation artifact path", simulation_pack["artifact_path"])
+        st.write("Approval simulation JSON path", simulation_pack["json_artifact_path"])
+        st.write("Approval simulation state path", simulation_pack["state_artifact_path"])
+        st.download_button(
+            "Download Approval Simulation Markdown",
+            simulation_pack["markdown"],
+            file_name="approval_simulation_pack.md",
         )
 
     contract_pack = st.session_state.get("buyer_structured_contracts_pack")

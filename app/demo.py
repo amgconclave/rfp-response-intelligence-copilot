@@ -505,6 +505,16 @@ async def main() -> None:
         buyer_workflow_replay,
         write_artifact=True,
     )
+    approval_simulation = container.approval_simulation.simulate(
+        trace_id="demo-approval-simulation",
+        workflow=buyer_intelligence,
+        requested_by="demo_proposal_manager",
+    )
+    approval_simulation_pack = container.approval_simulation.pack(
+        "demo-approval-simulation-pack",
+        approval_simulation,
+        write_artifact=True,
+    )
     agent_council = container.proposal_agent_council.council(
         trace_id="demo-agent-council",
         workflow=buyer_intelligence,
@@ -948,6 +958,17 @@ async def main() -> None:
     print(f"Buyer Workflow Replay Pack JSON: {buyer_workflow_replay_pack.json_artifact_path}")
     print("Buyer intelligence directory: storage/buyer_intelligence")
     print(
+        "Approval simulation: "
+        f"status={approval_simulation.status} "
+        f"workflow={approval_simulation.simulated_workflow_status} "
+        f"decisions={len(approval_simulation.decision_records)} "
+        f"unresolved={approval_simulation.unresolved_approval_count}"
+    )
+    print(f"Approval Simulation Pack: {approval_simulation_pack.artifact_path}")
+    print(f"Approval Simulation Pack JSON: {approval_simulation_pack.json_artifact_path}")
+    print(f"Approval Simulation State: {approval_simulation_pack.state_artifact_path}")
+    print("Approval simulation directory: storage/approval_simulations")
+    print(
         "Proposal agent council: "
         f"status={agent_council.status} "
         f"agents={len(agent_council.agents)} "
@@ -1220,6 +1241,8 @@ async def main() -> None:
         f"buyer_intelligence_pack={buyer_intelligence_pack.artifact_path} "
         f"buyer_replay={buyer_workflow_replay.status}/{buyer_workflow_replay.transition_count} "
         f"buyer_replay_pack={buyer_workflow_replay_pack.artifact_path} "
+        f"approval_simulation={approval_simulation.status}/{approval_simulation.unresolved_approval_count} "
+        f"approval_simulation_pack={approval_simulation_pack.artifact_path} "
         f"agent_council={agent_council.status}/{len(agent_council.agents)} "
         f"agent_council_pack={agent_council_pack.artifact_path} "
         f"decision_provenance={decision_provenance.status}/{decision_provenance.summary['node_count']} "

@@ -41,6 +41,8 @@ The v0.2 API also exposes proof-oriented coverage endpoints:
 - `POST /rag/eval-coverage-pack`: writes a RAG Eval Coverage Pack under `storage/rag_coverage/`.
 - `GET /proposal/agent-council`: returns local multi-role council eval scenarios for role coverage, turn order, tool governance, and handoff routing.
 - `POST /proposal/agent-council-pack`: writes the Proposal Agent Council Pack under `storage/agent_council/`.
+- `POST /proposal/approval-simulation`: returns local HITL approval simulation assertions for queue coverage, checkpoint keys, human-gate impact, and reject/block behavior.
+- `POST /proposal/approval-simulation-pack`: writes the Proposal Approval Simulation Pack under `storage/approval_simulations/`.
 - `GET /proposal/decision-provenance`: returns graph-level eval assertions for node/edge integrity, checkpoint pass-through, and council eval pass-through.
 - `POST /proposal/decision-provenance-pack`: writes the Proposal Decision Provenance Pack under `storage/decision_provenance/`.
 - `GET /proposal/submission-certification`: returns final certification gate assertions, checkpointed transitions, and reviewer routing checks.

@@ -9,6 +9,7 @@ from app.services.answer_reuse_approval import AnswerReuseApprovalService
 from app.services.answer_reuse_drift import AnswerReuseDriftService
 from app.services.answer_reuse_library import AnswerReuseLibraryService
 from app.services.api_contracts import ApiContractService
+from app.services.approval_simulation import ProposalApprovalSimulationService
 from app.services.artifact_inventory import ArtifactInventoryService
 from app.services.audit import AuditService
 from app.services.bid_simulator import BidScenarioSimulatorService
@@ -84,6 +85,7 @@ class ServiceContainer:
         self.buyer_contracts = BuyerStructuredContractService(settings)
         self.proposal_agent_council = ProposalAgentCouncilService(settings)
         self.decision_provenance = ProposalDecisionProvenanceService(settings)
+        self.approval_simulation = ProposalApprovalSimulationService(settings)
         self.submission_certification = ProposalSubmissionCertificationService(settings)
         self.proposal_observability = ProposalObservabilityService(settings)
         self.provider_resilience = ProviderResilienceService(settings)

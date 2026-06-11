@@ -205,6 +205,8 @@ class ApiContractService:
             "/proposal/buyer-intelligence-pack",
             "/proposal/buyer-intelligence-replay",
             "/proposal/buyer-intelligence-replay-pack",
+            "/proposal/approval-simulation",
+            "/proposal/approval-simulation-pack",
             "/proposal/buyer-contracts",
             "/proposal/buyer-contracts-pack",
             "/proposal/agent-council",
