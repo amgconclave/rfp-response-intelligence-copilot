@@ -142,6 +142,12 @@ async def main() -> None:
         customer_fit=customer_fit,
     )
     contract_text = (container.settings.sample_data_dir / "customer_contract_terms.md").read_text(encoding="utf-8")
+    if not any(doc.filename == "customer_contract_terms.md" for doc in container.repo.documents.values()):
+        await container.ingestion.ingest_path(
+            "sample_data/customer_contract_terms.md",
+            document_type="contract",
+            source="sample_data",
+        )
     contract_risk = container.contract_risk.analyze(
         contract_text,
         "demo-contract-risk",
@@ -385,6 +391,20 @@ async def main() -> None:
     procurement_approval_pack = container.procurement.approval_pack(
         "demo-procurement-approval-pack",
         procurement_question_risk,
+        write_artifact=True,
+    )
+    procurement_risk_desk = await container.procurement_risk_desk.risk_desk(
+        "demo-procurement-risk-desk",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=package_review.findings,
+        contract_risk=contract_risk,
+        win_strategy=win_strategy,
+        procurement_risk=procurement_question_risk,
+    )
+    procurement_risk_desk_pack = container.procurement_risk_desk.risk_desk_pack(
+        "demo-procurement-risk-desk-pack",
+        procurement_risk_desk,
         write_artifact=True,
     )
     reviewer_collaboration = container.reviewer_collaboration.create_board(
@@ -663,6 +683,15 @@ async def main() -> None:
     print(f"Procurement Approval Workflow Pack JSON: {procurement_approval_pack.json_artifact_path}")
     print("Procurement packs directory: storage/procurement_packs")
     print(
+        "Procurement Risk Desk: "
+        f"risks={procurement_risk_desk.summary['risk_count']} "
+        f"blocked={procurement_risk_desk.summary['blocked_count']} "
+        f"avg={procurement_risk_desk.summary['average_risk_score']}"
+    )
+    print(f"Procurement Risk Desk Pack: {procurement_risk_desk_pack.artifact_path}")
+    print(f"Procurement Risk Desk Pack JSON: {procurement_risk_desk_pack.json_artifact_path}")
+    print("Procurement risk desk directory: storage/procurement_risk_desk")
+    print(
         "Reviewer collaboration: "
         f"status={reviewer_collaboration.board_status} "
         f"assignments={len(reviewer_collaboration.assignments)} "
@@ -779,6 +808,8 @@ async def main() -> None:
         f"model_risk_pack={model_risk_pack.artifact_path} "
         f"procurement question risk={procurement_question_risk.coverage_summary['coverage_ratio']} "
         f"procurement_packs={procurement_approval_pack.artifact_path} "
+        f"procurement_risk_desk={procurement_risk_desk.summary['average_risk_score']} "
+        f"procurement_risk_desk_pack={procurement_risk_desk_pack.artifact_path} "
         f"reviewer_collaboration={reviewer_collaboration.board_status}/"
         f"{len(reviewer_collaboration.assignments)} "
         f"review_boards={reviewer_collaboration_pack.artifact_path} "

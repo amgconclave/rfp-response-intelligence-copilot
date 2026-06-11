@@ -33,6 +33,7 @@ from app.services.objection_handling import CompetitiveObjectionHandlingService
 from app.services.portfolio import PortfolioService
 from app.services.privacy_retention import PrivacyRetentionGuardrailService
 from app.services.procurement import ProcurementQuestionRiskService
+from app.services.procurement_risk_desk import ProcurementRiskDeskService
 from app.services.release import ReleaseService
 from app.services.retrieval import RetrievalService
 from app.services.review_board import RfpReviewBoardService
@@ -121,6 +122,7 @@ class ServiceContainer:
             self.review_board,
             self.compliance,
         )
+        self.procurement_risk_desk = ProcurementRiskDeskService(settings, self.retrieval)
         self.privacy_retention = PrivacyRetentionGuardrailService(self.repo, settings)
 
 

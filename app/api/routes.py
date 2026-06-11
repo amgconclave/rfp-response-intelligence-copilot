@@ -93,6 +93,9 @@ from app.models.api import (
     ProcurementApprovalPackRequest,
     ProcurementApprovalPackResponse,
     ProcurementQuestionRiskResponse,
+    ProcurementRiskDeskPackRequest,
+    ProcurementRiskDeskPackResponse,
+    ProcurementRiskDeskResponse,
     PublishPackRequest,
     PublishPackResponse,
     QueryRequest,
@@ -2966,6 +2969,69 @@ async def procurement_approval_pack(
 
 
 @router.get(
+    "/procurement/risk-desk",
+    response_model=ProcurementRiskDeskResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def procurement_risk_desk(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProcurementRiskDeskResponse:
+    trace_id = get_trace_id(request)
+    inputs = await _procurement_risk_desk_inputs(trace_id, container)
+    result = await container.procurement_risk_desk.risk_desk(trace_id=trace_id, **inputs)
+    container.audit.record(
+        trace_id,
+        "procurement.risk_desk_viewed",
+        "procurement_risk_desk",
+        metadata={
+            "risks": result.summary["risk_count"],
+            "critical": result.summary["critical_count"],
+            "high": result.summary["high_count"],
+            "blocked": result.summary["blocked_count"],
+        },
+    )
+    return result
+
+
+@router.post(
+    "/procurement/risk-desk-pack",
+    response_model=ProcurementRiskDeskPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def procurement_risk_desk_pack(
+    request: Request,
+    payload: ProcurementRiskDeskPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProcurementRiskDeskPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProcurementRiskDeskPackRequest()
+    inputs = await _procurement_risk_desk_inputs(trace_id, container)
+    risk_desk = await container.procurement_risk_desk.risk_desk(
+        trace_id=f"{trace_id}-risk-desk",
+        **inputs,
+    )
+    pack = container.procurement_risk_desk.risk_desk_pack(
+        trace_id,
+        risk_desk,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "procurement.risk_desk_pack_generated",
+        "procurement_risk_desk_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "risks": pack.risk_desk.summary["risk_count"],
+            "blocked": pack.risk_desk.summary["blocked_count"],
+        },
+    )
+    return pack
+
+
+@router.get(
     "/bid/scenario-analysis",
     response_model=BidScenarioAnalysisResponse,
     dependencies=[Depends(require_api_key)],
@@ -3304,6 +3370,70 @@ async def _procurement_inputs(
         requirement_matrix=matrix,
     )
     return analysis, matrix, review.findings
+
+
+async def _procurement_risk_desk_inputs(trace_id: str, container: ServiceContainer) -> dict[str, object]:
+    analysis, matrix, review_findings = await _procurement_inputs(trace_id, container)
+    customer_fit = container.customer_intelligence.customer_fit(
+        "regulated_healthcare",
+        f"{trace_id}-customer-fit",
+        analysis=analysis,
+        requirement_matrix=matrix,
+    )
+    memory_matches = container.customer_intelligence.search_response_memory(
+        "pricing data residency legal implementation procurement contract",
+        f"{trace_id}-memory",
+        customer_profile_id="regulated_healthcare",
+        top_k=5,
+    )
+    action_plan, _ = container.action_plan.create_action_plan(
+        trace_id=f"{trace_id}-action-plan",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        customer_fit=customer_fit,
+        review_findings=review_findings,
+    )
+    readiness = container.deal_readiness.create_scorecard(
+        trace_id=f"{trace_id}-readiness",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=review_findings,
+        customer_fit=customer_fit,
+        action_plan=action_plan,
+    )
+    win_strategy = container.win_strategy.create_win_strategy(
+        trace_id=f"{trace_id}-win-strategy",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        customer_fit=customer_fit,
+        readiness_scorecard=readiness,
+        response_memory_matches=memory_matches,
+        action_plan=action_plan,
+        review_findings=review_findings,
+        competitor_context=[
+            "Incumbent competitor may use discount pressure during procurement.",
+        ],
+    )
+    contract_path = container.settings.sample_data_dir / "customer_contract_terms.md"
+    contract_risk = container.contract_risk.analyze(
+        contract_path.read_text(encoding="utf-8"),
+        f"{trace_id}-contract-risk",
+        customer_profile_id="regulated_healthcare",
+    )
+    procurement_risk = await container.procurement.question_risk(
+        f"{trace_id}-question-risk",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        review_findings=review_findings,
+    )
+    return {
+        "analysis": analysis,
+        "requirement_matrix": matrix,
+        "review_findings": review_findings,
+        "contract_risk": contract_risk,
+        "win_strategy": win_strategy,
+        "procurement_risk": procurement_risk,
+    }
 
 
 async def _bid_inputs(trace_id: str, container: ServiceContainer) -> dict[str, object]:

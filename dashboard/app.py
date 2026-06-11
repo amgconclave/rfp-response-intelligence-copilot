@@ -104,6 +104,7 @@ tabs = st.tabs(
         "Cost Governance",
         "Source Trust Gate",
         "Model Risk Register",
+        "Procurement Risk Desk",
     ]
 )
 
@@ -2773,4 +2774,81 @@ with tabs[43]:
             "Download Model Risk Markdown",
             pack["markdown"],
             file_name="model_risk_register.md",
+        )
+
+
+with tabs[44]:
+    st.subheader("Procurement Risk Desk")
+    st.caption(
+        "Detect packet-level legal, pricing, data residency, insurance, and implementation risks; "
+        "route owners; and generate the Risk Desk Pack."
+    )
+    action_cols = st.columns(2)
+    if action_cols[0].button("Load Risk Desk"):
+        st.session_state.procurement_risk_desk = get_json("/procurement/risk-desk")
+    if action_cols[1].button("Generate Risk Desk Pack"):
+        pack = post_json("/procurement/risk-desk-pack", {"write_artifact": True})
+        st.session_state.procurement_risk_desk_pack = pack
+        st.session_state.procurement_risk_desk = pack["risk_desk"]
+        st.success(f"Risk Desk Pack generated under procurement_risk_desk: {pack['artifact_path']}")
+
+    desk = st.session_state.get("procurement_risk_desk")
+    if desk:
+        summary = desk["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Risks", summary["risk_count"])
+        metric_cols[1].metric("Critical", summary["critical_count"])
+        metric_cols[2].metric("High", summary["high_count"])
+        metric_cols[3].metric("Blocked", summary["blocked_count"])
+        metric_cols[4].metric("Avg score", summary["average_risk_score"])
+        st.write("Risk desk")
+        st.dataframe(
+            [
+                {
+                    "category": item["category"],
+                    "severity": item["severity"],
+                    "score": item["risk_score"],
+                    "status": item["status"],
+                    "owner": item["owner_role"],
+                    "reviewer": item["reviewer_role"],
+                    "due": item["due_hint"],
+                    "signals": len(item["source_signals"]),
+                    "gaps": len(item["evidence_gaps"]),
+                    "citations": ", ".join(citation["filename"] for citation in item["citations"]),
+                }
+                for item in desk["risks"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Owner routing")
+        st.dataframe(desk["owner_routing"], use_container_width=True)
+        st.write("Evidence snippets")
+        st.dataframe(
+            [
+                {
+                    "risk_id": item["risk_id"],
+                    "source": snippet["filename"],
+                    "score": snippet["score"],
+                    "snippet": snippet["snippet"],
+                }
+                for item in desk["risks"]
+                for snippet in item["snippets"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Proof commands")
+        st.code("\n".join(desk["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(desk["limitations"])
+
+    pack = st.session_state.get("procurement_risk_desk_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.write("Executive notes")
+        st.write(pack["pack"]["executive_notes"])
+        st.download_button(
+            "Download Risk Desk Markdown",
+            pack["markdown"],
+            file_name="procurement_risk_desk_pack.md",
         )

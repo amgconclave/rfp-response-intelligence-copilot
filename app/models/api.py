@@ -1236,6 +1236,51 @@ class ProcurementApprovalPackResponse(BaseModel):
     trace_id: str
 
 
+class ProcurementRiskDeskItem(BaseModel):
+    risk_id: str
+    category: str
+    title: str
+    severity: str
+    risk_score: int
+    status: str
+    owner_role: str
+    reviewer_role: str
+    due_hint: str
+    source_signals: list[str] = Field(default_factory=list)
+    rationale: str
+    recommended_actions: list[str] = Field(default_factory=list)
+    evidence_gaps: list[str] = Field(default_factory=list)
+    related_requirement_ids: list[str] = Field(default_factory=list)
+    related_contract_clause_ids: list[str] = Field(default_factory=list)
+    citations: list[Citation] = Field(default_factory=list)
+    snippets: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ProcurementRiskDeskResponse(BaseModel):
+    title: str
+    risks: list[ProcurementRiskDeskItem]
+    summary: dict[str, Any]
+    owner_routing: list[dict[str, Any]] = Field(default_factory=list)
+    packet_sources: list[str] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ProcurementRiskDeskPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class ProcurementRiskDeskPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    risk_desk: ProcurementRiskDeskResponse
+    trace_id: str
+
+
 class BidScenario(BaseModel):
     scenario_id: str
     name: str

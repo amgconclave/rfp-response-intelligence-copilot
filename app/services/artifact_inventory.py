@@ -553,6 +553,12 @@ class ArtifactInventoryService:
                 "Procurement Q&A risk simulator and approval workflow Markdown and JSON.",
             ),
             self._spec(
+                "procurement_risk_desk",
+                "procurement_risk_desk",
+                "POST /procurement/risk-desk-pack",
+                "Owner-routed legal, pricing, data residency, insurance, and implementation risk desk artifacts.",
+            ),
+            self._spec(
                 "review_boards",
                 "review_boards",
                 "POST /rfp/reviewer-collaboration-pack",

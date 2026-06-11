@@ -331,6 +331,27 @@ Writes Markdown and JSON Procurement Q&A Approval Workflow Pack artifacts under 
 
 The pack includes high-risk questions, approved/blocked draft answers, reviewer checklist, escalation owners, evidence gaps, exact local proof commands, limitations, embedded question risk JSON, Markdown, JSON, and trace ID.
 
+### `GET /procurement/risk-desk`
+
+Returns the Procurement Risk Desk packet view for legal, pricing, data residency, insurance, and implementation risk. Each row includes severity, risk score, status, owner role, reviewer role, due hint, packet signals, recommended actions, evidence gaps, related requirement IDs, related contract clause IDs, citations/snippets, owner routing, proof commands, and limitations.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/procurement/risk-desk" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /procurement/risk-desk-pack`
+
+Writes Markdown and JSON Procurement Risk Desk Pack artifacts under ignored `storage/procurement_risk_desk/` by default. The pack is built from the local RFP packet, requirement matrix, review findings, contract-risk analyzer, pricing strategy signals, procurement Q&A approvals, and retrieved citations.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes owner routing, detailed desk risks, executive notes, packet sources, proof commands, limitations, embedded risk desk JSON, Markdown, JSON, and trace ID.
+
 ### `GET /bid/scenario-analysis`
 
 Returns the Bid/No-Bid Scenario Simulator with four deterministic executive scenarios: pursue, pursue with conditions, no-bid due to compliance/evidence risk, and no-bid due to commercial/timeline risk. Each scenario includes deal value, pursuit effort, pursuit cost, win probability, gross margin, risk-adjusted revenue, risk-adjusted gross profit, risk-adjusted ROI, blockers, required reviewers, evidence readiness, timeline pressure, decision recommendation, customer profile, assumptions, and coverage summary.

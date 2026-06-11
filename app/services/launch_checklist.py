@@ -48,6 +48,8 @@ class LaunchChecklistService:
                 "POST /governance/model-risk-pack",
                 "GET /procurement/question-risk",
                 "POST /procurement/approval-pack",
+                "GET /procurement/risk-desk",
+                "POST /procurement/risk-desk-pack",
                 "POST /rfp/reviewer-collaboration",
                 "POST /rfp/reviewer-collaboration-pack",
                 "POST /rfp/exception-register",
@@ -142,6 +144,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\procurement_packs -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "procurement/risk-desk|Procurement Risk Desk|procurement_risk_desk|owner-routed risk" '
+                    "app dashboard docs README.md tests scripts sample_data Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\procurement_risk_desk -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -380,6 +390,7 @@ class LaunchChecklistService:
             "rag_coverage": "storage/rag_coverage",
             "compliance_packs": "storage/compliance_packs",
             "procurement_packs": "storage/procurement_packs",
+            "procurement_risk_desk": "storage/procurement_risk_desk",
             "review_boards": "storage/review_boards",
             "exception_registers": "storage/exception_registers",
             "bid_packs": "storage/bid_packs",
@@ -910,6 +921,30 @@ class LaunchChecklistService:
                     "escalation owners, evidence gaps, proof commands, and limitations."
                 ),
                 ["storage/procurement_packs/*.md", "storage/procurement_packs/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Procurement risk desk",
+                "GET",
+                "/procurement/risk-desk",
+                "procurement",
+                200,
+                (
+                    "Returns legal, pricing, data residency, insurance, and implementation risk rows "
+                    "with owner routing, evidence gaps, citations, and packet signals."
+                ),
+            ),
+            self._row(
+                "Procurement Risk Desk Pack",
+                "POST",
+                "/procurement/risk-desk-pack",
+                "artifact",
+                200,
+                (
+                    "Writes owner-routed procurement risk desk Markdown and JSON artifacts for legal, "
+                    "commercial, privacy, insurance, and implementation review."
+                ),
+                ["storage/procurement_risk_desk/*.md", "storage/procurement_risk_desk/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

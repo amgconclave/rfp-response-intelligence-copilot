@@ -477,6 +477,12 @@ class UIVerificationService:
                 "artifact_root": "procurement_packs",
             },
             {
+                "label": "Procurement Risk Desk",
+                "endpoint_paths": ["/procurement/risk-desk", "/procurement/risk-desk-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "procurement_risk_desk",
+            },
+            {
                 "label": "Bid/No-Bid ROI",
                 "endpoint_paths": ["/bid/scenario-analysis", "/bid/roi-pack"],
                 "generated_artifact_tab": True,
@@ -665,6 +671,17 @@ class UIVerificationService:
             },
             {
                 "method": "GET",
+                "path": "/procurement/risk-desk",
+                "purpose": "Procurement Risk Desk packet-level owner-routed risk view.",
+            },
+            {
+                "method": "POST",
+                "path": "/procurement/risk-desk-pack",
+                "purpose": "Procurement Risk Desk generated Markdown and JSON pack.",
+                "expected_artifacts": ["storage/procurement_risk_desk/*.md", "storage/procurement_risk_desk/*.json"],
+            },
+            {
+                "method": "GET",
                 "path": "/bid/scenario-analysis",
                 "purpose": "Bid/No-Bid ROI tab scenario simulator view.",
             },
@@ -811,6 +828,14 @@ class UIVerificationService:
             ),
             (
                 'curl -X POST "http://127.0.0.1:8000/procurement/approval-pack" '
+                '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
+            ),
+            (
+                'curl -X GET "http://127.0.0.1:8000/procurement/risk-desk" '
+                '-H "X-API-Key: local-demo-key"'
+            ),
+            (
+                'curl -X POST "http://127.0.0.1:8000/procurement/risk-desk-pack" '
                 '-H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"'
             ),
             (

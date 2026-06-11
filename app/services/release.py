@@ -231,6 +231,11 @@ class ReleaseService:
                 "artifact_root": str((self.settings.storage_dir / "procurement_packs").resolve()),
                 "endpoints": ["/procurement/question-risk", "/procurement/approval-pack"],
             },
+            "procurement_risk_desk": {
+                "service_path": "app/services/procurement_risk_desk.py",
+                "artifact_root": str((self.settings.storage_dir / "procurement_risk_desk").resolve()),
+                "endpoints": ["/procurement/risk-desk", "/procurement/risk-desk-pack"],
+            },
             "bid": {
                 "service_path": "app/services/bid_simulator.py",
                 "artifact_root": str((self.settings.storage_dir / "bid_packs").resolve()),
@@ -278,6 +283,7 @@ class ReleaseService:
             "rag_coverage": "RAG corpus expansion and eval coverage artifacts",
             "compliance_packs": "Compliance evidence matrix and control mapping packs",
             "procurement_packs": "Procurement Q&A risk and approval workflow packs",
+            "procurement_risk_desk": "Procurement risk desk owner routing packs",
             "review_boards": "Reviewer Collaboration assignment, comment, approval, and redline packs",
             "exception_registers": "Submission exception register packs",
             "bid_packs": "Bid/No-Bid scenario simulator and ROI Impact packs",
