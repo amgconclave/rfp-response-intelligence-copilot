@@ -1059,7 +1059,7 @@ Generates deterministic, cited objection responses for competitor, pricing, secu
 }
 ```
 
-The response includes objection records by `concern_type`, buyer objection text, competitor angle, response posture, cited response, confidence, risk level, approval status, required reviewer role, citations, source snippets, missing evidence, recommended follow-ups, endpoint references, local proof commands, and limitations.
+The response includes objection records by `concern_type`, buyer objection text, competitor angle, response posture, cited response, confidence, risk level, approval status, required reviewer role, citations, source snippets, missing evidence, recommended follow-ups, workflow checkpoint keys, route decisions, replayable state transitions, eval assertions, endpoint references, local proof commands, and limitations.
 
 ### `POST /rfp/objection-handling-pack`
 
@@ -1074,7 +1074,7 @@ Writes Markdown and JSON Competitive Objection Handling Pack artifacts under `st
 }
 ```
 
-The pack includes a summary, all cited objection responses, high-risk objections, reviewer workflow, endpoint references, proof commands, limitations, and artifact paths.
+The pack includes a summary, all cited objection responses, high-risk objections, reviewer workflow, workflow transition replay, checkpoint keys, route decisions, eval assertions, endpoint references, proof commands, limitations, and artifact paths.
 
 ### `POST /rfp/contract-risk`
 

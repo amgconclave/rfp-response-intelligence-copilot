@@ -59,6 +59,11 @@ async def test_objection_service_generates_cited_confidence_and_review_workflow(
     assert any(item.citations for item in result.objections)
     assert all(item.required_reviewer_role for item in result.objections)
     assert any(endpoint["path"] == "/rfp/objection-handling-pack" for endpoint in result.endpoint_references)
+    assert result.workflow_summary["replay_status"] == "pass"
+    assert result.workflow_summary["transition_count"] >= result.coverage_summary["objection_count"] * 5
+    assert all(item.checkpoint_key and item.route_decision for item in result.objections)
+    assert all(len(item.workflow_trace) >= 5 for item in result.objections)
+    assert all(assertion.passed for assertion in result.eval_assertions)
 
     pack = container.objection_handling.handling_pack("objection-service-pack", result, write_artifact=True)
     assert pack.artifact_path
@@ -68,6 +73,10 @@ async def test_objection_service_generates_cited_confidence_and_review_workflow(
     assert "objection_packs" in pack.artifact_path
     assert "Competitive Objection Handling Pack" in pack.markdown
     assert pack.pack["reviewer_workflow"]
+    assert pack.pack["workflow_transitions"]
+    assert pack.pack["eval_assertions"]
+    assert "## Workflow Trace" in pack.markdown
+    assert "## Eval Assertions" in pack.markdown
     repository.reset()
     get_settings.cache_clear()
     get_container.cache_clear()
@@ -92,6 +101,10 @@ def test_objection_endpoints_return_catalog_and_write_pack(client, auth_headers)
     assert handling["confidence_summary"]["average_confidence"] >= 0.45
     assert any(item["citations"] for item in handling["objections"])
     assert any(item["concern_type"] == "security" for item in handling["objections"])
+    assert handling["workflow_summary"]["replay_status"] == "pass"
+    assert handling["workflow_summary"]["transition_count"] >= handling["coverage_summary"]["objection_count"] * 5
+    assert all(item["checkpoint_key"] for item in handling["objections"])
+    assert all(assertion["passed"] for assertion in handling["eval_assertions"])
 
     pack_response = client.post(
         "/rfp/objection-handling-pack",
@@ -106,8 +119,12 @@ def test_objection_endpoints_return_catalog_and_write_pack(client, auth_headers)
     assert Path(pack["json_artifact_path"]).exists()
     assert "objection_packs" in pack["artifact_path"]
     assert "## Reviewer Workflow" in pack["markdown"]
+    assert "## Workflow Trace" in pack["markdown"]
+    assert "## Eval Assertions" in pack["markdown"]
     assert pack["pack"]["high_risk_objections"]
     assert pack["pack"]["endpoint_references"]
+    assert pack["pack"]["workflow_transitions"]
+    assert pack["pack"]["eval_assertions"]
 
 
 def test_objection_dashboard_smoke_launch_and_contract_wiring(client, auth_headers):

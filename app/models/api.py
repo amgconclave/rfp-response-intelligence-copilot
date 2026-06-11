@@ -449,6 +449,29 @@ class ObjectionHandlingRequest(WinStrategyRequest):
     top_k: int = 4
 
 
+class ObjectionWorkflowTransition(BaseModel):
+    transition_id: str
+    objection_id: str
+    sequence: int
+    from_state: str | None = None
+    to_state: str
+    decision: str
+    status: str
+    checkpoint_key: str
+    owner_role: str
+    evidence: str
+    source_refs: list[str] = Field(default_factory=list)
+    next_state: str | None = None
+
+
+class ObjectionEvalAssertion(BaseModel):
+    assertion_id: str
+    description: str
+    passed: bool
+    evidence: str
+    related_objection_ids: list[str] = Field(default_factory=list)
+
+
 class ObjectionResponseItem(BaseModel):
     objection_id: str
     concern_type: str
@@ -465,6 +488,9 @@ class ObjectionResponseItem(BaseModel):
     missing_evidence: list[str] = Field(default_factory=list)
     reviewer_notes: list[str] = Field(default_factory=list)
     recommended_followups: list[dict[str, Any]] = Field(default_factory=list)
+    checkpoint_key: str = ""
+    route_decision: str = "review"
+    workflow_trace: list[ObjectionWorkflowTransition] = Field(default_factory=list)
 
 
 class ObjectionHandlingResponse(BaseModel):
@@ -472,6 +498,8 @@ class ObjectionHandlingResponse(BaseModel):
     objections: list[ObjectionResponseItem]
     coverage_summary: dict[str, Any]
     confidence_summary: dict[str, Any]
+    workflow_summary: dict[str, Any] = Field(default_factory=dict)
+    eval_assertions: list[ObjectionEvalAssertion] = Field(default_factory=list)
     endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
     local_proof_commands: list[str] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)

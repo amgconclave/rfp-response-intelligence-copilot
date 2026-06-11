@@ -11,9 +11,11 @@ from typing import Any
 from app.core.config import Settings
 from app.models.api import (
     AnalyzeResponse,
+    ObjectionEvalAssertion,
     ObjectionHandlingPackResponse,
     ObjectionHandlingResponse,
     ObjectionResponseItem,
+    ObjectionWorkflowTransition,
     WinStrategyResponse,
 )
 from app.models.domain import Citation, RequirementMatrixRow, ResponseMemoryMatch, ReviewFinding, TokenUsage
@@ -72,6 +74,8 @@ class CompetitiveObjectionHandlingService:
             objections=objections,
             coverage_summary=self._coverage_summary(objections),
             confidence_summary=self._confidence_summary(objections),
+            workflow_summary=self._workflow_summary(objections),
+            eval_assertions=self._eval_assertions(objections),
             endpoint_references=self._endpoint_references(),
             local_proof_commands=self._local_proof_commands(),
             limitations=self._limitations(),
@@ -152,6 +156,18 @@ class CompetitiveObjectionHandlingService:
             risk_level = "high"
             if approval_status == "ready_with_review":
                 approval_status = "requires_reviewer_approval"
+        checkpoint_key = f"objection:{spec['id']}:{approval_status}"
+        route_decision = self._route_decision(approval_status)
+        workflow_trace = self._workflow_trace(
+            trace_id,
+            spec,
+            citations,
+            missing,
+            confidence,
+            risk_level,
+            approval_status,
+            route_decision,
+        )
         return ObjectionResponseItem(
             objection_id=spec["id"],
             concern_type=spec["concern_type"],
@@ -168,6 +184,9 @@ class CompetitiveObjectionHandlingService:
             missing_evidence=missing,
             reviewer_notes=self._reviewer_notes(spec, approval_status, review.findings),
             recommended_followups=self._recommended_followups(spec, risk_level, missing),
+            checkpoint_key=checkpoint_key,
+            route_decision=route_decision,
+            workflow_trace=workflow_trace,
         )
 
     def _query(
@@ -384,7 +403,152 @@ class CompetitiveObjectionHandlingService:
             ],
         }
 
+    def _workflow_summary(self, objections: list[ObjectionResponseItem]) -> dict[str, Any]:
+        transitions = [transition for item in objections for transition in item.workflow_trace]
+        route_counts = Counter(item.route_decision for item in objections)
+        owner_counts = Counter(transition.owner_role for transition in transitions)
+        checkpoint_keys = [item.checkpoint_key for item in objections]
+        return {
+            "workflow_name": "competitive_objection_review",
+            "pattern_coverage": [
+                "typed contracts",
+                "structured outputs",
+                "dependency injection",
+                "state machine workflow",
+                "checkpointing",
+                "conditional routing",
+                "traceable node transitions",
+                "eval-friendly design",
+            ],
+            "transition_count": len(transitions),
+            "checkpoint_count": len(checkpoint_keys),
+            "checkpoint_keys": checkpoint_keys,
+            "route_decision_counts": dict(sorted(route_counts.items())),
+            "owner_counts": dict(sorted(owner_counts.items())),
+            "replay_status": "pass" if transitions and all(item.workflow_trace for item in objections) else "needs_review",
+        }
+
+    def _eval_assertions(self, objections: list[ObjectionResponseItem]) -> list[ObjectionEvalAssertion]:
+        concern_types = {item.concern_type for item in objections}
+        checkpoint_keys = [item.checkpoint_key for item in objections]
+        transitions = [transition for item in objections for transition in item.workflow_trace]
+        return [
+            ObjectionEvalAssertion(
+                assertion_id="objection-required-concern-coverage",
+                description="Default pack covers competitor, pricing, security, compliance, and implementation objections.",
+                passed={"competitor", "pricing", "security", "compliance", "implementation"} <= concern_types,
+                evidence=", ".join(sorted(concern_types)),
+                related_objection_ids=[item.objection_id for item in objections],
+            ),
+            ObjectionEvalAssertion(
+                assertion_id="objection-checkpoints-unique",
+                description="Every objection has a replayable checkpoint key for reviewer handoff.",
+                passed=len(checkpoint_keys) == len(set(checkpoint_keys)) == len(objections),
+                evidence=", ".join(checkpoint_keys),
+                related_objection_ids=[item.objection_id for item in objections],
+            ),
+            ObjectionEvalAssertion(
+                assertion_id="objection-route-decisions-terminal",
+                description="Each objection reaches an explicit terminal route decision.",
+                passed=all(item.route_decision in {"ready", "review", "blocked"} for item in objections),
+                evidence=", ".join(f"{item.objection_id}:{item.route_decision}" for item in objections),
+                related_objection_ids=[item.objection_id for item in objections],
+            ),
+            ObjectionEvalAssertion(
+                assertion_id="objection-transition-replay-complete",
+                description="Every objection emits classify, retrieve, score, route, and handoff transitions.",
+                passed=all(len(item.workflow_trace) >= 5 for item in objections),
+                evidence=f"transitions={len(transitions)} objections={len(objections)}",
+                related_objection_ids=[item.objection_id for item in objections],
+            ),
+        ]
+
+    def _route_decision(self, approval_status: str) -> str:
+        if approval_status == "ready_with_review":
+            return "ready"
+        if approval_status == "blocked_until_evidence":
+            return "blocked"
+        return "review"
+
+    def _workflow_trace(
+        self,
+        trace_id: str,
+        spec: dict[str, Any],
+        citations: list[Citation],
+        missing: list[str],
+        confidence: float,
+        risk_level: str,
+        approval_status: str,
+        route_decision: str,
+    ) -> list[ObjectionWorkflowTransition]:
+        source_refs = [citation.filename for citation in citations]
+        route_owner = spec["owner"] if route_decision != "ready" else "sales"
+        rows = [
+            {
+                "from_state": None,
+                "to_state": "classified",
+                "decision": f"concern_type={spec['concern_type']}",
+                "status": "complete",
+                "owner_role": "proposal_manager",
+                "evidence": spec["buyer_objection"],
+            },
+            {
+                "from_state": "classified",
+                "to_state": "evidence_retrieved",
+                "decision": f"citations={len(citations)} priority_files={len(spec.get('priority_files', []))}",
+                "status": "complete" if citations else "needs_review",
+                "owner_role": "solutions",
+                "evidence": ", ".join(source_refs[:4]) or "No retrieved citation.",
+            },
+            {
+                "from_state": "evidence_retrieved",
+                "to_state": "confidence_scored",
+                "decision": f"confidence={confidence} risk={risk_level}",
+                "status": "complete",
+                "owner_role": "proposal_manager",
+                "evidence": f"missing_evidence={len(missing)}",
+            },
+            {
+                "from_state": "confidence_scored",
+                "to_state": "review_route_selected",
+                "decision": f"approval_status={approval_status} route={route_decision}",
+                "status": "blocked" if route_decision == "blocked" else "complete",
+                "owner_role": route_owner,
+                "evidence": "; ".join(missing[:2]) or "No blocking evidence gap.",
+            },
+            {
+                "from_state": "review_route_selected",
+                "to_state": "handoff_ready",
+                "decision": f"reviewer={spec['reviewer_role']}",
+                "status": "needs_review" if route_decision in {"review", "blocked"} else "complete",
+                "owner_role": spec["reviewer_role"],
+                "evidence": f"checkpoint=objection:{spec['id']}:{approval_status}",
+            },
+        ]
+        transitions: list[ObjectionWorkflowTransition] = []
+        for index, row in enumerate(rows, start=1):
+            next_state = rows[index]["to_state"] if index < len(rows) else None
+            transitions.append(
+                ObjectionWorkflowTransition(
+                    transition_id=f"{spec['id']}_transition_{index}",
+                    objection_id=spec["id"],
+                    sequence=index,
+                    from_state=row["from_state"],
+                    to_state=row["to_state"],
+                    decision=row["decision"],
+                    status=row["status"],
+                    checkpoint_key=f"{trace_id}:{spec['id']}:{index}:{row['to_state']}",
+                    owner_role=row["owner_role"],
+                    evidence=row["evidence"],
+                    source_refs=source_refs,
+                    next_state=next_state,
+                )
+            )
+        return transitions
+
     def _pack_payload(self, trace_id: str, objection_handling: ObjectionHandlingResponse) -> dict[str, Any]:
+        workflow_summary = objection_handling.workflow_summary or self._workflow_summary(objection_handling.objections)
+        eval_assertions = objection_handling.eval_assertions or self._eval_assertions(objection_handling.objections)
         return {
             "trace_id": trace_id,
             "title": "Competitive Objection Handling Pack",
@@ -392,6 +556,7 @@ class CompetitiveObjectionHandlingService:
             "summary": {
                 "coverage_summary": objection_handling.coverage_summary,
                 "confidence_summary": objection_handling.confidence_summary,
+                "workflow_summary": workflow_summary,
             },
             "objection_responses": [item.model_dump(mode="json") for item in objection_handling.objections],
             "high_risk_objections": [
@@ -400,6 +565,12 @@ class CompetitiveObjectionHandlingService:
                 if item.risk_level == "high"
             ],
             "reviewer_workflow": self._reviewer_workflow(objection_handling.objections),
+            "workflow_transitions": [
+                transition.model_dump(mode="json")
+                for item in objection_handling.objections
+                for transition in item.workflow_trace
+            ],
+            "eval_assertions": [assertion.model_dump(mode="json") for assertion in eval_assertions],
             "endpoint_references": objection_handling.endpoint_references,
             "local_proof_commands": objection_handling.local_proof_commands,
             "limitations": objection_handling.limitations,
@@ -422,6 +593,7 @@ class CompetitiveObjectionHandlingService:
     def _render_markdown(self, pack: dict[str, Any]) -> str:
         coverage = pack["summary"]["coverage_summary"]
         confidence = pack["summary"]["confidence_summary"]
+        workflow = pack["summary"]["workflow_summary"]
         lines = [
             "# Competitive Objection Handling Pack",
             "",
@@ -432,6 +604,8 @@ class CompetitiveObjectionHandlingService:
             f"- Average confidence: {confidence['average_confidence']}",
             f"- Blocked: {coverage['blocked_count']}",
             f"- Approvals required: {coverage['approval_required_count']}",
+            f"- Workflow transitions: {workflow['transition_count']}",
+            f"- Replay status: {workflow['replay_status']}",
             "",
             "## Objection Responses",
             "",
@@ -473,6 +647,41 @@ class CompetitiveObjectionHandlingService:
                         self._md(row["approval_status"]),
                         self._md(row["confidence"]),
                         self._md(row["required_action"]),
+                    ]
+                )
+                + " |"
+            )
+        lines.extend(["", "## Workflow Trace", ""])
+        lines.append("| Objection | Seq | From | To | Decision | Status | Checkpoint | Owner |")
+        lines.append("| --- | ---: | --- | --- | --- | --- | --- | --- |")
+        for row in pack["workflow_transitions"]:
+            lines.append(
+                "| "
+                + " | ".join(
+                    [
+                        self._md(row["objection_id"]),
+                        self._md(row["sequence"]),
+                        self._md(row["from_state"] or "START"),
+                        self._md(row["to_state"]),
+                        self._md(row["decision"]),
+                        self._md(row["status"]),
+                        self._md(row["checkpoint_key"]),
+                        self._md(row["owner_role"]),
+                    ]
+                )
+                + " |"
+            )
+        lines.extend(["", "## Eval Assertions", ""])
+        lines.append("| Assertion | Passed | Evidence |")
+        lines.append("| --- | --- | --- |")
+        for assertion in pack["eval_assertions"]:
+            lines.append(
+                "| "
+                + " | ".join(
+                    [
+                        self._md(assertion["assertion_id"]),
+                        self._md(assertion["passed"]),
+                        self._md(assertion["evidence"]),
                     ]
                 )
                 + " |"

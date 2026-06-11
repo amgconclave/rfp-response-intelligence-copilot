@@ -1048,6 +1048,8 @@ async def objection_handling(
             "coverage_ratio": result.coverage_summary["coverage_ratio"],
             "blocked": result.coverage_summary["blocked_count"],
             "average_confidence": result.confidence_summary["average_confidence"],
+            "workflow_transitions": result.workflow_summary.get("transition_count", 0),
+            "workflow_replay_status": result.workflow_summary.get("replay_status"),
         },
     )
     return result
@@ -1111,6 +1113,8 @@ async def objection_handling_pack(
             "json_artifact_path": pack.json_artifact_path,
             "objections": pack.objection_handling.coverage_summary["objection_count"],
             "coverage_ratio": pack.objection_handling.coverage_summary["coverage_ratio"],
+            "workflow_transitions": pack.objection_handling.workflow_summary.get("transition_count", 0),
+            "eval_assertions": len(pack.objection_handling.eval_assertions),
         },
     )
     return pack

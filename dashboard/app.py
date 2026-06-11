@@ -2053,7 +2053,7 @@ with tabs[33]:
     st.subheader("Competitive Objection Handling Pack")
     st.caption(
         "Generate cited objection responses for competitor, pricing, security, compliance, "
-        "and implementation concerns; show confidence, reviewer status, missing evidence, and local artifact proof."
+        "and implementation concerns; show confidence, reviewer status, workflow checkpoints, and local artifact proof."
     )
     competitor_context = st.text_area(
         "Objection competitor context",
@@ -2093,11 +2093,13 @@ with tabs[33]:
     if handling:
         coverage = handling["coverage_summary"]
         confidence = handling["confidence_summary"]
-        metric_cols = st.columns(4)
+        workflow = handling.get("workflow_summary", {})
+        metric_cols = st.columns(5)
         metric_cols[0].metric("Objections", coverage["objection_count"])
         metric_cols[1].metric("Coverage", coverage["coverage_ratio"])
         metric_cols[2].metric("Avg confidence", confidence["average_confidence"])
         metric_cols[3].metric("Blocked", coverage["blocked_count"])
+        metric_cols[4].metric("Transitions", workflow.get("transition_count", 0))
         st.dataframe(
             [
                 {
@@ -2105,6 +2107,8 @@ with tabs[33]:
                     "risk": item["risk_level"],
                     "confidence": item["confidence"],
                     "approval": item["approval_status"],
+                    "route": item.get("route_decision"),
+                    "checkpoint": item.get("checkpoint_key"),
                     "reviewer": item["required_reviewer_role"],
                     "citations": ", ".join(citation["filename"] for citation in item["citations"]),
                     "missing": "; ".join(item["missing_evidence"]),
@@ -2113,6 +2117,26 @@ with tabs[33]:
             ],
             use_container_width=True,
         )
+        st.write("Workflow replay")
+        st.dataframe(
+            [
+                {
+                    "objection": transition["objection_id"],
+                    "seq": transition["sequence"],
+                    "from": transition["from_state"] or "START",
+                    "to": transition["to_state"],
+                    "decision": transition["decision"],
+                    "status": transition["status"],
+                    "owner": transition["owner_role"],
+                    "checkpoint": transition["checkpoint_key"],
+                }
+                for item in handling["objections"]
+                for transition in item.get("workflow_trace", [])
+            ],
+            use_container_width=True,
+        )
+        st.write("Eval assertions")
+        st.dataframe(handling.get("eval_assertions", []), use_container_width=True)
         st.write("Endpoint references")
         st.dataframe(handling["endpoint_references"], use_container_width=True)
         st.write("Proof commands")
@@ -2126,6 +2150,10 @@ with tabs[33]:
         st.write("Generated JSON path", pack["json_artifact_path"])
         st.write("Reviewer workflow")
         st.dataframe(pack["pack"]["reviewer_workflow"], use_container_width=True)
+        st.write("Pack workflow transitions")
+        st.dataframe(pack["pack"]["workflow_transitions"], use_container_width=True)
+        st.write("Pack eval assertions")
+        st.dataframe(pack["pack"]["eval_assertions"], use_container_width=True)
         st.download_button(
             "Download Objection Handling Markdown",
             pack["markdown"],
