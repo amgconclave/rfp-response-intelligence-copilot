@@ -245,6 +245,7 @@ flowchart LR
 - Evidence Conflict Resolver via `GET /evidence/conflicts` and `POST /evidence/conflict-pack`, writing Markdown/JSON under `storage/conflict_packs/` with cited source-precedence conflicts, scope ambiguity, reviewer owners, endpoint impact, and resolution guidance.
 - Citation Lineage + Integrity Audit via `GET /evidence/citation-lineage` and `POST /evidence/citation-lineage-pack`, writing Markdown/JSON under `storage/citation_lineage/` with repository document/chunk verification, stale citation flags, generated-claim flags, owner follow-ups, endpoint impact, and proof commands.
 - Source Trust Gate via `GET /evidence/source-trust` and `POST /evidence/source-trust-pack`, writing Markdown/JSON under `storage/source_trust/` with source trust scores, retrieval policy updates, reviewer queues, approval decisions, endpoint impact, proof commands, and limitations.
+- Governed Retrieval via `POST /evidence/governed-retrieval` and `POST /evidence/governed-retrieval-pack`, writing Markdown/JSON under `storage/governed_retrieval/` with policy-aware citation decisions, blocked/suppressed rows, HITL reviewer queue, trace spans, proof commands, and limitations.
 - Contract Redline Risk Analyzer via `POST /rfp/contract-risk` that detects liability, data processing, security obligations, SLA/service credits, audit rights, termination, indemnity, data residency, AI/data-use, and pricing/payment risk.
 - Negotiation briefs under `storage/negotiation_briefs/` with contract risk summary, win strategy/pricing context, clause-by-clause redlines, fallback positions, owner actions, cited proof points, local commands, JD skills, and five interviewer talking points.
 - Evidence Gap Remediation Planner via `POST /rfp/evidence-gaps` that ranks missing sources, SMEs, approvals, impacted RFP/contract sections, due recommendations, citations, and closure criteria.
@@ -383,6 +384,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /evidence/citation-lineage-pack`: writes a Markdown/JSON Citation Lineage Integrity Pack under `storage/citation_lineage/`.
 - `GET /evidence/source-trust`: returns source trust scores, reuse decisions, reviewer queues, retrieval policy updates, and endpoint impact by combining freshness, conflict, and citation-lineage signals.
 - `POST /evidence/source-trust-pack`: writes a Markdown/JSON Source Trust Gate Pack under `storage/source_trust/`.
+- `POST /evidence/governed-retrieval`: returns policy-aware retrieval results, allowed citations, blocked/suppressed rows, reviewer queue items, and trace spans.
+- `POST /evidence/governed-retrieval-pack`: writes a Markdown/JSON Governed Retrieval Pack under `storage/governed_retrieval/`.
 - `GET /proposal/buyer-intelligence`: returns a buyer-grade durable proposal workflow with stage checkpoints, HITL approval queue, governance gates, provider routes, shared state, and trace analysis.
 - `POST /proposal/buyer-intelligence-pack`: writes a Markdown/JSON/State Buyer-Grade Proposal Intelligence Pack under `storage/buyer_intelligence/`.
 - `GET /proposal/buyer-intelligence-replay`: returns ordered workflow transitions, conditional route decisions, checkpoint validation, trace refs, and eval-friendly replay scenarios.
@@ -480,6 +483,7 @@ Run the API and dashboard, then capture:
 - Evidence Conflicts tab showing conflict counts, blocked/needs-review status, reviewer queue, cited claims, endpoint impact, and generated `storage/conflict_packs/` artifact path.
 - Citation Lineage tab showing citation integrity score, verified/missing/stale references, generated claim flags, owner follow-ups, endpoint impact, proof commands, and generated `storage/citation_lineage/` artifact path.
 - Source Trust Gate tab showing source trust status, approved/blocked counts, reviewer queue, retrieval policy updates, endpoint impact, proof commands, and generated `storage/source_trust/` artifact path.
+- Governed Retrieval tab showing policy-adjusted retrieval candidates, allowed citations, blocked/suppressed rows, HITL reviewer queue, trace spans, proof commands, and generated `storage/governed_retrieval/` artifact path.
 - Privacy Retention tab showing prompt/log/vector/artifact/upload/eval surface risks, missing controls, redaction rules, prompt/logging guidance, owner actions, and generated `storage/privacy_packs/` artifact path.
 - Model Risk Register tab showing model/provider risks, release gates, reviewer queue, proof commands, and generated `storage/model_risk/` artifact path.
 - Contract Risk / Negotiation Brief tab showing contract risk score, risky clauses, owner actions, and negotiation brief export path.

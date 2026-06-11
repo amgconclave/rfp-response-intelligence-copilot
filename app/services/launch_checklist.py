@@ -69,6 +69,8 @@ class LaunchChecklistService:
                 "POST /evidence/conflict-pack",
                 "GET /evidence/source-trust",
                 "POST /evidence/source-trust-pack",
+                "POST /evidence/governed-retrieval",
+                "POST /evidence/governed-retrieval-pack",
                 "GET /proposal/buyer-intelligence",
                 "POST /proposal/buyer-intelligence-pack",
                 "GET /proposal/buyer-intelligence-replay",
@@ -235,6 +237,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\source_trust -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "evidence/governed-retrieval|Governed Retrieval|governed_retrieval|'
+                    'storage/governed_retrieval" app dashboard docs README.md tests Makefile'
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\governed_retrieval -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -439,6 +449,7 @@ class LaunchChecklistService:
             "conflict_packs": "storage/conflict_packs",
             "citation_lineage": "storage/citation_lineage",
             "source_trust": "storage/source_trust",
+            "governed_retrieval": "storage/governed_retrieval",
             "buyer_intelligence": "storage/buyer_intelligence",
             "agent_council": "storage/agent_council",
             "api_contracts": "storage/api_contracts",
@@ -1167,6 +1178,31 @@ class LaunchChecklistService:
                 200,
                 "Writes Source Trust Gate Markdown and JSON.",
                 ["storage/source_trust/*.md", "storage/source_trust/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Governed retrieval",
+                "POST",
+                "/evidence/governed-retrieval",
+                "evidence",
+                200,
+                (
+                    "Applies source-trust retrieval policies to retrieved citations and returns allowed, "
+                    "review-required, suppressed, blocked, and trace-analysis rows."
+                ),
+                body=(
+                    '{"question":"What disaster recovery, uptime, SSO, encryption, and audit controls are '
+                    'supported?","top_k":6}'
+                ),
+            ),
+            self._row(
+                "Governed Retrieval Pack",
+                "POST",
+                "/evidence/governed-retrieval-pack",
+                "artifact",
+                200,
+                "Writes Governed Retrieval Markdown and JSON.",
+                ["storage/governed_retrieval/*.md", "storage/governed_retrieval/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

@@ -1265,6 +1265,62 @@ class SourceTrustPackResponse(BaseModel):
     trace_id: str
 
 
+class GovernedRetrievalRequest(BaseModel):
+    question: str = "What disaster recovery, uptime, SSO, encryption, and audit controls are supported?"
+    top_k: int = 6
+    include_suppressed: bool = False
+
+
+class GovernedRetrievalResult(BaseModel):
+    result_id: str
+    filename: str
+    chunk_id: str
+    original_score: float
+    adjusted_score: float
+    retrieval_policy: str
+    trust_decision: str
+    trust_score: int
+    governance_action: str
+    visible_to_generator: bool
+    approval_required: bool
+    reviewer_owners: list[str] = Field(default_factory=list)
+    reason: str
+    guardrails: list[str] = Field(default_factory=list)
+    citation: Citation
+
+
+class GovernedRetrievalResponse(BaseModel):
+    title: str
+    question: str
+    status: str
+    generated_at: str
+    top_k: int
+    include_suppressed: bool
+    results: list[GovernedRetrievalResult]
+    allowed_citations: list[Citation] = Field(default_factory=list)
+    blocked_results: list[GovernedRetrievalResult] = Field(default_factory=list)
+    reviewer_queue: list[dict[str, Any]] = Field(default_factory=list)
+    policy_trace: list[dict[str, Any]] = Field(default_factory=list)
+    summary: dict[str, Any]
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class GovernedRetrievalPackRequest(GovernedRetrievalRequest):
+    governed_retrieval: GovernedRetrievalResponse | None = None
+    write_artifact: bool = True
+
+
+class GovernedRetrievalPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    governed_retrieval: GovernedRetrievalResponse
+    trace_id: str
+
+
 class BuyerWorkflowStage(BaseModel):
     stage_id: str
     sequence: int

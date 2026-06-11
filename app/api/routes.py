@@ -74,6 +74,10 @@ from app.models.api import (
     GitPushPlanRequest,
     GitPushPlanResponse,
     GitReadinessResponse,
+    GovernedRetrievalPackRequest,
+    GovernedRetrievalPackResponse,
+    GovernedRetrievalRequest,
+    GovernedRetrievalResponse,
     HandoffBoardRequest,
     HandoffBoardResponse,
     HealthResponse,
@@ -2831,6 +2835,85 @@ async def evidence_source_trust_pack(
             "status": pack.source_trust.status,
             "sources": pack.source_trust.summary["source_count"],
             "blocked": pack.source_trust.summary["blocked_count"],
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/evidence/governed-retrieval",
+    response_model=GovernedRetrievalResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def evidence_governed_retrieval(
+    payload: GovernedRetrievalRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> GovernedRetrievalResponse:
+    trace_id = get_trace_id(request)
+    freshness, conflicts, lineage = await _source_trust_inputs(trace_id, container)
+    source_trust = container.source_trust.trust_gate(f"{trace_id}-source-trust", freshness, conflicts, lineage)
+    result = await container.governed_retrieval.preview(
+        trace_id,
+        payload.question,
+        source_trust,
+        top_k=payload.top_k,
+        include_suppressed=payload.include_suppressed,
+    )
+    container.audit.record(
+        trace_id,
+        "evidence.governed_retrieval_viewed",
+        "governed_retrieval",
+        metadata={
+            "status": result.status,
+            "question": result.question,
+            "candidates": result.summary["candidate_count"],
+            "allowed": result.summary["allowed_count"],
+            "approval_required": result.summary["approval_required_count"],
+        },
+    )
+    return result
+
+
+@router.post(
+    "/evidence/governed-retrieval-pack",
+    response_model=GovernedRetrievalPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def evidence_governed_retrieval_pack(
+    request: Request,
+    payload: GovernedRetrievalPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> GovernedRetrievalPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or GovernedRetrievalPackRequest()
+    governed = request_payload.governed_retrieval
+    if governed is None:
+        freshness, conflicts, lineage = await _source_trust_inputs(trace_id, container)
+        source_trust = container.source_trust.trust_gate(f"{trace_id}-source-trust", freshness, conflicts, lineage)
+        governed = await container.governed_retrieval.preview(
+            f"{trace_id}-governed-retrieval",
+            request_payload.question,
+            source_trust,
+            top_k=request_payload.top_k,
+            include_suppressed=request_payload.include_suppressed,
+        )
+    pack = container.governed_retrieval.pack(
+        trace_id,
+        governed,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "evidence.governed_retrieval_pack_generated",
+        "governed_retrieval_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.governed_retrieval.status,
+            "allowed": pack.governed_retrieval.summary["allowed_count"],
+            "approval_required": pack.governed_retrieval.summary["approval_required_count"],
         },
     )
     return pack

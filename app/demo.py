@@ -381,6 +381,17 @@ async def main() -> None:
         source_trust,
         write_artifact=True,
     )
+    governed_retrieval = await container.governed_retrieval.preview(
+        "demo-governed-retrieval",
+        "What disaster recovery, uptime, SSO, encryption, and audit controls are supported?",
+        source_trust,
+        top_k=6,
+    )
+    governed_retrieval_pack = container.governed_retrieval.pack(
+        "demo-governed-retrieval-pack",
+        governed_retrieval,
+        write_artifact=True,
+    )
     compliance_matrix = container.compliance.evidence_matrix(
         "demo-compliance-evidence-matrix",
         analysis=analysis,
@@ -731,6 +742,16 @@ async def main() -> None:
     print(f"Source Trust Pack JSON: {source_trust_pack.json_artifact_path}")
     print("Source trust directory: storage/source_trust")
     print(
+        "Governed retrieval: "
+        f"status={governed_retrieval.status} "
+        f"allowed={governed_retrieval.summary['allowed_count']} "
+        f"approval_required={governed_retrieval.summary['approval_required_count']} "
+        f"blocked={governed_retrieval.summary['blocked_or_suppressed_count']}"
+    )
+    print(f"Governed Retrieval Pack: {governed_retrieval_pack.artifact_path}")
+    print(f"Governed Retrieval Pack JSON: {governed_retrieval_pack.json_artifact_path}")
+    print("Governed retrieval directory: storage/governed_retrieval")
+    print(
         "Buyer intelligence workflow: "
         f"status={buyer_intelligence.workflow_status} "
         f"approvals={len(buyer_intelligence.human_approval_queue)} "
@@ -924,6 +945,8 @@ async def main() -> None:
         f"citation_lineage_pack={citation_lineage_pack.artifact_path} "
         f"source_trust={source_trust.status}/{source_trust.summary['average_trust_score']} "
         f"source_trust_pack={source_trust_pack.artifact_path} "
+        f"governed_retrieval={governed_retrieval.status}/{governed_retrieval.summary['allowed_count']} "
+        f"governed_retrieval_pack={governed_retrieval_pack.artifact_path} "
         f"buyer_intelligence={buyer_intelligence.workflow_status}/"
         f"{len(buyer_intelligence.human_approval_queue)} "
         f"buyer_intelligence_pack={buyer_intelligence_pack.artifact_path} "

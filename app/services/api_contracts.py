@@ -306,6 +306,8 @@ class ApiContractService:
             "storage/win_loss_packs": "win_loss_packs",
             "/evidence/source-trust-pack": "source_trust_pack",
             "storage/source_trust": "source_trust",
+            "/evidence/governed-retrieval-pack": "governed_retrieval_pack",
+            "storage/governed_retrieval": "governed_retrieval",
             "/proposal/buyer-intelligence-pack": "buyer_intelligence_pack",
             "/proposal/buyer-intelligence-replay-pack": "buyer_workflow_replay_pack",
             "storage/buyer_intelligence": "buyer_intelligence",

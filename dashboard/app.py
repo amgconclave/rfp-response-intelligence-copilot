@@ -109,6 +109,7 @@ tabs = st.tabs(
         "Buyer Intelligence Pack",
         "Agent Council",
         "Decision Provenance",
+        "Governed Retrieval",
     ]
 )
 
@@ -3217,4 +3218,79 @@ with tabs[48]:
             "Download Decision Provenance Markdown",
             pack["markdown"],
             file_name="proposal_decision_provenance_pack.md",
+        )
+
+
+with tabs[49]:
+    st.subheader("Governed Retrieval")
+    st.caption(
+        "Preview how Source Trust Gate policies affect retrieved citations before answer generation."
+    )
+    default_question = "What disaster recovery, uptime, SSO, encryption, and audit controls are supported?"
+    question = st.text_input("Governed retrieval question", value=default_question)
+    top_k = st.number_input("Top K", min_value=1, max_value=12, value=6, step=1)
+    include_suppressed = st.checkbox("Include suppressed sources", value=False)
+    action_cols = st.columns(2)
+    payload = {
+        "question": question,
+        "top_k": int(top_k),
+        "include_suppressed": include_suppressed,
+    }
+    if action_cols[0].button("Preview governed retrieval"):
+        st.session_state.governed_retrieval = post_json("/evidence/governed-retrieval", payload)
+    if action_cols[1].button("Generate Governed Retrieval Pack"):
+        pack = post_json("/evidence/governed-retrieval-pack", {**payload, "write_artifact": True})
+        st.session_state.governed_retrieval_pack = pack
+        st.session_state.governed_retrieval = pack["governed_retrieval"]
+        st.success(f"Governed Retrieval Pack generated under governed_retrieval: {pack['artifact_path']}")
+
+    governed = st.session_state.get("governed_retrieval")
+    if governed:
+        summary = governed["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", governed["status"])
+        metric_cols[1].metric("Candidates", summary["candidate_count"])
+        metric_cols[2].metric("Allowed", summary["allowed_count"])
+        metric_cols[3].metric("Approvals", summary["approval_required_count"])
+        metric_cols[4].metric("Blocked", summary["blocked_or_suppressed_count"])
+        st.write("Governed retrieval results")
+        st.dataframe(
+            [
+                {
+                    "result": item["result_id"],
+                    "source": item["filename"],
+                    "policy": item["retrieval_policy"],
+                    "action": item["governance_action"],
+                    "visible": item["visible_to_generator"],
+                    "approval": item["approval_required"],
+                    "original": item["original_score"],
+                    "adjusted": item["adjusted_score"],
+                    "owners": ", ".join(item["reviewer_owners"]),
+                    "reason": item["reason"],
+                }
+                for item in governed["results"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Allowed citations")
+        st.dataframe(governed["allowed_citations"], use_container_width=True)
+        st.write("Blocked or suppressed results")
+        st.dataframe(governed["blocked_results"], use_container_width=True)
+        st.write("Human review queue")
+        st.dataframe(governed["reviewer_queue"], use_container_width=True)
+        st.write("Policy trace")
+        st.json(governed["policy_trace"])
+        st.write("Local proof commands")
+        st.code("\n".join(governed["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(governed["limitations"])
+
+    pack = st.session_state.get("governed_retrieval_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Governed Retrieval Markdown",
+            pack["markdown"],
+            file_name="governed_retrieval_pack.md",
         )

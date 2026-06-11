@@ -241,6 +241,34 @@ Writes Markdown and JSON Source Trust Gate artifacts under ignored `storage/sour
 
 The pack includes the source trust matrix, reviewer queue, retrieval policy updates, endpoint references, local proof commands, limitations, embedded source-trust JSON, Markdown, JSON, and trace ID.
 
+### `POST /evidence/governed-retrieval`
+
+Returns a Governed Retrieval Preview for a buyer/RFP question. It retrieves candidate citations, joins Source Trust Gate decisions, applies retrieval policies, returns allowed citations, blocked or suppressed rows, human-review queue items, trace-analysis spans, proof commands, limitations, and trace ID.
+
+```json
+{
+  "question": "What disaster recovery, uptime, SSO, encryption, and audit controls are supported?",
+  "top_k": 6,
+  "include_suppressed": false
+}
+```
+
+The default path is deterministic and local/mock. It previews governance before generation and does not mutate the vector index or call external approval systems.
+
+### `POST /evidence/governed-retrieval-pack`
+
+Writes Markdown and JSON Governed Retrieval artifacts under ignored `storage/governed_retrieval/` by default.
+
+```json
+{
+  "question": "What disaster recovery, uptime, SSO, encryption, and audit controls are supported?",
+  "top_k": 6,
+  "write_artifact": true
+}
+```
+
+The pack includes governed retrieval results, allowed citations, blocked/suppressed rows, reviewer decisions, trace spans, local proof commands, limitations, embedded governed-retrieval JSON, Markdown, JSON, and trace ID.
+
 ### `GET /proposal/buyer-intelligence`
 
 Returns the Buyer-Grade Proposal Intelligence workflow. It composes deterministic local signals from requirement analysis, review findings, source trust, model risk, procurement question risk, and cost governance into durable workflow stages, a human approval queue, governance gates, provider routes, shared state, trace analysis, proof commands, limitations, and trace ID.

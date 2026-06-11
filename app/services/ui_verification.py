@@ -537,6 +537,12 @@ class UIVerificationService:
                 "artifact_root": "source_trust",
             },
             {
+                "label": "Governed Retrieval",
+                "endpoint_paths": ["/evidence/governed-retrieval", "/evidence/governed-retrieval-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "governed_retrieval",
+            },
+            {
                 "label": "Buyer Intelligence Pack",
                 "endpoint_paths": [
                     "/proposal/buyer-intelligence",
@@ -808,6 +814,17 @@ class UIVerificationService:
                 "path": "/evidence/source-trust-pack",
                 "purpose": "Source Trust Gate generated reviewer pack.",
                 "expected_artifacts": ["storage/source_trust/*.md", "storage/source_trust/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/evidence/governed-retrieval",
+                "purpose": "Governed Retrieval tab policy-aware citation preview and trace view.",
+            },
+            {
+                "method": "POST",
+                "path": "/evidence/governed-retrieval-pack",
+                "purpose": "Governed Retrieval generated Markdown and JSON artifacts.",
+                "expected_artifacts": ["storage/governed_retrieval/*.md", "storage/governed_retrieval/*.json"],
             },
             {
                 "method": "GET",

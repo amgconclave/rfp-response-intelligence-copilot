@@ -669,6 +669,12 @@ class ArtifactInventoryService:
                 "Source trust gate artifacts with retrieval policy, owner review, and source approval decisions.",
             ),
             self._spec(
+                "governed_retrieval",
+                "governed_retrieval",
+                "POST /evidence/governed-retrieval-pack",
+                "Governed retrieval artifacts with citation policy actions, HITL review queue, and trace analysis.",
+            ),
+            self._spec(
                 "buyer_intelligence",
                 "buyer_intelligence",
                 "POST /proposal/buyer-intelligence-pack",

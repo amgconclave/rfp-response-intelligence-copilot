@@ -27,6 +27,7 @@ from app.services.evidence_freshness import EvidenceFreshnessService
 from app.services.evidence_gap import EvidenceGapService
 from app.services.final_handoff import FinalHandoffService
 from app.services.git_readiness import GitReadinessService
+from app.services.governed_retrieval import GovernedRetrievalService
 from app.services.ingestion import DocumentIngestionService
 from app.services.launch_checklist import LaunchChecklistService
 from app.services.leadership_brief import LeadershipBriefService
@@ -102,6 +103,7 @@ class ServiceContainer:
         self.win_strategy = WinStrategyService(self.repo, settings)
         self.ingestion = DocumentIngestionService(self.repo, self.vector_store, settings)
         self.retrieval = RetrievalService(self.repo, self.vector_store)
+        self.governed_retrieval = GovernedRetrievalService(settings, self.retrieval)
         self.analysis = RfpAnalysisService(self.repo)
         self.generation = DraftGenerationService(
             self.repo,
