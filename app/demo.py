@@ -567,6 +567,17 @@ async def main() -> None:
         win_loss_learning,
         write_artifact=True,
     )
+    retrieval_experiments = await container.retrieval_experiments.compare(
+        trace_id="demo-retrieval-experiments",
+        dataset_path="sample_data/eval_dataset.json",
+        outcomes_fixture_path="sample_data/rfp_outcomes.json",
+        top_k=4,
+    )
+    retrieval_experiment_pack = await container.retrieval_experiments.experiment_pack(
+        trace_id="demo-retrieval-experiment-pack",
+        comparison=retrieval_experiments,
+        write_artifact=True,
+    )
     owner_counts = Counter(task.owner_role for task in action_plan)
 
     print("RFP Response Intelligence Copilot demo")
@@ -882,6 +893,16 @@ async def main() -> None:
     print(f"Win/Loss Strategy Pack: {win_loss_pack.artifact_path}")
     print(f"Win/Loss Strategy Pack JSON: {win_loss_pack.json_artifact_path}")
     print("Win/Loss packs directory: storage/win_loss_packs")
+    print(
+        "Retrieval experiments: "
+        f"status={retrieval_experiments.status} "
+        f"recommended={retrieval_experiments.recommended_policy_id} "
+        f"policies={retrieval_experiments.summary['policy_count']} "
+        f"questions={retrieval_experiments.summary['question_count']}"
+    )
+    print(f"Retrieval Experiment Pack: {retrieval_experiment_pack.artifact_path}")
+    print(f"Retrieval Experiment Pack JSON: {retrieval_experiment_pack.json_artifact_path}")
+    print("Retrieval experiments directory: storage/retrieval_experiments")
     print(f"Eval pass: {evaluation.passed}")
     print(f"Retrieval precision@k: {evaluation.retrieval_precision_at_k}")
     print(f"Citation coverage: {evaluation.citation_coverage}")
@@ -979,6 +1000,8 @@ async def main() -> None:
         f"objection_packs={objection_pack.artifact_path} "
         f"win_loss={win_loss_learning.win_rate}/{win_loss_learning.outcome_count} "
         f"win_loss_packs={win_loss_pack.artifact_path} "
+        f"retrieval_experiments={retrieval_experiments.recommended_policy_id}/{retrieval_experiments.status} "
+        f"retrieval_experiment_pack={retrieval_experiment_pack.artifact_path} "
         f"red_team={red_team['passed']} brief={leadership_brief.artifact_path}"
     )
 

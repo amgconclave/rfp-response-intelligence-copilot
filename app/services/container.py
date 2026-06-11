@@ -41,6 +41,7 @@ from app.services.procurement_risk_desk import ProcurementRiskDeskService
 from app.services.proposal_agent_council import ProposalAgentCouncilService
 from app.services.release import ReleaseService
 from app.services.retrieval import RetrievalService
+from app.services.retrieval_experiments import RetrievalExperimentComparisonService
 from app.services.review_board import RfpReviewBoardService
 from app.services.reviewer import ReviewerQuickstartService
 from app.services.reviewer_collaboration import ReviewerCollaborationService
@@ -103,6 +104,11 @@ class ServiceContainer:
         self.win_strategy = WinStrategyService(self.repo, settings)
         self.ingestion = DocumentIngestionService(self.repo, self.vector_store, settings)
         self.retrieval = RetrievalService(self.repo, self.vector_store)
+        self.retrieval_experiments = RetrievalExperimentComparisonService(
+            settings,
+            self.retrieval,
+            self.win_loss_learning,
+        )
         self.governed_retrieval = GovernedRetrievalService(settings, self.retrieval)
         self.analysis = RfpAnalysisService(self.repo)
         self.generation = DraftGenerationService(

@@ -42,6 +42,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `WinStrategyService`: simulates competitor posture, pricing risk, and pursuit strategy.
 - `CompetitiveObjectionHandlingService`: generates cited competitor, pricing, security, compliance, and implementation objection responses with confidence and reviewer workflow artifacts.
 - `WinLossLearningService`: ingests fake post-RFP outcomes and turns winning evidence/loss patterns into retrieval, eval, and response guidance recommendations.
+- `RetrievalExperimentComparisonService`: compares local retrieval policies over eval fixtures, emits diagnostics and trace spans, and recommends a governed shadow-eval policy without mutating the vector index.
 - `ContractRiskService`: identifies risky customer terms and writes negotiation briefs.
 - `EvidenceGapService`: produces source request packs for unsupported claims.
 - `EvidenceConflictService`: detects cited source-precedence, scope, and ambiguity conflicts before draft approval.
@@ -100,6 +101,7 @@ Generated files are not committed. They are reproducible outputs from local API 
 - `storage/bid_packs/`
 - `storage/objection_packs/`
 - `storage/win_loss_packs/`
+- `storage/retrieval_experiments/`
 - `storage/conflict_packs/`
 - `storage/citation_lineage/`
 - `storage/source_trust/`

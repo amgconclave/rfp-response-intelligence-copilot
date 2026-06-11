@@ -409,6 +409,10 @@ class ArtifactInventoryService:
                 "under storage/win_loss_packs/."
             ),
             (
+                "Call POST /rag/retrieval-experiment-pack to write the Retrieval Experiment Comparison Pack "
+                "under storage/retrieval_experiments/."
+            ),
+            (
                 "Call POST /evidence/freshness-pack to write the Evidence Freshness Pack "
                 "under storage/freshness_packs/."
             ),
@@ -643,6 +647,12 @@ class ArtifactInventoryService:
                 "win_loss_packs",
                 "POST /learning/win-loss-pack",
                 "Win/loss learning strategy pack with retrieval, eval, and response guidance updates.",
+            ),
+            self._spec(
+                "retrieval_experiments",
+                "retrieval_experiments",
+                "POST /rag/retrieval-experiment-pack",
+                "Retrieval policy experiment comparison with diagnostics, trace spans, and governance decision.",
             ),
             self._spec(
                 "freshness_packs",

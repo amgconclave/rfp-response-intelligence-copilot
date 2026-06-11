@@ -110,6 +110,7 @@ tabs = st.tabs(
         "Agent Council",
         "Decision Provenance",
         "Governed Retrieval",
+        "Retrieval Experiments",
     ]
 )
 
@@ -3321,4 +3322,61 @@ with tabs[49]:
             "Download Governed Retrieval Markdown",
             pack["markdown"],
             file_name="governed_retrieval_pack.md",
+        )
+
+
+with tabs[50]:
+    st.subheader("Retrieval Experiments")
+    st.caption(
+        "Compare local retrieval policies against the eval dataset with win/loss boosts, loss-gap guardrails, "
+        "diagnostics, trace spans, and a governed shadow-eval recommendation."
+    )
+    dataset_path = st.text_input("Experiment dataset", "sample_data/eval_dataset.json")
+    outcomes_path = st.text_input("Win/loss outcome fixture", "sample_data/rfp_outcomes.json")
+    experiment_top_k = st.number_input("Experiment Top K", min_value=1, max_value=10, value=4, step=1)
+    payload = {
+        "dataset_path": dataset_path,
+        "outcomes_fixture_path": outcomes_path,
+        "top_k": int(experiment_top_k),
+    }
+    cols = st.columns(2)
+    if cols[0].button("Run retrieval experiments"):
+        st.session_state.retrieval_experiments = post_json("/rag/retrieval-experiments", payload)
+    if cols[1].button("Generate experiment pack"):
+        pack_payload = {**payload, "write_artifact": True}
+        if st.session_state.get("retrieval_experiments"):
+            pack_payload["comparison"] = st.session_state.retrieval_experiments
+        pack = post_json("/rag/retrieval-experiment-pack", pack_payload)
+        st.session_state.retrieval_experiment_pack = pack
+        st.session_state.retrieval_experiments = pack["comparison"]
+        st.success(f"Retrieval Experiment Pack generated under retrieval_experiments: {pack['artifact_path']}")
+
+    comparison = st.session_state.get("retrieval_experiments")
+    if comparison:
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Status", comparison["status"])
+        metric_cols[1].metric("Recommended", comparison["recommended_policy_id"])
+        metric_cols[2].metric("Policies", comparison["summary"]["policy_count"])
+        metric_cols[3].metric("Questions", comparison["summary"]["question_count"])
+        st.write("Policy results")
+        st.dataframe(comparison["policy_results"], use_container_width=True)
+        st.write("Governance decision")
+        st.json(comparison["governance_decision"])
+        st.write("Question diagnostics")
+        st.dataframe(comparison["question_diagnostics"], use_container_width=True)
+        st.write("Trace spans")
+        st.dataframe(comparison["trace_spans"], use_container_width=True)
+        st.write("Local commands")
+        st.code("\n".join(comparison["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(comparison["limitations"])
+
+    pack = st.session_state.get("retrieval_experiment_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Retrieval Experiment Markdown",
+            pack["markdown"],
+            file_name="retrieval_experiment_pack.md",
         )

@@ -543,6 +543,12 @@ class UIVerificationService:
                 "artifact_root": "governed_retrieval",
             },
             {
+                "label": "Retrieval Experiments",
+                "endpoint_paths": ["/rag/retrieval-experiments", "/rag/retrieval-experiment-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "retrieval_experiments",
+            },
+            {
                 "label": "Buyer Intelligence Pack",
                 "endpoint_paths": [
                     "/proposal/buyer-intelligence",
@@ -770,6 +776,20 @@ class UIVerificationService:
                 "path": "/learning/win-loss-pack",
                 "purpose": "Win/Loss Learning generated strategy pack.",
                 "expected_artifacts": ["storage/win_loss_packs/*.md", "storage/win_loss_packs/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/rag/retrieval-experiments",
+                "purpose": "Retrieval Experiments tab local policy comparison and diagnostics.",
+            },
+            {
+                "method": "POST",
+                "path": "/rag/retrieval-experiment-pack",
+                "purpose": "Retrieval Experiments generated comparison pack.",
+                "expected_artifacts": [
+                    "storage/retrieval_experiments/*.md",
+                    "storage/retrieval_experiments/*.json",
+                ],
             },
             {
                 "method": "GET",

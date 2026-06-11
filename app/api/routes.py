@@ -131,6 +131,10 @@ from app.models.api import (
     RequirementMatrixResponse,
     ResponseMemorySearchRequest,
     ResponseMemorySearchResponse,
+    RetrievalExperimentPackRequest,
+    RetrievalExperimentPackResponse,
+    RetrievalExperimentRequest,
+    RetrievalExperimentResponse,
     ReviewAnswerRequest,
     ReviewAnswerResponse,
     ReviewerCollaborationPackRequest,
@@ -2597,6 +2601,83 @@ async def rag_eval_coverage_pack(
             "json_artifact_path": pack.json_artifact_path,
             "coverage_status": pack.coverage.status,
             "coverage_score": pack.coverage.score,
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/rag/retrieval-experiments",
+    response_model=RetrievalExperimentResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def retrieval_experiments(
+    request: Request,
+    payload: RetrievalExperimentRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> RetrievalExperimentResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or RetrievalExperimentRequest()
+    await _freshness_inputs(container)
+    try:
+        result = await container.retrieval_experiments.compare(
+            trace_id=trace_id,
+            dataset_path=request_payload.dataset_path,
+            outcomes_fixture_path=request_payload.outcomes_fixture_path,
+            top_k=request_payload.top_k,
+            policy_ids=request_payload.policy_ids,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    container.audit.record(
+        trace_id,
+        "rag.retrieval_experiments_compared",
+        "retrieval_experiments",
+        metadata={
+            "status": result.status,
+            "recommended_policy_id": result.recommended_policy_id,
+            "policy_count": result.summary["policy_count"],
+            "question_count": result.summary["question_count"],
+        },
+    )
+    return result
+
+
+@router.post(
+    "/rag/retrieval-experiment-pack",
+    response_model=RetrievalExperimentPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def retrieval_experiment_pack(
+    request: Request,
+    payload: RetrievalExperimentPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> RetrievalExperimentPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or RetrievalExperimentPackRequest()
+    await _freshness_inputs(container)
+    try:
+        pack = await container.retrieval_experiments.experiment_pack(
+            trace_id=trace_id,
+            comparison=request_payload.comparison,
+            dataset_path=request_payload.dataset_path,
+            outcomes_fixture_path=request_payload.outcomes_fixture_path,
+            top_k=request_payload.top_k,
+            policy_ids=request_payload.policy_ids,
+            write_artifact=request_payload.write_artifact,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    container.audit.record(
+        trace_id,
+        "rag.retrieval_experiment_pack_generated",
+        "retrieval_experiment_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.comparison.status,
+            "recommended_policy_id": pack.comparison.recommended_policy_id,
         },
     )
     return pack

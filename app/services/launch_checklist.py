@@ -63,6 +63,8 @@ class LaunchChecklistService:
                 "POST /rfp/answer-reuse-library-pack",
                 "POST /learning/win-loss",
                 "POST /learning/win-loss-pack",
+                "POST /rag/retrieval-experiments",
+                "POST /rag/retrieval-experiment-pack",
                 "GET /evidence/freshness",
                 "POST /evidence/freshness-pack",
                 "GET /evidence/conflicts",
@@ -213,6 +215,15 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\win_loss_packs -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "retrieval-experiments|retrieval-experiment-pack|Retrieval Experiments|'
+                    'retrieval_experiments|experiment comparison" '
+                    "app dashboard docs README.md tests sample_data Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\retrieval_experiments -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -445,6 +456,7 @@ class LaunchChecklistService:
             "bid_packs": "storage/bid_packs",
             "objection_packs": "storage/objection_packs",
             "win_loss_packs": "storage/win_loss_packs",
+            "retrieval_experiments": "storage/retrieval_experiments",
             "freshness_packs": "storage/freshness_packs",
             "conflict_packs": "storage/conflict_packs",
             "citation_lineage": "storage/citation_lineage",
@@ -1094,6 +1106,28 @@ class LaunchChecklistService:
                 200,
                 "Writes Win/Loss Learning Strategy Pack Markdown and JSON.",
                 ["storage/win_loss_packs/*.md", "storage/win_loss_packs/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Retrieval Experiments",
+                "POST",
+                "/rag/retrieval-experiments",
+                "rag",
+                200,
+                (
+                    "Compares baseline, win/loss boosted, loss-gap guarded, and balanced governed retrieval "
+                    "policies with diagnostics, trace spans, and governance decision."
+                ),
+                body='{"dataset_path":"sample_data/eval_dataset.json","top_k":4}',
+            ),
+            self._row(
+                "Retrieval Experiment Pack",
+                "POST",
+                "/rag/retrieval-experiment-pack",
+                "artifact",
+                200,
+                "Writes Retrieval Experiment Comparison Pack Markdown and JSON.",
+                ["storage/retrieval_experiments/*.md", "storage/retrieval_experiments/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

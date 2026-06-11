@@ -516,6 +516,31 @@ Writes Markdown and JSON Win/Loss Learning Strategy Pack artifacts under ignored
 
 The pack includes an executive summary, winning evidence pattern table, loss guardrails, retrieval updates, eval updates, response guidance updates, owner action plan, proof commands, limitations, embedded learning response JSON, Markdown, JSON, and trace ID.
 
+### `POST /rag/retrieval-experiments`
+
+Runs a deterministic local comparison of retrieval policies over `sample_data/eval_dataset.json` by default. The comparison includes baseline vector retrieval, win/loss source boosting, loss-gap guardrails, and a balanced governed policy. It returns policy scores, per-question retrieval diagnostics, local trace spans, governance decision, proof commands, limitations, and the recommended shadow-eval policy.
+
+```bash
+curl -X POST "http://127.0.0.1:8000/rag/retrieval-experiments" \
+  -H "X-API-Key: local-demo-key" \
+  -H "Content-Type: application/json" \
+  -d "{}"
+```
+
+Optional body fields include `dataset_path`, `outcomes_fixture_path`, `top_k`, and `policy_ids`.
+
+### `POST /rag/retrieval-experiment-pack`
+
+Writes Markdown and JSON Retrieval Experiment Comparison Pack artifacts under ignored `storage/retrieval_experiments/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes an executive summary, policy comparison table, question diagnostics, local trace spans, governance recommendation, proof commands, limitations, embedded comparison JSON, Markdown, JSON, and trace ID.
+
 ### `POST /api/reviewer-collection`
 
 Writes a Markdown and JSON Reviewer Collection Pack under ignored `storage/api_contracts/` by default. The collection includes endpoint inventory grouped by domain, sample curl and PowerShell commands with `X-API-Key`, demo-token flow, expected status codes, auth notes, generated artifact endpoints, RAG/eval/red-team verification order, recruiter and engineer explanation, local-only limitations, embedded API Contract Snapshot, Markdown, JSON, and trace ID.

@@ -165,6 +165,9 @@ class ReleaseService:
                 "Competitive Objection Handling Pack writes Markdown and JSON under storage/objection_packs."
             ),
             "win_loss_pack": "Win/Loss Learning Strategy Pack writes Markdown and JSON under storage/win_loss_packs.",
+            "retrieval_experiment_pack": (
+                "Retrieval Experiment Comparison Pack writes Markdown and JSON under storage/retrieval_experiments."
+            ),
             "source_trust_pack": "Source Trust Gate Pack writes Markdown and JSON under storage/source_trust.",
             "demo": "Final demo summary plus release gate status and publish pack path.",
             "readme": "README documents Release Candidate and Publish Pack workflow.",
@@ -251,6 +254,11 @@ class ReleaseService:
                 "artifact_root": str((self.settings.storage_dir / "win_loss_packs").resolve()),
                 "endpoints": ["/learning/win-loss", "/learning/win-loss-pack"],
             },
+            "retrieval_experiments": {
+                "service_path": "app/services/retrieval_experiments.py",
+                "artifact_root": str((self.settings.storage_dir / "retrieval_experiments").resolve()),
+                "endpoints": ["/rag/retrieval-experiments", "/rag/retrieval-experiment-pack"],
+            },
             "source_trust": {
                 "service_path": "app/services/source_trust.py",
                 "artifact_root": str((self.settings.storage_dir / "source_trust").resolve()),
@@ -289,6 +297,7 @@ class ReleaseService:
             "bid_packs": "Bid/No-Bid scenario simulator and ROI Impact packs",
             "objection_packs": "Competitive objection handling packs",
             "win_loss_packs": "Win/Loss Learning Strategy packs",
+            "retrieval_experiments": "Retrieval Experiment Comparison packs",
             "freshness_packs": "Evidence freshness and expiry risk packs",
             "source_trust": "Source trust gate packs",
             "agent_council": "Proposal agent council transcript, handoff, tool governance, and budget packs",

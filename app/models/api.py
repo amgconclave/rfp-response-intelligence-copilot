@@ -946,6 +946,42 @@ class RagEvalCoveragePackResponse(BaseModel):
     trace_id: str
 
 
+class RetrievalExperimentRequest(BaseModel):
+    dataset_path: str = "sample_data/eval_dataset.json"
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json"
+    top_k: int = 4
+    policy_ids: list[str] = Field(default_factory=list)
+
+
+class RetrievalExperimentResponse(BaseModel):
+    title: str
+    status: str
+    recommended_policy_id: str
+    summary: dict[str, Any]
+    policy_results: list[dict[str, Any]] = Field(default_factory=list)
+    question_diagnostics: list[dict[str, Any]] = Field(default_factory=list)
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    governance_decision: dict[str, Any]
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class RetrievalExperimentPackRequest(RetrievalExperimentRequest):
+    comparison: RetrievalExperimentResponse | None = None
+    write_artifact: bool = True
+
+
+class RetrievalExperimentPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    comparison: RetrievalExperimentResponse
+    trace_id: str
+
+
 class ComplianceRequirementLink(BaseModel):
     requirement_id: str
     requirement_text: str
