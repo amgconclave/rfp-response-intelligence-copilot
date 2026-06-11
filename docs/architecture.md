@@ -52,6 +52,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `GovernedRetrievalService`: applies source-trust retrieval policies to real retrieval candidates, producing allowed citations, blocked/suppressed rows, HITL reviewer queues, and trace spans before answer generation.
 - `ProposalAgentCouncilService`: turns buyer workflow, source trust, model risk, cost governance, and procurement risk signals into a deterministic multi-role proposal council with shared state, governed tool access, handoffs, token budget estimates, eval scenarios, and local transcript artifacts.
 - `ProposalDecisionProvenanceService`: composes buyer workflow replay, agent council turns, governance gates, provider/cost policy, source trust, model risk, and procurement approvals into a typed decision provenance graph with traceable edges and eval assertions.
+- `BuyerStructuredContractService`: validates buyer workflow, replay, council, and provenance outputs against Pydantic contracts, dependency-injected model lists, role coverage for sales, presales, compliance, procurement, and proposal management, and eval-friendly assertions.
 - `TimelineOrchestrationService`: creates proposal milestones and submission calendar packs.
 - `SubmissionDecisionService`: builds final go/no-go scores and executive memos.
 - `LeadershipBriefService`: consolidates portfolio-level readouts for recruiters and stakeholders.
@@ -108,6 +109,8 @@ Generated files are not committed. They are reproducible outputs from local API 
 - `storage/conflict_packs/`
 - `storage/citation_lineage/`
 - `storage/source_trust/`
+- `storage/buyer_intelligence/`
+- `storage/buyer_contracts/`
 - `storage/agent_council/`
 - `storage/decision_provenance/`
 - `storage/portfolio_packs/`

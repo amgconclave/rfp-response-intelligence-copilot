@@ -487,6 +487,18 @@ async def main() -> None:
         decision_provenance,
         write_artifact=True,
     )
+    buyer_structured_contracts = container.buyer_contracts.audit(
+        trace_id="demo-buyer-structured-contracts",
+        workflow=buyer_intelligence,
+        replay=buyer_workflow_replay,
+        council=agent_council,
+        provenance=decision_provenance,
+    )
+    buyer_structured_contracts_pack = container.buyer_contracts.pack(
+        "demo-buyer-structured-contracts-pack",
+        buyer_structured_contracts,
+        write_artifact=True,
+    )
     procurement_risk_desk = await container.procurement_risk_desk.risk_desk(
         "demo-procurement-risk-desk",
         analysis=analysis,
@@ -829,6 +841,16 @@ async def main() -> None:
     print(f"Decision Provenance Pack JSON: {decision_provenance_pack.json_artifact_path}")
     print("Decision provenance directory: storage/decision_provenance")
     print(
+        "Buyer structured contracts: "
+        f"status={buyer_structured_contracts.status} "
+        f"score={buyer_structured_contracts.score} "
+        f"checks={len(buyer_structured_contracts.checks)} "
+        f"roles={len(buyer_structured_contracts.role_contracts)}"
+    )
+    print(f"Buyer Structured Contract Pack: {buyer_structured_contracts_pack.artifact_path}")
+    print(f"Buyer Structured Contract Pack JSON: {buyer_structured_contracts_pack.json_artifact_path}")
+    print("Buyer contracts directory: storage/buyer_contracts")
+    print(
         "Compliance control coverage: "
         f"{compliance_matrix.coverage_summary['coverage_ratio']} "
         f"families={compliance_matrix.coverage_summary['control_family_count']} "
@@ -1019,6 +1041,8 @@ async def main() -> None:
         f"agent_council_pack={agent_council_pack.artifact_path} "
         f"decision_provenance={decision_provenance.status}/{decision_provenance.summary['node_count']} "
         f"decision_provenance_pack={decision_provenance_pack.artifact_path} "
+        f"buyer_contracts={buyer_structured_contracts.status}/{buyer_structured_contracts.score} "
+        f"buyer_contracts_pack={buyer_structured_contracts_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "
         f"compliance_packs={compliance_control_pack.artifact_path} "
         f"privacy_retention={privacy_retention.summary['high_risk_surface_count']}/"

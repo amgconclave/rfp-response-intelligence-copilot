@@ -354,6 +354,14 @@ class ArtifactInventoryService:
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
+                    'rg "proposal/buyer-contracts|Buyer Structured Output Contract|buyer_contracts" '
+                    "app dashboard docs README.md tests Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\buyer_contracts -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
                     'rg "proposal/agent-council|Proposal Agent Council|agent_council|storage/agent_council" '
                     "app dashboard docs README.md tests Makefile"
                 ),
@@ -443,6 +451,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /proposal/buyer-intelligence-replay-pack to write the Buyer Workflow Replay Pack "
                 "under storage/buyer_intelligence/."
+            ),
+            (
+                "Call POST /proposal/buyer-contracts-pack to write the Buyer Structured Output Contract Pack "
+                "under storage/buyer_contracts/."
             ),
             (
                 "Call POST /proposal/agent-council-pack to write the Proposal Agent Council Pack "
@@ -709,6 +721,15 @@ class ArtifactInventoryService:
                 (
                     "Buyer-grade proposal workflow pack with durable checkpoints, HITL approval queue, "
                     "governance gates, provider routes, local state JSON, and replay transition packs."
+                ),
+            ),
+            self._spec(
+                "buyer_contracts",
+                "buyer_contracts",
+                "POST /proposal/buyer-contracts-pack",
+                (
+                    "Structured output contract artifacts validating buyer workflow, replay, council, "
+                    "and provenance schemas plus role coverage and eval assertions."
                 ),
             ),
             self._spec(

@@ -1627,6 +1627,59 @@ class BuyerWorkflowReplayPackResponse(BaseModel):
     trace_id: str
 
 
+class BuyerContractRoleCoverage(BaseModel):
+    role: str
+    contract_id: str
+    status: str
+    required_outputs: list[str] = Field(default_factory=list)
+    observed_outputs: list[str] = Field(default_factory=list)
+    endpoint_refs: list[str] = Field(default_factory=list)
+    reviewer_controls: list[str] = Field(default_factory=list)
+
+
+class BuyerContractCheck(BaseModel):
+    check_id: str
+    name: str
+    status: str
+    expected: str
+    observed: str
+    evidence: str
+    blocking: bool = False
+    role_refs: list[str] = Field(default_factory=list)
+    endpoint_refs: list[str] = Field(default_factory=list)
+
+
+class BuyerStructuredContractResponse(BaseModel):
+    title: str
+    status: str
+    score: int
+    generated_at: str
+    contract_version: str
+    injected_dependencies: dict[str, Any]
+    output_contracts: list[dict[str, Any]] = Field(default_factory=list)
+    role_contracts: list[BuyerContractRoleCoverage] = Field(default_factory=list)
+    checks: list[BuyerContractCheck] = Field(default_factory=list)
+    schema_snapshots: dict[str, Any] = Field(default_factory=dict)
+    eval_assertions: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class BuyerStructuredContractPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class BuyerStructuredContractPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    contract_audit: BuyerStructuredContractResponse
+    trace_id: str
+
+
 class ProposalCouncilAgent(BaseModel):
     agent_id: str
     role: str

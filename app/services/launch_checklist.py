@@ -79,6 +79,8 @@ class LaunchChecklistService:
                 "POST /proposal/buyer-intelligence-pack",
                 "GET /proposal/buyer-intelligence-replay",
                 "POST /proposal/buyer-intelligence-replay-pack",
+                "GET /proposal/buyer-contracts",
+                "POST /proposal/buyer-contracts-pack",
                 "GET /proposal/agent-council",
                 "POST /proposal/agent-council-pack",
                 "GET /proposal/decision-provenance",
@@ -270,12 +272,17 @@ class LaunchChecklistService:
                 ),
                 (
                     'rg "proposal/buyer-intelligence|buyer-intelligence-replay|'
-                    'Buyer-Grade Proposal Intelligence|Buyer Workflow Replay|'
+                    'proposal/buyer-contracts|Buyer-Grade Proposal Intelligence|'
+                    'Buyer Workflow Replay|Buyer Structured Output Contract|'
                     'buyer_intelligence|storage/buyer_intelligence" '
                     "app dashboard docs README.md tests Makefile"
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\buyer_intelligence -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\buyer_contracts -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -474,6 +481,7 @@ class LaunchChecklistService:
             "source_trust": "storage/source_trust",
             "governed_retrieval": "storage/governed_retrieval",
             "buyer_intelligence": "storage/buyer_intelligence",
+            "buyer_contracts": "storage/buyer_contracts",
             "agent_council": "storage/agent_council",
             "api_contracts": "storage/api_contracts",
             "portfolio_packs": "storage/portfolio_packs",
@@ -1328,6 +1336,27 @@ class LaunchChecklistService:
                 200,
                 "Writes buyer workflow replay Markdown and JSON artifacts.",
                 ["storage/buyer_intelligence/*replay*.md", "storage/buyer_intelligence/*replay*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Buyer Structured Contracts",
+                "GET",
+                "/proposal/buyer-contracts",
+                "proposal",
+                200,
+                (
+                    "Returns typed structured-output contract checks over buyer workflow, replay, council, "
+                    "and decision provenance with role coverage and eval assertions."
+                ),
+            ),
+            self._row(
+                "Buyer Structured Contract Pack",
+                "POST",
+                "/proposal/buyer-contracts-pack",
+                "artifact",
+                200,
+                "Writes buyer structured-output contract Markdown and JSON artifacts.",
+                ["storage/buyer_contracts/*.md", "storage/buyer_contracts/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

@@ -3118,7 +3118,7 @@ with tabs[46]:
         "Compose durable proposal workflow checkpoints, human approvals, governance gates, provider routes, "
         "shared state, local trace analysis, and replayable transition audits for buyer-grade RFP review."
     )
-    action_cols = st.columns(4)
+    action_cols = st.columns(6)
     if action_cols[0].button("Load buyer workflow"):
         st.session_state.buyer_intelligence = get_json("/proposal/buyer-intelligence")
     if action_cols[1].button("Generate Buyer Intelligence Pack"):
@@ -3133,6 +3133,13 @@ with tabs[46]:
         st.session_state.buyer_workflow_replay_pack = pack
         st.session_state.buyer_workflow_replay = pack["replay"]
         st.success(f"Buyer Workflow Replay Pack generated under buyer_intelligence: {pack['artifact_path']}")
+    if action_cols[4].button("Audit contracts"):
+        st.session_state.buyer_structured_contracts = get_json("/proposal/buyer-contracts")
+    if action_cols[5].button("Generate Contract Pack"):
+        pack = post_json("/proposal/buyer-contracts-pack", {"write_artifact": True})
+        st.session_state.buyer_structured_contracts_pack = pack
+        st.session_state.buyer_structured_contracts = pack["contract_audit"]
+        st.success(f"Buyer Structured Contract Pack generated under buyer_contracts: {pack['artifact_path']}")
 
     workflow = st.session_state.get("buyer_intelligence")
     if workflow:
@@ -3202,6 +3209,27 @@ with tabs[46]:
         st.write("Replay proof commands")
         st.code("\n".join(replay["local_proof_commands"]), language="powershell")
 
+    contracts = st.session_state.get("buyer_structured_contracts")
+    if contracts:
+        contract_cols = st.columns(5)
+        contract_cols[0].metric("Contract status", contracts["status"])
+        contract_cols[1].metric("Score", contracts["score"])
+        contract_cols[2].metric("Checks", len(contracts["checks"]))
+        contract_cols[3].metric("Role contracts", len(contracts["role_contracts"]))
+        contract_cols[4].metric("Schemas", len(contracts["output_contracts"]))
+        st.write("Output contracts")
+        st.dataframe(contracts["output_contracts"], use_container_width=True)
+        st.write("Role coverage")
+        st.dataframe(contracts["role_contracts"], use_container_width=True)
+        st.write("Contract checks")
+        st.dataframe(contracts["checks"], use_container_width=True)
+        st.write("Eval assertions")
+        st.dataframe(contracts["eval_assertions"], use_container_width=True)
+        st.write("Injected dependencies")
+        st.json(contracts["injected_dependencies"])
+        st.write("Contract proof commands")
+        st.code("\n".join(contracts["local_proof_commands"]), language="powershell")
+
     pack = st.session_state.get("buyer_intelligence_pack")
     if pack:
         st.write("Generated artifact path", pack["artifact_path"])
@@ -3221,6 +3249,16 @@ with tabs[46]:
             "Download Buyer Workflow Replay Markdown",
             replay_pack["markdown"],
             file_name="buyer_workflow_replay_pack.md",
+        )
+
+    contract_pack = st.session_state.get("buyer_structured_contracts_pack")
+    if contract_pack:
+        st.write("Contract artifact path", contract_pack["artifact_path"])
+        st.write("Contract JSON path", contract_pack["json_artifact_path"])
+        st.download_button(
+            "Download Buyer Structured Contract Markdown",
+            contract_pack["markdown"],
+            file_name="buyer_structured_contract_pack.md",
         )
 
 

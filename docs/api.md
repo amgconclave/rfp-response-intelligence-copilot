@@ -313,6 +313,29 @@ Writes Markdown and JSON replay artifacts under ignored `storage/buyer_intellige
 
 The pack includes the replay transition table, conditional routing decisions, checkpoint validation, eval scenarios, reviewer controls, local proof commands, limitations, embedded replay JSON, Markdown, JSON, and trace ID.
 
+### `GET /proposal/buyer-contracts`
+
+Returns the Buyer Structured Output Contract Audit. It validates the buyer workflow, replay, agent council, and decision provenance as Pydantic structured outputs, then reports role contracts for sales, presales, compliance, procurement, and proposal management, schema snapshots, dependency-injection notes, eval assertions, proof commands, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/proposal/buyer-contracts" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The audit is deterministic and local. It does not call OpenAI, Azure OpenAI, CRM, GRC, or procurement systems.
+
+### `POST /proposal/buyer-contracts-pack`
+
+Writes Markdown and JSON structured-output contract artifacts under ignored `storage/buyer_contracts/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes output contract inventories, compact schema snapshots, role coverage, contract checks, eval assertions, reviewer controls, local proof commands, limitations, embedded audit JSON, Markdown, JSON, and trace ID.
+
 ### `GET /proposal/agent-council`
 
 Returns the Proposal Agent Council. It composes the buyer workflow, source trust, model risk, cost governance, and procurement question risk into deterministic sales, presales, compliance, procurement, and proposal-manager turns with shared state, governed tool access, handoffs, token budget estimates, eval scenarios, proof commands, limitations, and trace ID.

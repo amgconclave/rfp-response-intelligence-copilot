@@ -566,6 +566,8 @@ class UIVerificationService:
                     "/proposal/buyer-intelligence-pack",
                     "/proposal/buyer-intelligence-replay",
                     "/proposal/buyer-intelligence-replay-pack",
+                    "/proposal/buyer-contracts",
+                    "/proposal/buyer-contracts-pack",
                 ],
                 "generated_artifact_tab": True,
                 "artifact_root": "buyer_intelligence",
@@ -905,6 +907,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/buyer_intelligence/*replay*.md",
                     "storage/buyer_intelligence/*replay*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/proposal/buyer-contracts",
+                "purpose": "Buyer Intelligence Pack tab structured output contract audit.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/buyer-contracts-pack",
+                "purpose": "Buyer Intelligence Pack generated structured contract Markdown and JSON artifacts.",
+                "expected_artifacts": [
+                    "storage/buyer_contracts/*.md",
+                    "storage/buyer_contracts/*.json",
                 ],
             },
             {

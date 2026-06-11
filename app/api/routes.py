@@ -30,6 +30,9 @@ from app.models.api import (
     BuyerIntelligencePackRequest,
     BuyerIntelligencePackResponse,
     BuyerIntelligenceWorkflowResponse,
+    BuyerStructuredContractPackRequest,
+    BuyerStructuredContractPackResponse,
+    BuyerStructuredContractResponse,
     BuyerWorkflowReplayPackRequest,
     BuyerWorkflowReplayPackResponse,
     BuyerWorkflowReplayResponse,
@@ -3458,6 +3461,66 @@ async def proposal_decision_provenance_pack(
 
 
 @router.get(
+    "/proposal/buyer-contracts",
+    response_model=BuyerStructuredContractResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def buyer_structured_contracts(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> BuyerStructuredContractResponse:
+    trace_id = get_trace_id(request)
+    outputs = await _buyer_structured_contract_outputs(trace_id, container)
+    contract_audit = container.buyer_contracts.audit(trace_id=trace_id, **outputs)
+    container.audit.record(
+        trace_id,
+        "proposal.buyer_contracts_viewed",
+        "buyer_structured_contracts",
+        metadata={
+            "status": contract_audit.status,
+            "score": contract_audit.score,
+            "checks": len(contract_audit.checks),
+            "roles": len(contract_audit.role_contracts),
+        },
+    )
+    return contract_audit
+
+
+@router.post(
+    "/proposal/buyer-contracts-pack",
+    response_model=BuyerStructuredContractPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def buyer_structured_contracts_pack(
+    request: Request,
+    payload: BuyerStructuredContractPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> BuyerStructuredContractPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or BuyerStructuredContractPackRequest()
+    outputs = await _buyer_structured_contract_outputs(trace_id, container)
+    contract_audit = container.buyer_contracts.audit(trace_id=f"{trace_id}-contracts", **outputs)
+    pack = container.buyer_contracts.pack(
+        trace_id,
+        contract_audit,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.buyer_contracts_pack_generated",
+        "buyer_structured_contracts_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.contract_audit.status,
+            "score": pack.contract_audit.score,
+        },
+    )
+    return pack
+
+
+@router.get(
     "/compliance/evidence-matrix",
     response_model=ComplianceEvidenceMatrixResponse,
     dependencies=[Depends(require_api_key)],
@@ -3994,6 +4057,36 @@ async def _buyer_intelligence_inputs(trace_id: str, container: ServiceContainer)
         "source_trust": source_trust,
         "model_risk": model_risk,
         "procurement_risk": procurement_risk,
+    }
+
+
+async def _buyer_structured_contract_outputs(trace_id: str, container: ServiceContainer) -> dict[str, object]:
+    inputs = await _buyer_intelligence_inputs(trace_id, container)
+    workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+    replay = container.buyer_intelligence.replay(f"{trace_id}-replay", workflow)
+    council = container.proposal_agent_council.council(
+        trace_id=f"{trace_id}-council",
+        workflow=workflow,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    provenance = container.decision_provenance.provenance(
+        trace_id=f"{trace_id}-provenance",
+        workflow=workflow,
+        replay=replay,
+        council=council,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    return {
+        "workflow": workflow,
+        "replay": replay,
+        "council": council,
+        "provenance": provenance,
     }
 
 

@@ -150,3 +150,73 @@ def test_buyer_workflow_replay_pack_writes_artifacts_and_is_indexed(client, auth
 
     audit = client.get("/audit/events", headers=auth_headers).json()
     assert any(event["action"] == "proposal.buyer_intelligence_replay_pack_generated" for event in audit["events"])
+
+
+def test_buyer_structured_contracts_validate_role_outputs_and_eval_assertions(client, auth_headers):
+    response = client.get("/proposal/buyer-contracts", headers=auth_headers)
+
+    assert response.status_code == 200
+    contracts = response.json()
+    assert contracts["title"] == "Buyer Structured Output Contract Audit"
+    assert contracts["status"] == "pass"
+    assert contracts["score"] >= 90
+    assert contracts["injected_dependencies"]["external_provider_required"] is False
+    assert set(contracts["schema_snapshots"]) >= {
+        "BuyerIntelligenceWorkflowResponse",
+        "BuyerWorkflowReplayResponse",
+        "ProposalAgentCouncilResponse",
+        "ProposalDecisionProvenanceResponse",
+    }
+    assert {role["role"] for role in contracts["role_contracts"]} >= {
+        "Sales Lead",
+        "Presales Architect",
+        "Compliance Reviewer",
+        "Procurement Lead",
+        "Proposal Manager",
+    }
+    assert all(role["status"] == "pass" for role in contracts["role_contracts"])
+    assert all(check["status"] == "pass" for check in contracts["checks"])
+    assert all(assertion["passed"] for assertion in contracts["eval_assertions"])
+    assert any("/proposal/buyer-contracts-pack" in command for command in contracts["local_proof_commands"])
+
+    audit = client.get("/audit/events", headers=auth_headers).json()
+    assert any(event["action"] == "proposal.buyer_contracts_viewed" for event in audit["events"])
+
+
+def test_buyer_structured_contract_pack_writes_artifacts_and_is_indexed(client, auth_headers):
+    response = client.post("/proposal/buyer-contracts-pack", headers=auth_headers, json={"write_artifact": True})
+
+    assert response.status_code == 200
+    pack = response.json()
+    assert pack["artifact_path"]
+    assert pack["json_artifact_path"]
+    assert Path(pack["artifact_path"]).exists()
+    assert Path(pack["json_artifact_path"]).exists()
+    assert "buyer_contracts" in pack["artifact_path"]
+    assert "Buyer Structured Output Contract Pack" in pack["markdown"]
+    assert pack["contract_audit"]["status"] == "pass"
+
+    smoke = client.get("/ops/smoke-matrix", headers=auth_headers).json()
+    paths = {row["path"]: row for row in smoke["rows"]}
+    assert "/proposal/buyer-contracts" in paths
+    assert "/proposal/buyer-contracts-pack" in paths
+    assert "storage/buyer_contracts/*.json" in paths["/proposal/buyer-contracts-pack"][
+        "required_artifact_expectations"
+    ]
+
+    dashboard_smoke = client.get("/ui/dashboard-smoke", headers=auth_headers).json()
+    endpoint_paths = {endpoint["path"] for endpoint in dashboard_smoke["endpoint_references"]}
+    assert {"/proposal/buyer-contracts", "/proposal/buyer-contracts-pack"} <= endpoint_paths
+
+    inventory = client.get("/artifacts/inventory", headers=auth_headers).json()
+    assert "buyer_contracts" in {item["key"] for item in inventory["directories"]}
+
+    contract = client.get("/api/contract-audit", headers=auth_headers).json()
+    proposal_endpoints = {endpoint["path"] for endpoint in contract["endpoint_inventory"]["proposal"]}
+    assert {"/proposal/buyer-contracts", "/proposal/buyer-contracts-pack"} <= proposal_endpoints
+    assert "/proposal/buyer-contracts-pack" not in contract["generated_artifact_endpoint_coverage"][
+        "missing_paths"
+    ]
+
+    audit = client.get("/audit/events", headers=auth_headers).json()
+    assert any(event["action"] == "proposal.buyer_contracts_pack_generated" for event in audit["events"])
