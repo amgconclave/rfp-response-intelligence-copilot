@@ -172,14 +172,14 @@ The pack covers the expanded implementation, DPA/privacy, SLA/support, AI govern
 
 ### `GET /evidence/freshness`
 
-Returns the Evidence Freshness + Expiry Risk report. It scores non-RFP source documents by effective date, renewal date, policy owner, endpoint references, citation use, unsupported or absolute claim language, expiry status, risk drivers, and local proof commands.
+Returns the Evidence Freshness + Expiry Risk report. It scores non-RFP source documents by effective date, renewal date, policy owner, endpoint references, citation use, unsupported or absolute claim language, expiry status, risk drivers, and local proof commands. The response also includes a durable review workflow, human review queue, governance policy, and local trace spans so stale or unsupported evidence can be quarantined before customer-facing reuse.
 
 ```bash
 curl -X GET "http://127.0.0.1:8000/evidence/freshness" \
   -H "X-API-Key: local-demo-key"
 ```
 
-The local report uses deterministic sample metadata and falls back to document metadata or content labels for uploaded documents. It does not require a live GRC, policy management, legal, or CRM system.
+The local report uses deterministic sample metadata and falls back to document metadata or content labels for uploaded documents. It does not require a live GRC, policy management, legal, or CRM system; the workflow and trace fields are local governance artifacts for reviewer handoff.
 
 ### `POST /evidence/freshness-pack`
 
@@ -191,7 +191,7 @@ Writes Markdown and JSON Evidence Freshness + Expiry Risk Pack artifacts under i
 }
 ```
 
-The pack includes the source freshness matrix, renewal calendar, owner follow-ups, unsupported-claim flags, endpoint references, exact local proof commands, limitations, embedded freshness JSON, Markdown, JSON, and trace ID.
+The pack includes the source freshness matrix, renewal calendar, owner follow-ups, durable workflow checkpoints, human review queue, governance rules, trace spans, unsupported-claim flags, endpoint references, exact local proof commands, limitations, embedded freshness JSON, Markdown, JSON, and trace ID.
 
 ### `GET /evidence/conflicts`
 

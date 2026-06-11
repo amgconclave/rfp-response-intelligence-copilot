@@ -37,6 +37,11 @@ async def test_evidence_freshness_service_scores_sources_and_flags_risks(tmp_pat
     assert dr_source.expiry_status == "expired"
     assert dr_source.unsupported_claim_flags
     assert "/compliance/evidence-matrix" in dr_source.endpoint_references
+    assert report.review_workflow["status"] == "blocked_until_owner_review"
+    assert "durable workflows" in report.review_workflow["patterns_applied"]
+    assert any(item["workflow_state"] == "blocked_source_quarantine" for item in report.human_review_queue)
+    assert report.governance_policy["policy_id"] == "local-evidence-freshness-gate-v1"
+    assert any(span["span_id"] == "freshness.route_human_review" for span in report.trace_spans)
     repository.reset()
     get_settings.cache_clear()
     get_container.cache_clear()
@@ -51,6 +56,10 @@ def test_evidence_freshness_endpoints_write_pack_and_artifacts(client, auth_head
     assert freshness["summary"]["unsupported_claim_count"] >= 1
     assert freshness["renewal_calendar"]
     assert freshness["owner_followups"]
+    assert freshness["review_workflow"]["current_state"] == "blocked_source_quarantine"
+    assert freshness["human_review_queue"]
+    assert freshness["governance_policy"]["enforcement_mode"] == "review_gate_only"
+    assert len(freshness["trace_spans"]) >= 3
     assert freshness["endpoint_references"]
     assert any(source["filename"] == "dpa_privacy_policy.md" for source in freshness["sources"])
 
@@ -63,6 +72,10 @@ def test_evidence_freshness_endpoints_write_pack_and_artifacts(client, auth_head
     assert Path(pack["json_artifact_path"]).exists()
     assert "freshness_packs" in pack["artifact_path"]
     assert "Evidence Freshness + Expiry Risk Pack" in pack["markdown"]
+    assert "Freshness Review Workflow" in pack["markdown"]
+    assert pack["pack"]["review_workflow"]["status"] == "blocked_until_owner_review"
+    assert pack["pack"]["human_review_queue"]
+    assert pack["pack"]["trace_spans"]
     assert pack["pack"]["summary"]["source_count"] >= 11
     assert pack["pack"]["renewal_calendar"]
     assert pack["pack"]["owner_followups"]

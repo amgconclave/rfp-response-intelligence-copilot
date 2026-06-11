@@ -30,14 +30,19 @@ class EvidenceFreshnessService:
             )
             if document.document_type != "rfp"
         ]
+        summary = self._summary(sources)
         return EvidenceFreshnessResponse(
             title="Evidence Freshness + Expiry Risk",
             generated_at=datetime.now(UTC).isoformat(),
             sources=sources,
-            summary=self._summary(sources),
+            summary=summary,
             unsupported_claims=self._unsupported_claims(sources),
             renewal_calendar=self._renewal_calendar(sources),
             owner_followups=self._owner_followups(sources),
+            review_workflow=self._review_workflow(sources, summary),
+            human_review_queue=self._human_review_queue(sources),
+            governance_policy=self._governance_policy(),
+            trace_spans=self._trace_spans(sources, summary),
             endpoint_references=self._endpoint_references(sources),
             local_proof_commands=self._local_proof_commands(),
             limitations=self._limitations(),
@@ -293,6 +298,10 @@ class EvidenceFreshnessService:
             "renewal_calendar": freshness.renewal_calendar,
             "unsupported_claims": freshness.unsupported_claims,
             "owner_followups": freshness.owner_followups,
+            "review_workflow": freshness.review_workflow,
+            "human_review_queue": freshness.human_review_queue,
+            "governance_policy": freshness.governance_policy,
+            "trace_spans": freshness.trace_spans,
             "endpoint_references": freshness.endpoint_references,
             "local_proof_commands": freshness.local_proof_commands,
             "limitations": freshness.limitations,
@@ -366,6 +375,45 @@ class EvidenceFreshnessService:
                 )
         else:
             lines.append("- None")
+        lines.extend(["", "## Freshness Review Workflow", ""])
+        workflow = pack["review_workflow"]
+        lines.append(f"- Workflow status: {workflow['status']}")
+        lines.append(f"- Current state: {workflow['current_state']}")
+        lines.append(f"- Durable state key: {workflow['durable_state_key']}")
+        if workflow["checkpoints"]:
+            lines.append("")
+            lines.append("| Seq | State | Status | Owner | Sources | Exit condition |")
+            lines.append("| ---: | --- | --- | --- | ---: | --- |")
+            for checkpoint in workflow["checkpoints"]:
+                lines.append(
+                    f"| {self._md(checkpoint['sequence'])} | {self._md(checkpoint['state'])} | "
+                    f"{self._md(checkpoint['status'])} | {self._md(checkpoint['owner_role'])} | "
+                    f"{self._md(checkpoint['source_count'])} | {self._md(checkpoint['exit_condition'])} |"
+                )
+        lines.extend(["", "## Human Review Queue", ""])
+        if pack["human_review_queue"]:
+            lines.append("| Priority | Owner | Source | State | Decision | Due |")
+            lines.append("| --- | --- | --- | --- | --- | --- |")
+            for item in pack["human_review_queue"]:
+                lines.append(
+                    f"| {self._md(item['priority'])} | {self._md(item['owner'])} | "
+                    f"{self._md(item['filename'])} | {self._md(item['workflow_state'])} | "
+                    f"{self._md(item['required_decision'])} | {self._md(item['due_hint'])} |"
+                )
+        else:
+            lines.append("- None")
+        lines.extend(["", "## Governance Policy", ""])
+        policy = pack["governance_policy"]
+        lines.append(f"- Policy ID: {policy['policy_id']}")
+        lines.append(f"- Enforcement mode: {policy['enforcement_mode']}")
+        self._append_list(lines, "Blocked reuse conditions", policy["blocked_reuse_conditions"])
+        self._append_list(lines, "Approval roles", policy["approval_roles"])
+        lines.extend(["", "## Trace Spans", ""])
+        for span in pack["trace_spans"]:
+            lines.append(
+                f"- {span['span_id']} `{span['name']}` status={span['status']} "
+                f"inputs={span['input_count']} outputs={span['output_count']}"
+            )
         lines.extend(["", "## Endpoint References", ""])
         for item in pack["endpoint_references"]:
             lines.append(
@@ -380,6 +428,189 @@ class EvidenceFreshnessService:
             lines.extend(["", "## Freshness Pack Artifacts", ""])
             lines.extend(f"- {label}: {path}" for label, path in pack["artifact_paths"].items())
         return "\n".join(lines).strip() + "\n"
+
+    def _review_workflow(self, sources: list[EvidenceFreshnessSource], summary: dict[str, Any]) -> dict[str, Any]:
+        expired = [source for source in sources if source.expiry_status == "expired"]
+        due = [source for source in sources if source.expiry_status in {"renewal_due", "renewal_watch"}]
+        missing = [source for source in sources if source.expiry_status == "missing_renewal"]
+        flagged = [source for source in sources if source.unsupported_claim_flags]
+        high_risk = [source for source in sources if source.risk_level in {"high", "critical"}]
+        needs_owner_review = sorted(
+            {source.filename for source in [*expired, *due, *missing, *flagged, *high_risk]}
+        )
+        current_state = "owner_review"
+        if expired or any(source.risk_level == "critical" for source in sources):
+            status = "blocked_until_owner_review"
+            current_state = "blocked_source_quarantine"
+        elif needs_owner_review:
+            status = "waiting_for_human_review"
+        else:
+            status = "ready"
+            current_state = "approved_for_reuse"
+        checkpoints = [
+            {
+                "checkpoint_id": "freshness-cp-001",
+                "sequence": 1,
+                "state": "catalog_scan",
+                "status": "complete",
+                "owner_role": "proposal_operations",
+                "source_count": len(sources),
+                "enter_condition": "Local corpus has been ingested.",
+                "exit_condition": "Every non-RFP source has owner, age, renewal, and endpoint signals scored.",
+            },
+            {
+                "checkpoint_id": "freshness-cp-002",
+                "sequence": 2,
+                "state": "renewal_triage",
+                "status": "blocked" if expired else ("review" if due or missing else "complete"),
+                "owner_role": "policy_owner",
+                "source_count": len(expired) + len(due) + len(missing),
+                "enter_condition": "Expiry status is assigned.",
+                "exit_condition": "Expired, due, and missing-renewal sources have owner acknowledgement.",
+            },
+            {
+                "checkpoint_id": "freshness-cp-003",
+                "sequence": 3,
+                "state": "claim_language_review",
+                "status": "review" if flagged else "complete",
+                "owner_role": "security_legal_review",
+                "source_count": len(flagged),
+                "enter_condition": "Unsupported or absolute claim language is detected.",
+                "exit_condition": "Owner approves qualified wording or replaces the source.",
+            },
+            {
+                "checkpoint_id": "freshness-cp-004",
+                "sequence": 4,
+                "state": "retrieval_reuse_gate",
+                "status": "blocked" if expired or high_risk else ("review" if needs_owner_review else "complete"),
+                "owner_role": "ai_engineering",
+                "source_count": len(high_risk),
+                "enter_condition": "Freshness and claim review signals are available.",
+                "exit_condition": "Retrieval policy is block, review_before_use, or allow for every source.",
+            },
+        ]
+        return {
+            "workflow_id": "evidence-freshness-review",
+            "status": status,
+            "current_state": current_state,
+            "durable_state_key": f"freshness:{summary['source_count']}:{summary['expired_count']}:"
+            f"{summary['unsupported_claim_count']}",
+            "patterns_applied": ["durable workflows", "human-in-the-loop", "governance", "trace analysis"],
+            "checkpoints": checkpoints,
+            "transitions": [
+                {
+                    "from_state": "catalog_scan",
+                    "to_state": "renewal_triage",
+                    "condition": "All source records are scored.",
+                    "decision": "continue",
+                },
+                {
+                    "from_state": "renewal_triage",
+                    "to_state": "claim_language_review",
+                    "condition": "Expired sources are quarantined or no expiry blockers exist.",
+                    "decision": "continue_with_guardrails" if needs_owner_review else "continue",
+                },
+                {
+                    "from_state": "claim_language_review",
+                    "to_state": "retrieval_reuse_gate",
+                    "condition": "Unsupported claims are approved, qualified, or blocked.",
+                    "decision": "require_human_review" if flagged else "continue",
+                },
+                {
+                    "from_state": "retrieval_reuse_gate",
+                    "to_state": current_state,
+                    "condition": "Owner review queue and retrieval policy are synchronized.",
+                    "decision": status,
+                },
+            ],
+        }
+
+    def _human_review_queue(self, sources: list[EvidenceFreshnessSource]) -> list[dict[str, Any]]:
+        queue = []
+        for source in sources:
+            reasons = []
+            if source.expiry_status in {"expired", "renewal_due", "renewal_watch", "missing_renewal"}:
+                reasons.append(f"expiry_status={source.expiry_status}")
+            if source.risk_level in {"high", "critical"}:
+                reasons.append(f"risk_level={source.risk_level}")
+            reasons.extend(source.unsupported_claim_flags[:2])
+            if not reasons:
+                continue
+            priority = "critical" if source.expiry_status == "expired" or source.risk_level == "critical" else "high"
+            if priority != "critical" and source.expiry_status in {"renewal_watch", "missing_renewal"}:
+                priority = "medium"
+            queue.append(
+                {
+                    "queue_id": f"freshness-review-{self._slug(source.filename)}",
+                    "owner": source.policy_owner,
+                    "priority": priority,
+                    "filename": source.filename,
+                    "workflow_state": self._workflow_state(source),
+                    "required_decision": self._required_decision(source),
+                    "due_hint": self._due_hint(source),
+                    "reasons": reasons,
+                    "endpoint_references": source.endpoint_references,
+                }
+            )
+        return sorted(queue, key=lambda item: (self._priority_rank(item["priority"]), item["owner"], item["filename"]))
+
+    def _governance_policy(self) -> dict[str, Any]:
+        return {
+            "policy_id": "local-evidence-freshness-gate-v1",
+            "enforcement_mode": "review_gate_only",
+            "blocked_reuse_conditions": [
+                "Source expiry_status is expired.",
+                "Source risk_level is critical.",
+                "Unsupported absolute claim is present without policy owner approval.",
+            ],
+            "review_before_use_conditions": [
+                "Renewal is due or within 60 days.",
+                "Renewal metadata is missing.",
+                "Freshness score is below 75.",
+            ],
+            "approval_roles": ["policy_owner", "security_legal_review", "proposal_operations", "ai_engineering"],
+            "retrieval_guardrails": [
+                "Expired sources should be quarantined from generated answer evidence until owner review.",
+                "Due or unsupported sources may be cited only with explicit qualification.",
+                "Freshness packs must be regenerated for each submission review cycle.",
+            ],
+        }
+
+    def _trace_spans(self, sources: list[EvidenceFreshnessSource], summary: dict[str, Any]) -> list[dict[str, Any]]:
+        return [
+            {
+                "span_id": "freshness.scan_sources",
+                "name": "Scan local source metadata and chunks",
+                "status": "ok",
+                "input_count": len(sources),
+                "output_count": summary["source_count"],
+                "attributes": {
+                    "provider": "local_deterministic",
+                    "external_services": "none",
+                },
+            },
+            {
+                "span_id": "freshness.score_expiry",
+                "name": "Score age, renewal, owner, citation use, and claim language",
+                "status": "review" if summary["high_or_critical_risk_count"] else "ok",
+                "input_count": summary["source_count"],
+                "output_count": summary["high_or_critical_risk_count"],
+                "attributes": {
+                    "expired_count": summary["expired_count"],
+                    "unsupported_claim_count": summary["unsupported_claim_count"],
+                },
+            },
+            {
+                "span_id": "freshness.route_human_review",
+                "name": "Route owner review queue and durable workflow checkpoints",
+                "status": "review" if summary["expired_count"] or summary["unsupported_claim_count"] else "ok",
+                "input_count": summary["source_count"],
+                "output_count": summary["high_or_critical_risk_count"] + summary["renewal_due_count"],
+                "attributes": {
+                    "patterns": "durable workflows,human-in-the-loop,governance",
+                },
+            },
+        ]
 
     def _document_text(self, document_id: str) -> str:
         chunks = [chunk.text for chunk in self.repo.chunks.values() if chunk.document_id == document_id]
@@ -523,6 +754,47 @@ class EvidenceFreshnessService:
 
     def _md(self, value: object) -> str:
         return str(value).replace("|", "\\|").replace("\n", " ").strip()
+
+    def _append_list(self, lines: list[str], title: str, items: list[str]) -> None:
+        lines.append(f"- {title}:")
+        lines.extend(f"  - {item}" for item in items)
+
+    def _slug(self, value: str) -> str:
+        return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-") or "source"
+
+    def _priority_rank(self, priority: str) -> int:
+        return {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(priority, 4)
+
+    def _workflow_state(self, source: EvidenceFreshnessSource) -> str:
+        if source.expiry_status == "expired" or source.risk_level == "critical":
+            return "blocked_source_quarantine"
+        if source.unsupported_claim_flags:
+            return "claim_language_review"
+        if source.expiry_status in {"renewal_due", "renewal_watch", "missing_renewal"}:
+            return "renewal_triage"
+        return "owner_review"
+
+    def _required_decision(self, source: EvidenceFreshnessSource) -> str:
+        if source.expiry_status == "expired":
+            return "renew_source_or_block_customer_citation"
+        if source.unsupported_claim_flags:
+            return "approve_qualified_wording_or_replace_evidence"
+        if source.expiry_status in {"renewal_due", "renewal_watch"}:
+            return "confirm_renewal_or_extend_policy_review_date"
+        if source.expiry_status == "missing_renewal":
+            return "add_renewal_metadata_and_review_cadence"
+        return "approve_standard_reuse"
+
+    def _due_hint(self, source: EvidenceFreshnessSource) -> str:
+        if source.expiry_status == "expired":
+            return "before_submission"
+        if source.days_until_renewal is not None and source.days_until_renewal <= 30:
+            return "within_5_business_days"
+        if source.days_until_renewal is not None and source.days_until_renewal <= 60:
+            return "within_10_business_days"
+        if source.unsupported_claim_flags:
+            return "before_customer_draft"
+        return "next_review_cycle"
 
     def _catalog(self) -> dict[str, dict[str, Any]]:
         return {

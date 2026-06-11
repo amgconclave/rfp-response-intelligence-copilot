@@ -2526,6 +2526,24 @@ with tabs[36]:
             st.dataframe(freshness["unsupported_claims"], use_container_width=True)
         st.write("Owner follow-ups")
         st.dataframe(freshness["owner_followups"], use_container_width=True)
+        workflow = freshness.get("review_workflow", {})
+        if workflow:
+            st.write("Freshness review workflow")
+            workflow_cols = st.columns(3)
+            workflow_cols[0].metric("Workflow status", workflow.get("status", "unknown"))
+            workflow_cols[1].metric("Current state", workflow.get("current_state", "unknown"))
+            workflow_cols[2].metric("Checkpoints", len(workflow.get("checkpoints", [])))
+            st.dataframe(workflow.get("checkpoints", []), use_container_width=True)
+            st.dataframe(workflow.get("transitions", []), use_container_width=True)
+        if freshness.get("human_review_queue"):
+            st.write("Human review queue")
+            st.dataframe(freshness["human_review_queue"], use_container_width=True)
+        if freshness.get("governance_policy"):
+            st.write("Governance policy")
+            st.json(freshness["governance_policy"])
+        if freshness.get("trace_spans"):
+            st.write("Local trace spans")
+            st.dataframe(freshness["trace_spans"], use_container_width=True)
         st.write("Endpoint references")
         st.dataframe(freshness["endpoint_references"], use_container_width=True)
         st.write("Local proof commands")
