@@ -539,6 +539,29 @@ Writes Markdown and JSON Model Risk Register Pack artifacts under ignored `stora
 
 The pack includes the risk register, mapped evidence snippets, release gates, reviewer queue, proof commands, limitations, embedded register JSON, Markdown, JSON, and trace ID.
 
+### `GET /governance/access-policy`
+
+Returns the local Role-Based Access Policy Review. It maps proposal roles to allowed and blocked tools, endpoint permissions, generated artifact permissions, human-review queues, provider boundaries, control gates, local trace spans, eval assertions, proof commands, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/governance/access-policy" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The default path is deterministic and local/mock. It does not call SSO, SCIM, IAM, GRC, OpenAI, or Azure systems.
+
+### `POST /governance/access-policy-pack`
+
+Writes Markdown and JSON Role-Based Access Policy Pack artifacts under ignored `storage/access_policy/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes role policy, endpoint permissions, artifact permissions, reviewer queues, control gates, eval assertions, proof commands, limitations, embedded policy JSON, Markdown, JSON, and trace ID.
+
 ### `GET /procurement/question-risk`
 
 Returns the Procurement Q&A question risk catalog. It simulates security architecture, privacy/DPA, SLA/support, disaster recovery, AI governance/model claims, pricing/commercial, implementation timeline, and out-of-scope/adversarial unsupported-claim buyer questions. Each item includes category, risk level, required reviewer role, approval status, evidence support, unsupported-claim flag, citations, snippets, approved response memory matches, reviewer checklist, escalation owner, evidence gaps, review findings, and coverage summary.

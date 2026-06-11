@@ -296,6 +296,14 @@ class ArtifactInventoryService:
                 "Select-Object FullName,Length,LastWriteTime"
             ),
             (
+                'rg "governance/access-policy|Role-Based Access Policy|access_policy" '
+                "app dashboard docs README.md tests Makefile"
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\access_policy -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
                 'rg "procurement/question-risk|procurement/approval-pack|Procurement Q&A|'
                 'Approval Workflow|procurement_packs|question risk" '
                 "app dashboard docs README.md tests scripts sample_data Makefile"
@@ -541,6 +549,10 @@ class ArtifactInventoryService:
                 "Certification Pack under storage/submission_certifications/."
             ),
             (
+                "Call POST /governance/access-policy-pack to write the Role-Based Access Policy Pack "
+                "under storage/access_policy/."
+            ),
+            (
                 "Call POST /ops/verification-evidence-pack to write the Verification Evidence Pack "
                 "under storage/verification_evidence/."
             ),
@@ -716,6 +728,12 @@ class ArtifactInventoryService:
                 "model_risk",
                 "POST /governance/model-risk-pack",
                 "Model risk register, release gates, reviewer queue, and local AI governance artifacts.",
+            ),
+            self._spec(
+                "access_policy",
+                "access_policy",
+                "POST /governance/access-policy-pack",
+                "Role-based access policy, endpoint permissions, artifact permissions, and HITL control gates.",
             ),
             self._spec(
                 "procurement_packs",

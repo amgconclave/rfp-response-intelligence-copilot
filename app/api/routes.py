@@ -7,6 +7,9 @@ from app.core.config import Settings, get_settings
 from app.core.security import require_api_key
 from app.core.telemetry import get_trace_id
 from app.models.api import (
+    AccessPolicyPackRequest,
+    AccessPolicyPackResponse,
+    AccessPolicyResponse,
     ActionPlanRequest,
     ActionPlanResponse,
     AnalyzeRequest,
@@ -4388,6 +4391,64 @@ async def model_risk_pack(
 
 
 @router.get(
+    "/governance/access-policy",
+    response_model=AccessPolicyResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def access_policy(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> AccessPolicyResponse:
+    trace_id = get_trace_id(request)
+    policy = await _access_policy_report(trace_id, container)
+    container.audit.record(
+        trace_id,
+        "governance.access_policy_viewed",
+        "access_policy",
+        metadata={
+            "status": policy.status,
+            "roles": policy.summary["role_count"],
+            "endpoint_policies": policy.summary["endpoint_policy_count"],
+            "reviewer_queue": policy.summary["reviewer_queue_count"],
+        },
+    )
+    return policy
+
+
+@router.post(
+    "/governance/access-policy-pack",
+    response_model=AccessPolicyPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def access_policy_pack(
+    request: Request,
+    payload: AccessPolicyPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> AccessPolicyPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or AccessPolicyPackRequest()
+    policy = request_payload.policy or await _access_policy_report(trace_id, container)
+    pack = container.access_policy.pack(
+        trace_id,
+        policy,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "governance.access_policy_pack_generated",
+        "access_policy_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.policy.status,
+            "roles": pack.policy.summary["role_count"],
+        },
+    )
+    return pack
+
+
+@router.get(
     "/procurement/question-risk",
     response_model=ProcurementQuestionRiskResponse,
     dependencies=[Depends(require_api_key)],
@@ -4884,6 +4945,59 @@ async def _proposal_quality_benchmark_report(
         certification=certification,
         observability=observability,
         provider_resilience=provider_resilience,
+    )
+
+
+async def _access_policy_report(
+    trace_id: str,
+    container: ServiceContainer,
+) -> AccessPolicyResponse:
+    inputs = await _buyer_intelligence_inputs(f"{trace_id}-access-policy", container)
+    workflow = container.buyer_intelligence.workflow(
+        trace_id=f"{trace_id}-workflow",
+        **inputs,
+    )
+    council = container.proposal_agent_council.council(
+        trace_id=f"{trace_id}-council",
+        workflow=workflow,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    replay = container.buyer_intelligence.replay(f"{trace_id}-replay", workflow)
+    provenance = container.decision_provenance.provenance(
+        trace_id=f"{trace_id}-provenance",
+        workflow=workflow,
+        replay=replay,
+        council=council,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    contract_audit = container.buyer_contracts.audit(
+        trace_id=f"{trace_id}-contracts",
+        workflow=workflow,
+        replay=replay,
+        council=council,
+        provenance=provenance,
+    )
+    certification = container.submission_certification.certify(
+        trace_id=f"{trace_id}-certification",
+        workflow=workflow,
+        replay=replay,
+        council=council,
+        provenance=provenance,
+        contract_audit=contract_audit,
+    )
+    return container.access_policy.policy(
+        trace_id=trace_id,
+        workflow=workflow,
+        council=council,
+        certification=certification,
+        cost_governance=inputs["cost_governance"],
+        model_risk=inputs["model_risk"],
     )
 
 

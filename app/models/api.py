@@ -1438,6 +1438,37 @@ class ModelRiskPackResponse(BaseModel):
     trace_id: str
 
 
+class AccessPolicyResponse(BaseModel):
+    title: str
+    status: str
+    generated_at: str
+    summary: dict[str, Any]
+    roles: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_permissions: list[dict[str, Any]] = Field(default_factory=list)
+    artifact_permissions: list[dict[str, Any]] = Field(default_factory=list)
+    reviewer_queue: list[dict[str, Any]] = Field(default_factory=list)
+    control_gates: list[dict[str, Any]] = Field(default_factory=list)
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    eval_assertions: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class AccessPolicyPackRequest(BaseModel):
+    policy: AccessPolicyResponse | None = None
+    write_artifact: bool = True
+
+
+class AccessPolicyPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    policy: AccessPolicyResponse
+    trace_id: str
+
+
 class CitationLineageItem(BaseModel):
     citation_id: str
     source_kind: str

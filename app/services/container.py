@@ -3,6 +3,7 @@ from functools import lru_cache
 from app.core.config import Settings, get_settings
 from app.providers.factory import build_llm_provider
 from app.repositories.memory import repository
+from app.services.access_policy import AccessPolicyService
 from app.services.action_plan import StakeholderActionPlanService
 from app.services.amendment_impact import RfpAmendmentImpactService
 from app.services.answer_reuse_approval import AnswerReuseApprovalService
@@ -82,6 +83,7 @@ class ServiceContainer:
         self.metrics = MetricsService(self.repo, settings)
         self.cost_governance = CostGovernanceService(settings, self.metrics)
         self.model_risk = ModelRiskRegisterService(self.repo, settings)
+        self.access_policy = AccessPolicyService(settings)
         self.buyer_intelligence = BuyerProposalIntelligenceService(settings)
         self.buyer_contracts = BuyerStructuredContractService(settings)
         self.proposal_agent_council = ProposalAgentCouncilService(settings)

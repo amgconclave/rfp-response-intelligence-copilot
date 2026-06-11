@@ -114,6 +114,8 @@ The Model Risk Register tab and pack map groundedness, provider-change, prompt p
 ```bash
 curl -X GET "http://127.0.0.1:8000/governance/model-risk-register" -H "X-API-Key: local-demo-key"
 curl -X POST "http://127.0.0.1:8000/governance/model-risk-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
+curl -X GET "http://127.0.0.1:8000/governance/access-policy" -H "X-API-Key: local-demo-key"
+curl -X POST "http://127.0.0.1:8000/governance/access-policy-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 curl -X GET "http://127.0.0.1:8000/proposal/buyer-intelligence" -H "X-API-Key: local-demo-key"
 curl -X POST "http://127.0.0.1:8000/proposal/buyer-intelligence-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 curl -X GET "http://127.0.0.1:8000/proposal/buyer-intelligence-replay" -H "X-API-Key: local-demo-key"
@@ -309,6 +311,7 @@ flowchart LR
 - RAG Corpus Coverage + Eval Coverage Pack via `GET /rag/corpus-coverage` and `POST /rag/eval-coverage-pack`, writing Markdown/JSON under ignored `storage/rag_coverage/` with corpus coverage, eval coverage, citation/source coverage, red-team coverage, missing-evidence coverage, gaps, warnings, and local commands.
 - Compliance Evidence Matrix + Control Mapping Pack via `GET /compliance/evidence-matrix` and `POST /compliance/control-pack`, writing Markdown/JSON under ignored `storage/compliance_packs/` with control coverage, requirement links, source snippets, confidence, owners, missing-evidence warnings, unsupported-claim flags, owner actions, reviewer notes, proof commands, and limitations.
 - Privacy Retention Guardrails via `GET /privacy/retention-guardrails` and `POST /privacy/retention-pack`, writing Markdown/JSON under ignored `storage/privacy_packs/` with prompt/log/vector/artifact/upload/eval surfaces, policy evidence snippets, missing controls, redaction rules, retention actions, prompt logging guidance, proof commands, and limitations.
+- Role-Based Access Policy Review via `GET /governance/access-policy` and `POST /governance/access-policy-pack`, writing Markdown/JSON under ignored `storage/access_policy/` with sales, presales, compliance, procurement, proposal, platform, and executive role policies, endpoint permissions, artifact permissions, HITL queues, provider boundaries, trace spans, eval assertions, proof commands, and local/mock limitations.
 - CI Doctor + Audit Pack via `GET /ops/ci-doctor` and `POST /ops/audit-pack`, writing Markdown/JSON under ignored `storage/audit_packs/` with CI/docs/tests/env/Docker/dependency checks, dependency inventory, local verification commands, publish-safety checklist, remediation notes, recruiter/interviewer explanation, and a redacted secret scan summary.
 - Artifact Inventory + README Badge/Checklist Pack via `GET /artifacts/inventory` and `POST /artifacts/readme-checklist`, writing Markdown/JSON under ignored `storage/artifact_indexes/` with latest files, producer endpoints/commands, ignored status, reviewer purpose, freshness notes, local commands, README badge suggestions, and reviewer proof checklist.
 - Dashboard Smoke + UI Verification Pack via `GET /ui/dashboard-smoke`, `POST /ui/verification-pack`, and `python scripts\dashboard_smoke.py`, writing Markdown/JSON under ignored `storage/ui_verification/` with source-level dashboard tab checks, endpoint references, generated-artifact tabs, Streamlit run command, reviewer checklist, screenshot placeholders, troubleshooting, and limitations.
@@ -470,6 +473,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /privacy/retention-pack`: writes a Markdown/JSON Privacy Retention Guardrail Pack under `storage/privacy_packs/`.
 - `GET /governance/model-risk-register`: returns model/provider risk register items, mitigation controls, local evidence, release gates, reviewer queue, proof commands, and limitations.
 - `POST /governance/model-risk-pack`: writes a Markdown/JSON Model Risk Register Pack under `storage/model_risk/`.
+- `GET /governance/access-policy`: returns role-based access policy for proposal roles, endpoints, artifact roots, HITL queues, provider boundaries, trace spans, and eval assertions.
+- `POST /governance/access-policy-pack`: writes a Markdown/JSON Role-Based Access Policy Pack under `storage/access_policy/`.
 - `POST /rfp/contract-risk`: returns contract risk score/status, risky clauses, category counts, redlines, fallback positions, cited proof points, owner actions, assumptions, and missing-evidence warnings.
 - `POST /rfp/negotiation-brief`: writes a Markdown/JSON contract negotiation brief under `storage/negotiation_briefs/`.
 - `POST /rfp/evidence-gaps`: returns prioritized evidence gaps with impacted sections, missing source type, owner/team, severity, due recommendation, SME/source request, related citations, and closure criteria.

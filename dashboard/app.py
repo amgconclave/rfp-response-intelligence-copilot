@@ -116,6 +116,7 @@ tabs = st.tabs(
         "Verification Evidence",
         "Provider Resilience",
         "Amendment Impact",
+        "Access Policy",
     ]
 )
 
@@ -4094,4 +4095,58 @@ with tabs[55]:
             "Download Amendment Impact Markdown",
             pack["markdown"],
             file_name="rfp_amendment_impact_pack.md",
+        )
+
+
+with tabs[56]:
+    st.subheader("Access Policy")
+    st.caption(
+        "Review least-privilege roles, endpoint permissions, artifact access, provider boundaries, "
+        "and human-review queues for the local proposal workflow."
+    )
+    action_cols = st.columns(2)
+    if action_cols[0].button("Load access policy"):
+        st.session_state.access_policy = get_json("/governance/access-policy")
+    if action_cols[1].button("Generate Access Policy Pack"):
+        pack = post_json("/governance/access-policy-pack", {"write_artifact": True})
+        st.session_state.access_policy_pack = pack
+        st.session_state.access_policy = pack["policy"]
+        st.success(f"Access Policy Pack generated: {pack['artifact_path']}")
+
+    policy = st.session_state.get("access_policy")
+    if policy:
+        summary = policy["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", policy["status"])
+        metric_cols[1].metric("Roles", summary["role_count"])
+        metric_cols[2].metric("Endpoints", summary["endpoint_policy_count"])
+        metric_cols[3].metric("Approvals", summary["approval_required_endpoint_count"])
+        metric_cols[4].metric("Reviews", summary["reviewer_queue_count"])
+        st.write("Role policy")
+        st.dataframe(policy["roles"], use_container_width=True)
+        st.write("Endpoint permissions")
+        st.dataframe(policy["endpoint_permissions"], use_container_width=True)
+        st.write("Artifact permissions")
+        st.dataframe(policy["artifact_permissions"], use_container_width=True)
+        st.write("Reviewer queue")
+        st.dataframe(policy["reviewer_queue"], use_container_width=True)
+        st.write("Control gates")
+        st.dataframe(policy["control_gates"], use_container_width=True)
+        st.write("Trace spans")
+        st.dataframe(policy["trace_spans"], use_container_width=True)
+        st.write("Eval assertions")
+        st.dataframe(policy["eval_assertions"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(policy["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(policy["limitations"])
+
+    pack = st.session_state.get("access_policy_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Access Policy Markdown",
+            pack["markdown"],
+            file_name="access_policy_pack.md",
         )

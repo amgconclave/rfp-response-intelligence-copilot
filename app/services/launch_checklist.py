@@ -48,6 +48,8 @@ class LaunchChecklistService:
                 "POST /privacy/retention-pack",
                 "GET /governance/model-risk-register",
                 "POST /governance/model-risk-pack",
+                "GET /governance/access-policy",
+                "POST /governance/access-policy-pack",
                 "GET /procurement/question-risk",
                 "POST /procurement/approval-pack",
                 "GET /procurement/risk-desk",
@@ -181,6 +183,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\model_risk -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "governance/access-policy|Role-Based Access Policy|access_policy" '
+                    "app dashboard docs README.md tests Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\access_policy -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -525,6 +535,7 @@ class LaunchChecklistService:
             "citation_lineage": "storage/citation_lineage",
             "source_trust": "storage/source_trust",
             "governed_retrieval": "storage/governed_retrieval",
+            "access_policy": "storage/access_policy",
             "buyer_intelligence": "storage/buyer_intelligence",
             "buyer_contracts": "storage/buyer_contracts",
             "agent_council": "storage/agent_council",
@@ -1172,6 +1183,27 @@ class LaunchChecklistService:
                 200,
                 "Writes model risk register, release gates, reviewer queue, and governance proof artifacts.",
                 ["storage/model_risk/*.md", "storage/model_risk/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Access Policy Review",
+                "GET",
+                "/governance/access-policy",
+                "governance",
+                200,
+                (
+                    "Returns local role-based access policy across proposal endpoints, artifact roots, "
+                    "human-review queues, provider boundaries, and traceable control gates."
+                ),
+            ),
+            self._row(
+                "Access Policy Pack",
+                "POST",
+                "/governance/access-policy-pack",
+                "artifact",
+                200,
+                "Writes role-based access policy Markdown and JSON artifacts.",
+                ["storage/access_policy/*.md", "storage/access_policy/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

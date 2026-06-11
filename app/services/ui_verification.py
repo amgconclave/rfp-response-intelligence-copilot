@@ -532,6 +532,12 @@ class UIVerificationService:
                 "artifact_root": "model_risk",
             },
             {
+                "label": "Access Policy",
+                "endpoint_paths": ["/governance/access-policy", "/governance/access-policy-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "access_policy",
+            },
+            {
                 "label": "Procurement Q&A",
                 "endpoint_paths": ["/procurement/question-risk", "/procurement/approval-pack"],
                 "generated_artifact_tab": True,
@@ -899,6 +905,17 @@ class UIVerificationService:
                 "path": "/governance/model-risk-pack",
                 "purpose": "Model Risk Register generated governance pack.",
                 "expected_artifacts": ["storage/model_risk/*.md", "storage/model_risk/*.json"],
+            },
+            {
+                "method": "GET",
+                "path": "/governance/access-policy",
+                "purpose": "Access Policy tab role, endpoint, artifact, and reviewer queue view.",
+            },
+            {
+                "method": "POST",
+                "path": "/governance/access-policy-pack",
+                "purpose": "Access Policy generated governance pack.",
+                "expected_artifacts": ["storage/access_policy/*.md", "storage/access_policy/*.json"],
             },
             {
                 "method": "GET",

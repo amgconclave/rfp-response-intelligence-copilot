@@ -728,6 +728,19 @@ async def main() -> None:
         proposal_quality_benchmark,
         write_artifact=True,
     )
+    access_policy = container.access_policy.policy(
+        trace_id="demo-access-policy",
+        workflow=buyer_intelligence,
+        council=agent_council,
+        certification=submission_certification,
+        cost_governance=cost_governance,
+        model_risk=model_risk,
+    )
+    access_policy_pack = container.access_policy.pack(
+        "demo-access-policy-pack",
+        access_policy,
+        write_artifact=True,
+    )
     owner_counts = Counter(task.owner_role for task in action_plan)
 
     print("RFP Response Intelligence Copilot demo")
@@ -1030,6 +1043,16 @@ async def main() -> None:
     print(f"Proposal Quality Benchmark Pack JSON: {proposal_quality_benchmark_pack.json_artifact_path}")
     print("Proposal benchmark directory: storage/proposal_benchmarks")
     print(
+        "Access policy: "
+        f"status={access_policy.status} "
+        f"roles={access_policy.summary['role_count']} "
+        f"endpoints={access_policy.summary['endpoint_policy_count']} "
+        f"reviews={access_policy.summary['reviewer_queue_count']}"
+    )
+    print(f"Access Policy Pack: {access_policy_pack.artifact_path}")
+    print(f"Access Policy Pack JSON: {access_policy_pack.json_artifact_path}")
+    print("Access policy directory: storage/access_policy")
+    print(
         "Compliance control coverage: "
         f"{compliance_matrix.coverage_summary['coverage_ratio']} "
         f"families={compliance_matrix.coverage_summary['control_family_count']} "
@@ -1274,6 +1297,8 @@ async def main() -> None:
         f"submission_certification_pack={submission_certification_pack.artifact_path} "
         f"quality_benchmark={proposal_quality_benchmark.status}/{proposal_quality_benchmark.score} "
         f"quality_benchmark_pack={proposal_quality_benchmark_pack.artifact_path} "
+        f"access_policy={access_policy.status}/{access_policy.summary['role_count']} "
+        f"access_policy_pack={access_policy_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "
         f"compliance_packs={compliance_control_pack.artifact_path} "
         f"privacy_retention={privacy_retention.summary['high_risk_surface_count']}/"
