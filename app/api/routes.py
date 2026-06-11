@@ -134,6 +134,9 @@ from app.models.api import (
     ProposalObservabilityPackRequest,
     ProposalObservabilityPackResponse,
     ProposalObservabilityResponse,
+    ProposalQualityBenchmarkPackRequest,
+    ProposalQualityBenchmarkPackResponse,
+    ProposalQualityBenchmarkResponse,
     ProposalReadinessScorePackRequest,
     ProposalReadinessScorePackResponse,
     ProposalSubmissionCertificationPackRequest,
@@ -4132,6 +4135,71 @@ async def proposal_submission_certification_pack(
 
 
 @router.get(
+    "/proposal/quality-benchmark",
+    response_model=ProposalQualityBenchmarkResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_quality_benchmark(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalQualityBenchmarkResponse:
+    trace_id = get_trace_id(request)
+    benchmark = await _proposal_quality_benchmark_report(trace_id, container)
+    container.audit.record(
+        trace_id,
+        "proposal.quality_benchmark_viewed",
+        "proposal_quality_benchmark",
+        metadata={
+            "status": benchmark.status,
+            "score": benchmark.score,
+            "scenarios": benchmark.scenario_count,
+            "warnings": benchmark.warning_count,
+            "failures": benchmark.failed_count,
+        },
+    )
+    return benchmark
+
+
+@router.post(
+    "/proposal/quality-benchmark-pack",
+    response_model=ProposalQualityBenchmarkPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_quality_benchmark_pack(
+    request: Request,
+    payload: ProposalQualityBenchmarkPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalQualityBenchmarkPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProposalQualityBenchmarkPackRequest()
+    benchmark = await _proposal_quality_benchmark_report(
+        trace_id,
+        container,
+        dataset_path=request_payload.dataset_path,
+        outcomes_fixture_path=request_payload.outcomes_fixture_path,
+        top_k=request_payload.top_k,
+    )
+    pack = container.proposal_benchmark.pack(
+        trace_id,
+        benchmark,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.quality_benchmark_pack_generated",
+        "proposal_quality_benchmark_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": benchmark.status,
+            "score": benchmark.score,
+        },
+    )
+    return pack
+
+
+@router.get(
     "/compliance/evidence-matrix",
     response_model=ComplianceEvidenceMatrixResponse,
     dependencies=[Depends(require_api_key)],
@@ -4788,6 +4856,34 @@ async def _proposal_observability_report(
         cost_governance=inputs["cost_governance"],
         usage_metrics=container.metrics.list_metrics(),
         audit_events=container.audit.list_events(),
+    )
+
+
+async def _proposal_quality_benchmark_report(
+    trace_id: str,
+    container: ServiceContainer,
+    dataset_path: str = "sample_data/eval_dataset.json",
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json",
+    top_k: int = 4,
+) -> ProposalQualityBenchmarkResponse:
+    outputs = await _proposal_submission_certification_outputs(f"{trace_id}-certification", container)
+    certification = container.submission_certification.certify(
+        trace_id=f"{trace_id}-certification",
+        **outputs,
+    )
+    observability = await _proposal_observability_report(
+        f"{trace_id}-observability",
+        container,
+        dataset_path=dataset_path,
+        outcomes_fixture_path=outcomes_fixture_path,
+        top_k=top_k,
+    )
+    provider_resilience = container.provider_resilience.resilience(f"{trace_id}-provider-resilience")
+    return container.proposal_benchmark.benchmark(
+        trace_id=trace_id,
+        certification=certification,
+        observability=observability,
+        provider_resilience=provider_resilience,
     )
 
 

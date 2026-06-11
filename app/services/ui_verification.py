@@ -638,6 +638,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "submission_certifications",
             },
+            {
+                "label": "Quality Benchmark",
+                "endpoint_paths": ["/proposal/quality-benchmark", "/proposal/quality-benchmark-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "proposal_benchmarks",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -1125,6 +1131,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/submission_certifications/*.md",
                     "storage/submission_certifications/*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/proposal/quality-benchmark",
+                "purpose": "Quality Benchmark tab deterministic scenario and role scorecard view.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/quality-benchmark-pack",
+                "purpose": "Quality Benchmark generated Markdown and JSON artifacts.",
+                "expected_artifacts": [
+                    "storage/proposal_benchmarks/*.md",
+                    "storage/proposal_benchmarks/*.json",
                 ],
             },
         ]

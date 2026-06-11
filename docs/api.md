@@ -449,6 +449,27 @@ Writes Markdown and JSON artifacts under ignored `storage/submission_certificati
 
 The pack includes certification gates, state transitions, reviewer queue, eval assertions, reviewer controls, proof commands, limitations, embedded certification JSON, Markdown, JSON, and trace ID.
 
+### `GET /proposal/quality-benchmark`
+
+Returns the Proposal Quality Benchmark. It evaluates submission certification, proposal observability, and provider resilience as typed benchmark scenarios with owner roles, weights, evidence refs, checkpointed transitions, role scorecards, eval assertions, proof commands, limitations, and trace ID. It does not call external providers.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/proposal/quality-benchmark" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /proposal/quality-benchmark-pack`
+
+Writes Markdown and JSON artifacts under ignored `storage/proposal_benchmarks/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes benchmark scenarios, role scorecards, state transitions, eval assertions, reviewer controls, proof commands, limitations, embedded benchmark JSON, Markdown, JSON, and trace ID.
+
 ### `GET /compliance/evidence-matrix`
 
 Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.

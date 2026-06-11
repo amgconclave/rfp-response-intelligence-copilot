@@ -3,7 +3,7 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8000
 DASHBOARD_PORT ?= 8501
 
-.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack model-risk model-risk-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack source-trust source-trust-pack buyer-intelligence buyer-intelligence-pack buyer-replay buyer-replay-pack buyer-contracts buyer-contracts-pack decision-provenance decision-provenance-pack submission-certification submission-certification-pack amendment-impact amendment-impact-pack proposal-observability proposal-observability-pack verification-evidence verification-evidence-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack reviewer-signoff reviewer-signoff-pack exception-register exception-pack answer-reuse answer-reuse-pack answer-reuse-drift answer-reuse-drift-pack answer-reuse-approval answer-reuse-approval-pack readiness-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack provider-resilience provider-resilience-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
+.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack model-risk model-risk-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack source-trust source-trust-pack buyer-intelligence buyer-intelligence-pack buyer-replay buyer-replay-pack buyer-contracts buyer-contracts-pack decision-provenance decision-provenance-pack submission-certification submission-certification-pack quality-benchmark quality-benchmark-pack amendment-impact amendment-impact-pack proposal-observability proposal-observability-pack verification-evidence verification-evidence-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack reviewer-signoff reviewer-signoff-pack exception-register exception-pack answer-reuse answer-reuse-pack answer-reuse-drift answer-reuse-drift-pack answer-reuse-approval answer-reuse-approval-pack readiness-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack provider-resilience provider-resilience-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
 
 install:
 	$(PYTHON) -m pip install -e .
@@ -102,6 +102,12 @@ submission-certification:
 
 submission-certification-pack:
 	$(PYTHON) -c "import httpx; p=httpx.post('http://127.0.0.1:8000/proposal/submission-certification-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json(); print({'artifact': p['artifact_path'], 'json': p['json_artifact_path']})"
+
+quality-benchmark:
+	$(PYTHON) -c "import httpx; b=httpx.get('http://127.0.0.1:8000/proposal/quality-benchmark', headers={'X-API-Key': 'local-demo-key'}, timeout=60).json(); print({'status': b['status'], 'score': b['score'], 'scenarios': b['scenario_count'], 'warnings': b['warning_count'], 'failures': b['failed_count']})"
+
+quality-benchmark-pack:
+	$(PYTHON) -c "import httpx; p=httpx.post('http://127.0.0.1:8000/proposal/quality-benchmark-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=60).json(); print({'artifact': p['artifact_path'], 'json': p['json_artifact_path']})"
 
 amendment-impact:
 	$(PYTHON) -c "import httpx; i=httpx.post('http://127.0.0.1:8000/rfp/amendment-impact', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json(); print({'status': i['status'], 'changes': i['summary']['change_count'], 'blocking': i['summary']['blocking_change_count'], 'gate': i['readiness_impact']['submission_gate']})"

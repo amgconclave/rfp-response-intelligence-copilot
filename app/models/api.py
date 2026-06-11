@@ -1989,6 +1989,58 @@ class ProposalSubmissionCertificationPackResponse(BaseModel):
     trace_id: str
 
 
+class ProposalBenchmarkScenario(BaseModel):
+    scenario_id: str
+    title: str
+    owner_role: str
+    category: str
+    status: str
+    weight: int
+    expected: str
+    observed: str
+    evidence_refs: list[str] = Field(default_factory=list)
+    reviewer_action: str
+    eval_assertion: str
+
+
+class ProposalQualityBenchmarkResponse(BaseModel):
+    title: str
+    benchmark_id: str
+    status: str
+    generated_at: str
+    score: int
+    scenario_count: int
+    passed_count: int
+    warning_count: int
+    failed_count: int
+    injected_dependencies: dict[str, Any]
+    benchmark_summary: dict[str, Any]
+    scenarios: list[ProposalBenchmarkScenario]
+    role_scorecard: list[dict[str, Any]] = Field(default_factory=list)
+    state_transitions: list[dict[str, Any]] = Field(default_factory=list)
+    eval_assertions: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ProposalQualityBenchmarkPackRequest(BaseModel):
+    dataset_path: str = "sample_data/eval_dataset.json"
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json"
+    top_k: int = 4
+    write_artifact: bool = True
+
+
+class ProposalQualityBenchmarkPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    benchmark: ProposalQualityBenchmarkResponse
+    trace_id: str
+
+
 class ProposalCouncilAgent(BaseModel):
     agent_id: str
     role: str

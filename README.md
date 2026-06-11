@@ -128,6 +128,8 @@ curl -X GET "http://127.0.0.1:8000/proposal/decision-provenance" -H "X-API-Key: 
 curl -X POST "http://127.0.0.1:8000/proposal/decision-provenance-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 curl -X GET "http://127.0.0.1:8000/proposal/submission-certification" -H "X-API-Key: local-demo-key"
 curl -X POST "http://127.0.0.1:8000/proposal/submission-certification-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
+curl -X GET "http://127.0.0.1:8000/proposal/quality-benchmark" -H "X-API-Key: local-demo-key"
+curl -X POST "http://127.0.0.1:8000/proposal/quality-benchmark-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 ```
 
 The Procurement Q&A tab and Approval Workflow Pack show question risk, reviewer approval status, evidence support, unsupported-claim flags, citations/snippets, blocked drafts, escalation owners, proof commands, and limitations for procurement/security/legal/commercial review:
@@ -462,6 +464,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /proposal/decision-provenance-pack`: writes a Markdown/JSON Proposal Decision Provenance Pack under `storage/decision_provenance/`.
 - `GET /proposal/submission-certification`: returns typed final proposal certification gates, checkpointed route transitions, reviewer queue, source artifact links, dependency metadata, and eval assertions.
 - `POST /proposal/submission-certification-pack`: writes a Markdown/JSON Proposal Submission Certification Pack under `storage/submission_certifications/`.
+- `GET /proposal/quality-benchmark`: returns deterministic quality benchmark scenarios over submission certification, proposal observability, provider resilience, checkpointing, reviewer routing, and eval assertions.
+- `POST /proposal/quality-benchmark-pack`: writes a Markdown/JSON Proposal Quality Benchmark Pack under `storage/proposal_benchmarks/`.
 - `GET /privacy/retention-guardrails`: returns privacy/retention surface risk, local policy evidence, missing controls, redaction rules, prompt/logging guidance, and owner actions.
 - `POST /privacy/retention-pack`: writes a Markdown/JSON Privacy Retention Guardrail Pack under `storage/privacy_packs/`.
 - `GET /governance/model-risk-register`: returns model/provider risk register items, mitigation controls, local evidence, release gates, reviewer queue, proof commands, and limitations.

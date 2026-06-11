@@ -717,6 +717,17 @@ async def main() -> None:
         proposal_observability,
         write_artifact=True,
     )
+    proposal_quality_benchmark = container.proposal_benchmark.benchmark(
+        trace_id="demo-proposal-quality-benchmark",
+        certification=submission_certification,
+        observability=proposal_observability,
+        provider_resilience=provider_resilience,
+    )
+    proposal_quality_benchmark_pack = container.proposal_benchmark.pack(
+        "demo-proposal-quality-benchmark-pack",
+        proposal_quality_benchmark,
+        write_artifact=True,
+    )
     owner_counts = Counter(task.owner_role for task in action_plan)
 
     print("RFP Response Intelligence Copilot demo")
@@ -1009,6 +1020,16 @@ async def main() -> None:
     print(f"Submission Certification Pack JSON: {submission_certification_pack.json_artifact_path}")
     print("Submission certification directory: storage/submission_certifications")
     print(
+        "Proposal quality benchmark: "
+        f"status={proposal_quality_benchmark.status} "
+        f"score={proposal_quality_benchmark.score} "
+        f"scenarios={proposal_quality_benchmark.scenario_count} "
+        f"warnings={proposal_quality_benchmark.warning_count}"
+    )
+    print(f"Proposal Quality Benchmark Pack: {proposal_quality_benchmark_pack.artifact_path}")
+    print(f"Proposal Quality Benchmark Pack JSON: {proposal_quality_benchmark_pack.json_artifact_path}")
+    print("Proposal benchmark directory: storage/proposal_benchmarks")
+    print(
         "Compliance control coverage: "
         f"{compliance_matrix.coverage_summary['coverage_ratio']} "
         f"families={compliance_matrix.coverage_summary['control_family_count']} "
@@ -1251,6 +1272,8 @@ async def main() -> None:
         f"buyer_contracts_pack={buyer_structured_contracts_pack.artifact_path} "
         f"submission_certification={submission_certification.status}/{submission_certification.readiness_score} "
         f"submission_certification_pack={submission_certification_pack.artifact_path} "
+        f"quality_benchmark={proposal_quality_benchmark.status}/{proposal_quality_benchmark.score} "
+        f"quality_benchmark_pack={proposal_quality_benchmark_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "
         f"compliance_packs={compliance_control_pack.artifact_path} "
         f"privacy_retention={privacy_retention.summary['high_risk_surface_count']}/"

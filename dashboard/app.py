@@ -3289,7 +3289,7 @@ with tabs[46]:
         "Compose durable proposal workflow checkpoints, human approvals, governance gates, provider routes, "
         "shared state, local trace analysis, and replayable transition audits for buyer-grade RFP review."
     )
-    action_cols = st.columns(8)
+    action_cols = st.columns(10)
     if action_cols[0].button("Load buyer workflow"):
         st.session_state.buyer_intelligence = get_json("/proposal/buyer-intelligence")
     if action_cols[1].button("Generate Buyer Intelligence Pack"):
@@ -3319,6 +3319,13 @@ with tabs[46]:
         st.session_state.buyer_structured_contracts_pack = pack
         st.session_state.buyer_structured_contracts = pack["contract_audit"]
         st.success(f"Buyer Structured Contract Pack generated under buyer_contracts: {pack['artifact_path']}")
+    if action_cols[8].button("Load benchmark"):
+        st.session_state.proposal_quality_benchmark = get_json("/proposal/quality-benchmark")
+    if action_cols[9].button("Generate Benchmark Pack"):
+        pack = post_json("/proposal/quality-benchmark-pack", {"write_artifact": True})
+        st.session_state.proposal_quality_benchmark_pack = pack
+        st.session_state.proposal_quality_benchmark = pack["benchmark"]
+        st.success(f"Proposal Quality Benchmark Pack generated under proposal_benchmarks: {pack['artifact_path']}")
 
     workflow = st.session_state.get("buyer_intelligence")
     if workflow:
@@ -3444,6 +3451,38 @@ with tabs[46]:
         st.write("Contract proof commands")
         st.code("\n".join(contracts["local_proof_commands"]), language="powershell")
 
+    benchmark = st.session_state.get("proposal_quality_benchmark")
+    if benchmark:
+        benchmark_cols = st.columns(5)
+        benchmark_cols[0].metric("Benchmark", benchmark["status"])
+        benchmark_cols[1].metric("Score", benchmark["score"])
+        benchmark_cols[2].metric("Scenarios", benchmark["scenario_count"])
+        benchmark_cols[3].metric("Warnings", benchmark["warning_count"])
+        benchmark_cols[4].metric("Failures", benchmark["failed_count"])
+        st.write("Benchmark scenarios")
+        st.dataframe(
+            [
+                {
+                    "scenario": item["title"],
+                    "owner": item["owner_role"],
+                    "category": item["category"],
+                    "status": item["status"],
+                    "weight": item["weight"],
+                    "observed": item["observed"],
+                }
+                for item in benchmark["scenarios"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Role scorecard")
+        st.dataframe(benchmark["role_scorecard"], use_container_width=True)
+        st.write("State transitions")
+        st.dataframe(benchmark["state_transitions"], use_container_width=True)
+        st.write("Eval assertions")
+        st.dataframe(benchmark["eval_assertions"], use_container_width=True)
+        st.write("Benchmark proof commands")
+        st.code("\n".join(benchmark["local_proof_commands"]), language="powershell")
+
     pack = st.session_state.get("buyer_intelligence_pack")
     if pack:
         st.write("Generated artifact path", pack["artifact_path"])
@@ -3484,6 +3523,16 @@ with tabs[46]:
             "Download Buyer Structured Contract Markdown",
             contract_pack["markdown"],
             file_name="buyer_structured_contract_pack.md",
+        )
+
+    benchmark_pack = st.session_state.get("proposal_quality_benchmark_pack")
+    if benchmark_pack:
+        st.write("Benchmark artifact path", benchmark_pack["artifact_path"])
+        st.write("Benchmark JSON path", benchmark_pack["json_artifact_path"])
+        st.download_button(
+            "Download Quality Benchmark Markdown",
+            benchmark_pack["markdown"],
+            file_name="proposal_quality_benchmark_pack.md",
         )
 
 

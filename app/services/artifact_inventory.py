@@ -874,6 +874,15 @@ class ArtifactInventoryService:
                 ),
             ),
             self._spec(
+                "proposal_benchmarks",
+                "proposal_benchmarks",
+                "POST /proposal/quality-benchmark-pack",
+                (
+                    "Quality benchmark artifacts with deterministic scenarios, role scorecards, "
+                    "checkpoint transitions, and eval assertions."
+                ),
+            ),
+            self._spec(
                 "proposal_observability",
                 "proposal_observability",
                 "POST /ops/proposal-observability-pack",

@@ -1573,6 +1573,27 @@ class LaunchChecklistService:
                 '{"write_artifact":true}',
             ),
             self._row(
+                "Proposal Quality Benchmark",
+                "GET",
+                "/proposal/quality-benchmark",
+                "proposal",
+                200,
+                (
+                    "Returns deterministic benchmark scenarios over certification, observability, "
+                    "provider resilience, checkpoints, and reviewer routing."
+                ),
+            ),
+            self._row(
+                "Proposal Quality Benchmark Pack",
+                "POST",
+                "/proposal/quality-benchmark-pack",
+                "artifact",
+                200,
+                "Writes proposal quality benchmark Markdown and JSON artifacts.",
+                ["storage/proposal_benchmarks/*.md", "storage/proposal_benchmarks/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
                 "CI Doctor",
                 "GET",
                 "/ops/ci-doctor",
