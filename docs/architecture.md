@@ -35,6 +35,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `CustomerIntelligenceService`: scores customer profile fit and account-specific response posture.
 - `AnswerReuseLibraryService`: converts accepted answer snippets into governed reusable language with owner, expiry, reuse decision, and citation lineage artifacts.
 - `AnswerReuseDriftService`: checks reusable snippets against cited source text with typed drift findings, checkpointed state transitions, conditional owner routing, and reuse gate artifacts.
+- `AnswerReuseApprovalService`: turns reusable-answer drift findings into durable local HITL approval ledgers with owner checkpoints, governance decisions, trace spans, and artifact packs.
 - `RequirementMatrixService` behavior: requirement rows flow through API/domain models and export workflows.
 - `ReviewBoardService`: produces reviewer findings and red-team style concerns for response quality.
 - `ReviewerCollaborationService`: converts matrix rows, review findings, source gaps, and contract redlines into local reviewer assignments, decision comments, approval status, and review-board artifacts.
@@ -108,6 +109,7 @@ Generated files are not committed. They are reproducible outputs from local API 
 - `storage/exception_registers/`
 - `storage/answer_reuse_library/`
 - `storage/answer_reuse_drift/`
+- `storage/answer_reuse_approvals/`
 - `storage/bid_packs/`
 - `storage/objection_packs/`
 - `storage/win_loss_packs/`

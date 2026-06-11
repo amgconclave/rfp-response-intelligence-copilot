@@ -11,6 +11,10 @@ from app.models.api import (
     ActionPlanResponse,
     AnalyzeRequest,
     AnalyzeResponse,
+    AnswerReuseApprovalLedgerPackRequest,
+    AnswerReuseApprovalLedgerPackResponse,
+    AnswerReuseApprovalLedgerRequest,
+    AnswerReuseApprovalLedgerResponse,
     AnswerReuseDriftPackRequest,
     AnswerReuseDriftPackResponse,
     AnswerReuseDriftRequest,
@@ -580,6 +584,78 @@ async def answer_reuse_drift_pack(
             "snippets": pack.drift_report.summary["snippet_count"],
             "owner_review": pack.drift_report.summary["owner_review_count"],
             "rewrite": pack.drift_report.summary["rewrite_count"],
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/rfp/answer-reuse-approval-ledger",
+    response_model=AnswerReuseApprovalLedgerResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def answer_reuse_approval_ledger(
+    payload: AnswerReuseApprovalLedgerRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> AnswerReuseApprovalLedgerResponse:
+    trace_id = get_trace_id(request)
+    ledger = container.answer_reuse_approval.ledger(
+        trace_id,
+        category=payload.category,
+        customer_profile_id=payload.customer_profile_id,
+        include_expired=payload.include_expired,
+        min_source_overlap=payload.min_source_overlap,
+        requested_by=payload.requested_by,
+        approver_overrides=payload.approver_overrides,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.answer_reuse_approval_ledger_viewed",
+        "answer_reuse_approval_ledger",
+        resource_id=payload.customer_profile_id,
+        metadata={
+            "records": ledger.summary["record_count"],
+            "approved": ledger.summary["approved_count"],
+            "pending": ledger.summary["pending_count"],
+            "blocked": ledger.summary["blocked_count"],
+        },
+    )
+    return ledger
+
+
+@router.post(
+    "/rfp/answer-reuse-approval-pack",
+    response_model=AnswerReuseApprovalLedgerPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def answer_reuse_approval_pack(
+    payload: AnswerReuseApprovalLedgerPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> AnswerReuseApprovalLedgerPackResponse:
+    trace_id = get_trace_id(request)
+    pack = container.answer_reuse_approval.pack(
+        trace_id,
+        ledger=payload.ledger,
+        category=payload.category,
+        customer_profile_id=payload.customer_profile_id,
+        include_expired=payload.include_expired,
+        min_source_overlap=payload.min_source_overlap,
+        requested_by=payload.requested_by,
+        approver_overrides=payload.approver_overrides,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.answer_reuse_approval_pack_created",
+        "answer_reuse_approval_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "records": pack.ledger.summary["record_count"],
+            "pending": pack.ledger.summary["pending_count"],
+            "blocked": pack.ledger.summary["blocked_count"],
         },
     )
     return pack

@@ -76,6 +76,15 @@ async def main() -> None:
         answer_reuse_drift,
         write_artifact=True,
     )
+    answer_reuse_approval = container.answer_reuse_approval.ledger(
+        "demo-answer-reuse-approval",
+        customer_profile_id="regulated_healthcare",
+    )
+    answer_reuse_approval_pack = container.answer_reuse_approval.pack(
+        "demo-answer-reuse-approval-pack",
+        answer_reuse_approval,
+        write_artifact=True,
+    )
     export = container.workbench.export_package(
         analysis,
         draft,
@@ -711,6 +720,16 @@ async def main() -> None:
     print(f"Answer Reuse Drift Pack: {answer_reuse_drift_pack.artifact_path}")
     print(f"Answer Reuse Drift Pack JSON: {answer_reuse_drift_pack.json_artifact_path}")
     print("Answer reuse drift directory: storage/answer_reuse_drift")
+    print(
+        "Answer reuse approval: "
+        f"status={answer_reuse_approval.status} "
+        f"records={answer_reuse_approval.summary['record_count']} "
+        f"pending={answer_reuse_approval.summary['pending_count']} "
+        f"blocked={answer_reuse_approval.summary['blocked_count']}"
+    )
+    print(f"Answer Reuse Approval Pack: {answer_reuse_approval_pack.artifact_path}")
+    print(f"Answer Reuse Approval Pack JSON: {answer_reuse_approval_pack.json_artifact_path}")
+    print("Answer reuse approval directory: storage/answer_reuse_approvals")
     print(f"Answer confidence: {answer.confidence}")
     print(f"Citations: {', '.join(c.filename for c in answer.citations)}")
     print(f"Draft sections: {len(draft.sections)}")
@@ -1111,6 +1130,8 @@ async def main() -> None:
         f"answer_reuse_library={answer_reuse_library_pack.artifact_path} "
         f"answer_reuse_drift={answer_reuse_drift.status}/{answer_reuse_drift.summary['average_drift_score']} "
         f"answer_reuse_drift_pack={answer_reuse_drift_pack.artifact_path} "
+        f"answer_reuse_approval={answer_reuse_approval.status}/{answer_reuse_approval.summary['record_count']} "
+        f"answer_reuse_approval_pack={answer_reuse_approval_pack.artifact_path} "
         f"readiness={scorecard.readiness_score}/{scorecard.readiness_level} "
         f"readiness_pack={readiness_pack.artifact_path} "
         f"win score={win_strategy.win_score}/{win_strategy.win_level} "

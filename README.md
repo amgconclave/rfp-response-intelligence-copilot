@@ -265,6 +265,7 @@ flowchart LR
 - Local approved response memory search with reusable snippets, tags, citations, and confidence.
 - Governed Answer Reuse Library via `POST /rfp/answer-reuse-library` and `POST /rfp/answer-reuse-library-pack`, writing Markdown/JSON under `storage/answer_reuse_library/` with owner, expiry, approval status, reuse decision, citation lineage, owner queue, proof commands, and limitations.
 - Answer Reuse Drift Monitor via `POST /rfp/answer-reuse-drift` and `POST /rfp/answer-reuse-drift-pack`, writing Markdown/JSON under `storage/answer_reuse_drift/` with typed drift findings, source-overlap checks, stale claim terms, checkpointed workflow transitions, owner routing, reuse gates, proof commands, and limitations.
+- Answer Reuse Approval Ledger via `POST /rfp/answer-reuse-approval-ledger` and `POST /rfp/answer-reuse-approval-pack`, writing Markdown/JSON under `storage/answer_reuse_approvals/` with HITL checkpoints, governance decisions, owner approval queues, and trace spans.
 - Local response export packs with executive summary, matrix, drafted sections, citations, risks, missing evidence, and usage summary.
 - Groundedness review board for unsupported claims, weak citations, missing evidence, high-risk requirements, and cost/latency warnings.
 - Reviewer Collaboration Workflow via `POST /rfp/reviewer-workflow` and `POST /rfp/reviewer-workflow-pack`, writing checkpointed Markdown/JSON under `storage/review_boards/` with state-machine gates, traceable transitions, approval path, replay notes, proof commands, and limitations.
@@ -406,6 +407,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /rfp/answer-reuse-library-pack`: writes a Markdown/JSON Answer Reuse Library Pack under `storage/answer_reuse_library/`.
 - `POST /rfp/answer-reuse-drift`: returns reusable-answer drift findings with owner routing, checkpointed transitions, and reuse gate decisions.
 - `POST /rfp/answer-reuse-drift-pack`: writes a Markdown/JSON Answer Reuse Drift Pack under `storage/answer_reuse_drift/`.
+- `POST /rfp/answer-reuse-approval-ledger`: returns durable approval records, owner checkpoints, human review queue, and trace spans for reusable answers.
+- `POST /rfp/answer-reuse-approval-pack`: writes a Markdown/JSON Answer Reuse Approval Pack under `storage/answer_reuse_approvals/`.
 - `POST /rfp/export-package`: writes a local Markdown/JSON response pack under `storage/exports/`.
 - `POST /rfp/review-answer`: reviews groundedness, citation quality, missing evidence, risk, and usage for one answer.
 - `POST /rfp/review-package`: reviews a requirement matrix plus draft/export package and can create the local matrix/draft/export payload when given analysis.

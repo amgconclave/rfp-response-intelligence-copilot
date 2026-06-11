@@ -226,6 +226,41 @@ class AnswerReuseDriftPackResponse(BaseModel):
     trace_id: str
 
 
+class AnswerReuseApprovalLedgerRequest(AnswerReuseDriftRequest):
+    requested_by: str = "proposal_manager"
+    approver_overrides: dict[str, str] = Field(default_factory=dict)
+
+
+class AnswerReuseApprovalLedgerResponse(BaseModel):
+    title: str
+    status: str
+    records: list[dict[str, Any]] = Field(default_factory=list)
+    summary: dict[str, Any]
+    human_review_queue: list[dict[str, Any]] = Field(default_factory=list)
+    workflow: dict[str, Any] = Field(default_factory=dict)
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    governance_policy: dict[str, Any] = Field(default_factory=dict)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class AnswerReuseApprovalLedgerPackRequest(AnswerReuseApprovalLedgerRequest):
+    ledger: AnswerReuseApprovalLedgerResponse | None = None
+    write_artifact: bool = True
+
+
+class AnswerReuseApprovalLedgerPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    ledger: AnswerReuseApprovalLedgerResponse
+    trace_id: str
+
+
 class ExportPackageRequest(BaseModel):
     rfp_document_id: str | None = None
     analyzed_payload: AnalyzeResponse | None = None

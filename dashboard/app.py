@@ -3122,6 +3122,54 @@ with tabs[45]:
         st.session_state.answer_reuse_drift = pack["drift_report"]
         st.success(f"Answer Reuse Drift Pack generated under answer_reuse_drift: {pack['artifact_path']}")
 
+    st.subheader("Answer Reuse Approval Ledger")
+    st.caption(
+        "Turn drift findings into durable reuse decisions with named-owner checkpoints, human review queues, "
+        "and trace spans."
+    )
+    approval_cols = st.columns(2)
+    requested_by = st.text_input("Requested by", value="proposal_manager", key="answer_reuse_requested_by")
+    approval_payload = {**drift_payload, "requested_by": requested_by}
+    if approval_cols[0].button("Load approval ledger"):
+        st.session_state.answer_reuse_approval = post_json("/rfp/answer-reuse-approval-ledger", approval_payload)
+    if approval_cols[1].button("Generate Approval Pack"):
+        pack = post_json("/rfp/answer-reuse-approval-pack", {**approval_payload, "write_artifact": True})
+        st.session_state.answer_reuse_approval_pack = pack
+        st.session_state.answer_reuse_approval = pack["ledger"]
+        st.success(f"Answer Reuse Approval Pack generated under answer_reuse_approvals: {pack['artifact_path']}")
+
+    approval = st.session_state.get("answer_reuse_approval")
+    if approval:
+        summary = approval["summary"]
+        approval_metric_cols = st.columns(5)
+        approval_metric_cols[0].metric("Status", approval["status"])
+        approval_metric_cols[1].metric("Records", summary["record_count"])
+        approval_metric_cols[2].metric("Approved", summary["approved_count"])
+        approval_metric_cols[3].metric("Pending", summary["pending_count"])
+        approval_metric_cols[4].metric("Blocked", summary["blocked_count"])
+        st.write("Approval records")
+        st.dataframe(
+            [
+                {
+                    "id": item["snippet_id"],
+                    "title": item["title"],
+                    "owner": item["owner"],
+                    "decision": item["approval_decision"],
+                    "status": item["approval_status"],
+                    "approvers": ", ".join(item["required_approvers"]),
+                    "checkpoint": item["checkpoint_key"],
+                }
+                for item in approval["records"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Human review queue")
+        st.dataframe(approval["human_review_queue"], use_container_width=True)
+        st.write("Trace spans")
+        st.dataframe(approval["trace_spans"], use_container_width=True)
+        st.write("Approval workflow")
+        st.json(approval["workflow"])
+
     drift = st.session_state.get("answer_reuse_drift")
     if drift:
         summary = drift["summary"]
@@ -3221,6 +3269,16 @@ with tabs[45]:
             "Download Answer Reuse Drift Markdown",
             drift_pack["markdown"],
             file_name="answer_reuse_drift_pack.md",
+        )
+
+    approval_pack = st.session_state.get("answer_reuse_approval_pack")
+    if approval_pack:
+        st.write("Generated approval artifact path", approval_pack["artifact_path"])
+        st.write("Generated approval JSON path", approval_pack["json_artifact_path"])
+        st.download_button(
+            "Download Answer Reuse Approval Markdown",
+            approval_pack["markdown"],
+            file_name="answer_reuse_approval_pack.md",
         )
 
 

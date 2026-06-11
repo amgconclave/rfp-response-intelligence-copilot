@@ -334,6 +334,15 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "answer_reuse_drift",
             },
+            {
+                "label": "Answer Reuse Approval Ledger",
+                "endpoint_paths": [
+                    "/rfp/answer-reuse-approval-ledger",
+                    "/rfp/answer-reuse-approval-pack",
+                ],
+                "generated_artifact_tab": True,
+                "artifact_root": "answer_reuse_approvals",
+            },
             {"label": "Action Plan / Handoff Board", "endpoint_paths": ["/rfp/action-plan", "/rfp/handoff-board"]},
             {"label": "Review Board / Red Team", "endpoint_paths": ["/rfp/review-answer", "/rfp/review-package"]},
             {
@@ -711,6 +720,20 @@ class UIVerificationService:
                 "path": "/rfp/answer-reuse-drift-pack",
                 "purpose": "Answer Reuse Drift generated governance pack.",
                 "expected_artifacts": ["storage/answer_reuse_drift/*.md", "storage/answer_reuse_drift/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/answer-reuse-approval-ledger",
+                "purpose": "Answer Reuse Approval Ledger panel with HITL governance decisions.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/answer-reuse-approval-pack",
+                "purpose": "Answer Reuse Approval generated governance pack.",
+                "expected_artifacts": [
+                    "storage/answer_reuse_approvals/*.md",
+                    "storage/answer_reuse_approvals/*.json",
+                ],
             },
             {"method": "GET", "path": "/api/contract-audit", "purpose": "API Contract tab audit snapshot."},
             {

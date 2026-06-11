@@ -67,6 +67,8 @@ class LaunchChecklistService:
                 "POST /rfp/answer-reuse-library-pack",
                 "POST /rfp/answer-reuse-drift",
                 "POST /rfp/answer-reuse-drift-pack",
+                "POST /rfp/answer-reuse-approval-ledger",
+                "POST /rfp/answer-reuse-approval-pack",
                 "POST /learning/win-loss",
                 "POST /learning/win-loss-pack",
                 "POST /rag/retrieval-experiments",
@@ -229,6 +231,14 @@ class LaunchChecklistService:
                 (
                     "Get-ChildItem -Recurse -File storage\\answer_reuse_drift -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "answer-reuse-approval|Answer Reuse Approval|answer_reuse_approvals|'
+                    'approval ledger" app dashboard docs README.md tests sample_data Makefile'
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\answer_reuse_approvals "
+                    "-ErrorAction SilentlyContinue | Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
                     'rg "bid/scenario-analysis|bid/roi-pack|Bid/No-Bid|ROI Impact|bid_packs|'
@@ -505,6 +515,7 @@ class LaunchChecklistService:
             "exception_registers": "storage/exception_registers",
             "answer_reuse_library": "storage/answer_reuse_library",
             "answer_reuse_drift": "storage/answer_reuse_drift",
+            "answer_reuse_approvals": "storage/answer_reuse_approvals",
             "bid_packs": "storage/bid_packs",
             "objection_packs": "storage/objection_packs",
             "win_loss_packs": "storage/win_loss_packs",
@@ -665,6 +676,25 @@ class LaunchChecklistService:
                 200,
                 "Writes Answer Reuse Drift Markdown and JSON artifacts.",
                 ["storage/answer_reuse_drift/*.md", "storage/answer_reuse_drift/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Answer reuse approval ledger",
+                "POST",
+                "/rfp/answer-reuse-approval-ledger",
+                "enterprise",
+                200,
+                "Returns durable answer reuse approval records with HITL owner checkpoints and trace spans.",
+                body='{"customer_profile_id":"regulated_healthcare"}',
+            ),
+            self._row(
+                "Answer reuse approval pack",
+                "POST",
+                "/rfp/answer-reuse-approval-pack",
+                "artifact",
+                200,
+                "Writes Answer Reuse Approval Markdown and JSON artifacts.",
+                ["storage/answer_reuse_approvals/*.md", "storage/answer_reuse_approvals/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

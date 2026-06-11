@@ -973,6 +973,32 @@ Writes a Markdown and JSON Answer Reuse Drift Pack under `storage/answer_reuse_d
 }
 ```
 
+### `POST /rfp/answer-reuse-approval-ledger`
+
+Turns reusable-answer drift findings into durable local approval records. The response includes approval decisions, required approvers, human review queue, checkpointed transitions, trace spans, governance policy, proof commands, and limitations.
+
+```json
+{
+  "category": "security",
+  "customer_profile_id": "regulated_healthcare",
+  "requested_by": "proposal_manager",
+  "approver_overrides": {
+    "resp_sso_001": "approve"
+  }
+}
+```
+
+### `POST /rfp/answer-reuse-approval-pack`
+
+Writes a Markdown and JSON Answer Reuse Approval Pack under `storage/answer_reuse_approvals/`. The pack documents human-in-the-loop approval gates, owner checkpoints, trace spans, and final reusable-answer decisions.
+
+```json
+{
+  "customer_profile_id": "regulated_healthcare",
+  "write_artifact": true
+}
+```
+
 ### `POST /rfp/export-package`
 
 Creates an interview-ready response package from an analyzed RFP payload or ingested RFP document ID plus an optional draft response. By default, artifacts are written under `storage/exports/` and the response also includes Markdown and structured JSON.

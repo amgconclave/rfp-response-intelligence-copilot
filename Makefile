@@ -3,7 +3,7 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8000
 DASHBOARD_PORT ?= 8501
 
-.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack model-risk model-risk-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack source-trust source-trust-pack buyer-intelligence buyer-intelligence-pack buyer-replay buyer-replay-pack buyer-contracts buyer-contracts-pack decision-provenance decision-provenance-pack submission-certification submission-certification-pack proposal-observability proposal-observability-pack verification-evidence verification-evidence-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack reviewer-signoff reviewer-signoff-pack exception-register exception-pack answer-reuse answer-reuse-pack answer-reuse-drift answer-reuse-drift-pack readiness-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack provider-resilience provider-resilience-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
+.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack model-risk model-risk-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack source-trust source-trust-pack buyer-intelligence buyer-intelligence-pack buyer-replay buyer-replay-pack buyer-contracts buyer-contracts-pack decision-provenance decision-provenance-pack submission-certification submission-certification-pack proposal-observability proposal-observability-pack verification-evidence verification-evidence-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack reviewer-signoff reviewer-signoff-pack exception-register exception-pack answer-reuse answer-reuse-pack answer-reuse-drift answer-reuse-drift-pack answer-reuse-approval answer-reuse-approval-pack readiness-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack provider-resilience provider-resilience-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
 
 install:
 	$(PYTHON) -m pip install -e .
@@ -138,6 +138,12 @@ answer-reuse-drift:
 
 answer-reuse-drift-pack:
 	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/rfp/answer-reuse-drift-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
+
+answer-reuse-approval:
+	$(PYTHON) -c "import httpx; r=httpx.post('http://127.0.0.1:8000/rfp/answer-reuse-approval-ledger', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json(); print({'status': r['status'], 'records': r['summary']['record_count'], 'pending': r['summary']['pending_count'], 'blocked': r['summary']['blocked_count']})"
+
+answer-reuse-approval-pack:
+	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/rfp/answer-reuse-approval-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
 
 readiness-pack:
 	$(PYTHON) -c "import httpx; h={'X-API-Key':'local-demo-key'}; a=httpx.post('http://127.0.0.1:8000/rfp/analyze', headers=h, json={'fixture_path':'sample_data/acme_enterprise_rfp.md'}, timeout=30).json(); m=httpx.post('http://127.0.0.1:8000/rfp/requirement-matrix', headers=h, json={'analyzed_payload':a}, timeout=30).json()['matrix']; print(httpx.post('http://127.0.0.1:8000/rfp/proposal-readiness-score-pack', headers=h, json={'analysis':a,'matrix':m,'write_artifact':True}, timeout=30).json()['artifact_path'])"

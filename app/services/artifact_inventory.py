@@ -337,6 +337,14 @@ class ArtifactInventoryService:
                 "Select-Object FullName,Length,LastWriteTime"
             ),
             (
+                'rg "answer-reuse-approval|Answer Reuse Approval|answer_reuse_approvals|'
+                'approval ledger" app dashboard docs README.md tests Makefile'
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\answer_reuse_approvals "
+                "-ErrorAction SilentlyContinue | Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
                 'rg "bid/scenario-analysis|bid/roi-pack|Bid/No-Bid|ROI Impact|bid_packs|'
                 'risk-adjusted ROI" app dashboard docs README.md tests scripts sample_data Makefile'
             ),
@@ -463,6 +471,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /rfp/answer-reuse-drift-pack to write the Answer Reuse Drift Pack "
                 "under storage/answer_reuse_drift/."
+            ),
+            (
+                "Call POST /rfp/answer-reuse-approval-pack to write the Answer Reuse Approval Pack "
+                "under storage/answer_reuse_approvals/."
             ),
             (
                 "Call POST /bid/roi-pack to write the Bid/No-Bid ROI Impact Pack "
@@ -734,6 +746,12 @@ class ArtifactInventoryService:
                 "answer_reuse_drift",
                 "POST /rfp/answer-reuse-drift-pack",
                 "Checkpointed reusable-answer drift monitor with owner routing and reuse gate decisions.",
+            ),
+            self._spec(
+                "answer_reuse_approvals",
+                "answer_reuse_approvals",
+                "POST /rfp/answer-reuse-approval-pack",
+                "Durable reusable-answer approval ledger with HITL checkpoints, owner queue, and trace spans.",
             ),
             self._spec(
                 "bid_packs",
