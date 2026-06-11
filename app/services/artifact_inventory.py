@@ -587,6 +587,12 @@ class ArtifactInventoryService:
                 "Citation lineage and integrity artifacts with missing, stale, weak, and claim-risk checks.",
             ),
             self._spec(
+                "source_trust",
+                "source_trust",
+                "POST /evidence/source-trust-pack",
+                "Source trust gate artifacts with retrieval policy, owner review, and source approval decisions.",
+            ),
+            self._spec(
                 "audit_packs",
                 "audit_packs",
                 "POST /ops/audit-pack",

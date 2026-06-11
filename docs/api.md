@@ -218,6 +218,29 @@ Writes Markdown and JSON Citation Lineage + Integrity Pack artifacts under ignor
 
 The pack includes the citation lineage matrix, stale/missing citation lists, generated-claim flags, owner follow-ups, endpoint references, exact proof commands, limitations, Markdown, JSON, and trace ID.
 
+### `GET /evidence/source-trust`
+
+Returns the Source Trust Gate report. It combines Evidence Freshness, Evidence Conflict Resolver, and Citation Lineage signals into source-level trust scores, reuse decisions, retrieval policies, reviewer queues, endpoint impact, proof commands, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/evidence/source-trust" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The default path auto-loads the local sample corpus and uses deterministic rules. It recommends retrieval policy updates but does not mutate a live vector index or external policy system.
+
+### `POST /evidence/source-trust-pack`
+
+Writes Markdown and JSON Source Trust Gate artifacts under ignored `storage/source_trust/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes the source trust matrix, reviewer queue, retrieval policy updates, endpoint references, local proof commands, limitations, embedded source-trust JSON, Markdown, JSON, and trace ID.
+
 ### `GET /compliance/evidence-matrix`
 
 Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.

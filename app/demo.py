@@ -342,6 +342,17 @@ async def main() -> None:
         citation_lineage,
         write_artifact=True,
     )
+    source_trust = container.source_trust.trust_gate(
+        "demo-source-trust",
+        evidence_freshness,
+        evidence_conflicts,
+        citation_lineage,
+    )
+    source_trust_pack = container.source_trust.trust_pack(
+        "demo-source-trust-pack",
+        source_trust,
+        write_artifact=True,
+    )
     compliance_matrix = container.compliance.evidence_matrix(
         "demo-compliance-evidence-matrix",
         analysis=analysis,
@@ -599,6 +610,16 @@ async def main() -> None:
     print(f"Citation Lineage Pack JSON: {citation_lineage_pack.json_artifact_path}")
     print("Citation lineage directory: storage/citation_lineage")
     print(
+        "Source trust gate: "
+        f"status={source_trust.status} "
+        f"avg={source_trust.summary['average_trust_score']} "
+        f"approved={source_trust.summary['approved_count']} "
+        f"blocked={source_trust.summary['blocked_count']}"
+    )
+    print(f"Source Trust Pack: {source_trust_pack.artifact_path}")
+    print(f"Source Trust Pack JSON: {source_trust_pack.json_artifact_path}")
+    print("Source trust directory: storage/source_trust")
+    print(
         "Compliance control coverage: "
         f"{compliance_matrix.coverage_summary['coverage_ratio']} "
         f"families={compliance_matrix.coverage_summary['control_family_count']} "
@@ -732,6 +753,8 @@ async def main() -> None:
         f"conflict_packs={evidence_conflict_pack.artifact_path} "
         f"citation_lineage={citation_lineage.score}/{citation_lineage.summary['citation_count']} "
         f"citation_lineage_pack={citation_lineage_pack.artifact_path} "
+        f"source_trust={source_trust.status}/{source_trust.summary['average_trust_score']} "
+        f"source_trust_pack={source_trust_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "
         f"compliance_packs={compliance_control_pack.artifact_path} "
         f"privacy_retention={privacy_retention.summary['high_risk_surface_count']}/"

@@ -39,6 +39,7 @@ from app.services.reviewer import ReviewerQuickstartService
 from app.services.reviewer_collaboration import ReviewerCollaborationService
 from app.services.rfp_analysis import RfpAnalysisService
 from app.services.runtime_demo import RuntimeDemoService
+from app.services.source_trust import SourceTrustGateService
 from app.services.submission_decision import SubmissionDecisionService
 from app.services.submission_exceptions import SubmissionExceptionService
 from app.services.submission_regression import SubmissionRegressionService
@@ -71,6 +72,7 @@ class ServiceContainer:
         self.submission_decision = SubmissionDecisionService(settings)
         self.submission_exceptions = SubmissionExceptionService(settings)
         self.submission_regression = SubmissionRegressionService(settings)
+        self.source_trust = SourceTrustGateService(settings)
         self.demo_script = DemoScriptService(settings)
         self.api_contracts = ApiContractService(settings)
         self.artifact_inventory = ArtifactInventoryService(settings)

@@ -60,6 +60,8 @@ class LaunchChecklistService:
                 "POST /evidence/freshness-pack",
                 "GET /evidence/conflicts",
                 "POST /evidence/conflict-pack",
+                "GET /evidence/source-trust",
+                "POST /evidence/source-trust-pack",
                 "GET /ops/ci-doctor",
                 "POST /ops/audit-pack",
                 "GET /api/contract-audit",
@@ -186,6 +188,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\conflict_packs -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "evidence/source-trust|Source Trust|source_trust|storage/source_trust" '
+                    "app dashboard docs README.md tests Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\source_trust -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -368,6 +378,7 @@ class LaunchChecklistService:
             "freshness_packs": "storage/freshness_packs",
             "conflict_packs": "storage/conflict_packs",
             "citation_lineage": "storage/citation_lineage",
+            "source_trust": "storage/source_trust",
             "api_contracts": "storage/api_contracts",
             "portfolio_packs": "storage/portfolio_packs",
             "release_packs": "storage/release_packs",
@@ -999,6 +1010,27 @@ class LaunchChecklistService:
                 200,
                 "Writes citation lineage integrity Markdown and JSON.",
                 ["storage/citation_lineage/*.md", "storage/citation_lineage/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Source trust gate",
+                "GET",
+                "/evidence/source-trust",
+                "evidence",
+                200,
+                (
+                    "Returns source-level trust decisions by combining freshness, conflict, and "
+                    "citation-lineage signals into retrieval policy guidance."
+                ),
+            ),
+            self._row(
+                "Source Trust Pack",
+                "POST",
+                "/evidence/source-trust-pack",
+                "artifact",
+                200,
+                "Writes Source Trust Gate Markdown and JSON.",
+                ["storage/source_trust/*.md", "storage/source_trust/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

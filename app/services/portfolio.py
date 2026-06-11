@@ -52,6 +52,7 @@ class PortfolioService:
                 "bid_packs": str((self.settings.storage_dir / "bid_packs").resolve()),
                 "objection_packs": str((self.settings.storage_dir / "objection_packs").resolve()),
                 "win_loss_packs": str((self.settings.storage_dir / "win_loss_packs").resolve()),
+                "source_trust": str((self.settings.storage_dir / "source_trust").resolve()),
             },
             limitations=[
                 "Local portfolio mode uses deterministic mock LLM behavior by default; paid OpenAI/Azure APIs are optional adapters.",
@@ -318,6 +319,23 @@ class PortfolioService:
                 ["sample_data/rfp_outcomes.json", "docs/api.md"],
             ),
             self._skill(
+                "source-trust-gate",
+                "Source trust gate for retrieval policy and reviewer approval decisions",
+                [
+                    "Freshness/conflict/lineage signal consolidation",
+                    "Source-level trust scores",
+                    "Retrieval policy updates",
+                    "Owner approval queue",
+                    "Markdown/JSON source trust artifacts",
+                ],
+                ["/evidence/source-trust", "/evidence/source-trust-pack"],
+                ["app/services/source_trust.py"],
+                ["tests/test_source_trust.py", "python scripts\\dashboard_smoke.py"],
+                ["storage/source_trust/*.md", "storage/source_trust/*.json"],
+                ["python -m app.demo"],
+                ["docs/api.md", "README.md"],
+            ),
+            self._skill(
                 "requirement-matrix-review",
                 "Requirement matrix and review-board workflow",
                 ["Requirement ownership, risk status, package review, groundedness review"],
@@ -486,6 +504,7 @@ class PortfolioService:
             "rg \"objection-handling|Competitive Objection|Objection Handling|objection_packs\" app dashboard docs README.md tests Makefile",
             "rg \"learning/win-loss|Win/Loss Learning|win_loss_packs|rfp_outcomes\" app dashboard docs README.md tests sample_data Makefile",
             "rg \"evidence/freshness|Evidence Freshness|freshness_packs|expiry risk|renewal\" app dashboard docs README.md tests sample_data Makefile",
+            "rg \"evidence/source-trust|Source Trust|source_trust|storage/source_trust\" app dashboard docs README.md tests Makefile",
         ]
 
     def _pack_payload(

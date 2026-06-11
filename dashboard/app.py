@@ -102,6 +102,7 @@ tabs = st.tabs(
         "Submission Exceptions",
         "Citation Lineage",
         "Cost Governance",
+        "Source Trust Gate",
     ]
 )
 
@@ -2680,4 +2681,52 @@ with tabs[41]:
             "Download Cost Governance Markdown",
             pack["markdown"],
             file_name="cost_governance_pack.md",
+        )
+
+
+with tabs[42]:
+    st.subheader("Source Trust Gate")
+    st.caption(
+        "Consolidate freshness, conflict, and citation-lineage signals into source-level retrieval policies "
+        "and reviewer approval queues."
+    )
+    action_cols = st.columns(2)
+    if action_cols[0].button("Analyze source trust"):
+        st.session_state.source_trust = get_json("/evidence/source-trust")
+    if action_cols[1].button("Generate Source Trust Pack"):
+        pack = post_json("/evidence/source-trust-pack", {"write_artifact": True})
+        st.session_state.source_trust_pack = pack
+        st.session_state.source_trust = pack["source_trust"]
+        st.success(f"Source Trust Pack generated under source_trust: {pack['artifact_path']}")
+
+    trust = st.session_state.get("source_trust")
+    if trust:
+        summary = trust["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", trust["status"])
+        metric_cols[1].metric("Avg trust", summary["average_trust_score"])
+        metric_cols[2].metric("Approved", summary["approved_count"])
+        metric_cols[3].metric("Needs approval", summary["approval_required_count"])
+        metric_cols[4].metric("Blocked", summary["blocked_count"])
+        st.write("Source trust matrix")
+        st.dataframe(trust["sources"], use_container_width=True)
+        st.write("Reviewer queue")
+        st.dataframe(trust["reviewer_queue"], use_container_width=True)
+        st.write("Retrieval policy updates")
+        st.dataframe(trust["retrieval_policy_updates"], use_container_width=True)
+        st.write("Endpoint references")
+        st.dataframe(trust["endpoint_references"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(trust["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(trust["limitations"])
+
+    pack = st.session_state.get("source_trust_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Source Trust Markdown",
+            pack["markdown"],
+            file_name="source_trust_gate.md",
         )

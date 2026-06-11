@@ -122,6 +122,9 @@ from app.models.api import (
     SmokeMatrixResponse,
     SourceRequestPackRequest,
     SourceRequestPackResponse,
+    SourceTrustGateResponse,
+    SourceTrustPackRequest,
+    SourceTrustPackResponse,
     SubmissionCalendarPackRequest,
     SubmissionCalendarPackResponse,
     SubmissionDecisionRequest,
@@ -2640,6 +2643,68 @@ async def evidence_citation_lineage_pack(
 
 
 @router.get(
+    "/evidence/source-trust",
+    response_model=SourceTrustGateResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def evidence_source_trust(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> SourceTrustGateResponse:
+    trace_id = get_trace_id(request)
+    freshness, conflicts, lineage = await _source_trust_inputs(trace_id, container)
+    result = container.source_trust.trust_gate(trace_id, freshness, conflicts, lineage)
+    container.audit.record(
+        trace_id,
+        "evidence.source_trust_viewed",
+        "source_trust",
+        metadata={
+            "status": result.status,
+            "sources": result.summary["source_count"],
+            "approved": result.summary["approved_count"],
+            "blocked": result.summary["blocked_count"],
+            "approval_required": result.summary["approval_required_count"],
+        },
+    )
+    return result
+
+
+@router.post(
+    "/evidence/source-trust-pack",
+    response_model=SourceTrustPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def evidence_source_trust_pack(
+    request: Request,
+    payload: SourceTrustPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> SourceTrustPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or SourceTrustPackRequest()
+    freshness, conflicts, lineage = await _source_trust_inputs(trace_id, container)
+    source_trust = container.source_trust.trust_gate(f"{trace_id}-source-trust", freshness, conflicts, lineage)
+    pack = container.source_trust.trust_pack(
+        trace_id,
+        source_trust,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "evidence.source_trust_pack_generated",
+        "source_trust_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.source_trust.status,
+            "sources": pack.source_trust.summary["source_count"],
+            "blocked": pack.source_trust.summary["blocked_count"],
+        },
+    )
+    return pack
+
+
+@router.get(
     "/compliance/evidence-matrix",
     response_model=ComplianceEvidenceMatrixResponse,
     dependencies=[Depends(require_api_key)],
@@ -3120,6 +3185,18 @@ async def _citation_lineage_inputs(trace_id: str, container: ServiceContainer) -
         top_k=5,
     )
     return answer, draft
+
+
+async def _source_trust_inputs(
+    trace_id: str,
+    container: ServiceContainer,
+) -> tuple[EvidenceFreshnessResponse, EvidenceConflictResponse, CitationLineageAuditResponse]:
+    await _freshness_inputs(container)
+    freshness = container.evidence_freshness.freshness_report(f"{trace_id}-freshness")
+    conflicts = container.evidence_conflicts.conflict_report(f"{trace_id}-conflicts")
+    answer, draft = await _citation_lineage_inputs(f"{trace_id}-lineage-inputs", container)
+    lineage = container.citation_lineage.audit(f"{trace_id}-lineage", answers=[answer], drafts=[draft])
+    return freshness, conflicts, lineage
 
 
 async def _procurement_inputs(

@@ -506,6 +506,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "citation_lineage",
             },
+            {
+                "label": "Source Trust Gate",
+                "endpoint_paths": ["/evidence/source-trust", "/evidence/source-trust-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "source_trust",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -705,6 +711,17 @@ class UIVerificationService:
                 "path": "/evidence/citation-lineage-pack",
                 "purpose": "Citation Lineage generated integrity pack.",
                 "expected_artifacts": ["storage/citation_lineage/*.md", "storage/citation_lineage/*.json"],
+            },
+            {
+                "method": "GET",
+                "path": "/evidence/source-trust",
+                "purpose": "Source Trust Gate tab consolidated source trust and retrieval policy view.",
+            },
+            {
+                "method": "POST",
+                "path": "/evidence/source-trust-pack",
+                "purpose": "Source Trust Gate generated reviewer pack.",
+                "expected_artifacts": ["storage/source_trust/*.md", "storage/source_trust/*.json"],
             },
         ]
 

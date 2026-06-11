@@ -185,6 +185,8 @@ class ApiContractService:
             "/evidence/conflict-pack",
             "/evidence/citation-lineage",
             "/evidence/citation-lineage-pack",
+            "/evidence/source-trust",
+            "/evidence/source-trust-pack",
             "/ops/smoke-matrix",
             "/ops/launch-checklist",
             "/ui/dashboard-smoke",
@@ -282,6 +284,8 @@ class ApiContractService:
             "storage/objection_packs": "objection_packs",
             "/learning/win-loss-pack": "win_loss_pack",
             "storage/win_loss_packs": "win_loss_packs",
+            "/evidence/source-trust-pack": "source_trust_pack",
+            "storage/source_trust": "source_trust",
         }
         missing = [path for path, token in required.items() if token not in demo]
         return ApiContractCheck(
@@ -540,6 +544,7 @@ class ApiContractService:
             "/evidence/freshness-pack": '{"write_artifact":true}',
             "/evidence/conflict-pack": '{"write_artifact":true}',
             "/evidence/citation-lineage-pack": '{"write_artifact":true}',
+            "/evidence/source-trust-pack": '{"write_artifact":true}',
         }
         no_body_paths = {"/health", "/documents", "/metrics/usage", "/audit/events"}
         return bodies.get(path, "{}" if path not in no_body_paths else None)

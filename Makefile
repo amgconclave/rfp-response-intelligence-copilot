@@ -3,7 +3,7 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8000
 DASHBOARD_PORT ?= 8501
 
-.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack exception-register exception-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
+.PHONY: install install-dev api dev dashboard eval red-team rag-coverage rag-coverage-pack compliance-matrix compliance-pack privacy-guardrails privacy-pack freshness freshness-pack conflicts conflict-pack citation-lineage citation-lineage-pack source-trust source-trust-pack procurement-risk procurement-pack reviewer-collaboration reviewer-collaboration-pack exception-register exception-pack bid-scenarios bid-roi-pack objection-handling objection-pack win-loss win-loss-pack smoke checklist cost-governance cost-governance-pack runtime-check runtime-pack start-demo ci-doctor audit-pack api-contract reviewer-collection ui-smoke ui-verification artifact-inventory readme-checklist release-gate release-pack git-readiness git-push-plan portfolio reviewer final-audit final-pack test lint demo brief decision docker-up docker-down
 
 install:
 	$(PYTHON) -m pip install -e .
@@ -60,6 +60,12 @@ citation-lineage:
 
 citation-lineage-pack:
 	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/evidence/citation-lineage-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
+
+source-trust:
+	$(PYTHON) -c "import httpx; t=httpx.get('http://127.0.0.1:8000/evidence/source-trust', headers={'X-API-Key': 'local-demo-key'}, timeout=30).json(); print({'status': t['status'], 'avg_score': t['summary']['average_trust_score'], 'approved': t['summary']['approved_count'], 'blocked': t['summary']['blocked_count']})"
+
+source-trust-pack:
+	$(PYTHON) -c "import httpx; print(httpx.post('http://127.0.0.1:8000/evidence/source-trust-pack', headers={'X-API-Key': 'local-demo-key'}, json={}, timeout=30).json()['artifact_path'])"
 
 procurement-risk:
 	$(PYTHON) -c "import httpx; r=httpx.get('http://127.0.0.1:8000/procurement/question-risk', headers={'X-API-Key': 'local-demo-key'}, timeout=30).json(); print({'questions': r['coverage_summary']['question_count'], 'coverage': r['coverage_summary']['coverage_ratio'], 'blocked': r['approval_summary']['blocked_count']})"

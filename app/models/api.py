@@ -1096,6 +1096,55 @@ class EvidenceConflictPackResponse(BaseModel):
     trace_id: str
 
 
+class SourceTrustItem(BaseModel):
+    source_id: str
+    filename: str
+    document_type: str
+    policy_owner: str
+    trust_score: int
+    trust_decision: str
+    approval_required: bool
+    freshness_score: int
+    freshness_risk_level: str
+    expiry_status: str
+    citation_use_count: int
+    conflict_count: int
+    blocking_conflict_count: int
+    lineage_issue_count: int
+    retrieval_policy: str
+    guardrails: list[str] = Field(default_factory=list)
+    reviewer_owners: list[str] = Field(default_factory=list)
+    endpoint_references: list[str] = Field(default_factory=list)
+    source_path: str | None = None
+
+
+class SourceTrustGateResponse(BaseModel):
+    title: str
+    status: str
+    generated_at: str
+    sources: list[SourceTrustItem]
+    summary: dict[str, Any]
+    reviewer_queue: list[dict[str, Any]] = Field(default_factory=list)
+    retrieval_policy_updates: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class SourceTrustPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class SourceTrustPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    source_trust: SourceTrustGateResponse
+    trace_id: str
+
+
 class ProcurementQuestionRiskItem(BaseModel):
     question_id: str
     question_type: str

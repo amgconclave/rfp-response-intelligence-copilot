@@ -165,6 +165,7 @@ class ReleaseService:
                 "Competitive Objection Handling Pack writes Markdown and JSON under storage/objection_packs."
             ),
             "win_loss_pack": "Win/Loss Learning Strategy Pack writes Markdown and JSON under storage/win_loss_packs.",
+            "source_trust_pack": "Source Trust Gate Pack writes Markdown and JSON under storage/source_trust.",
             "demo": "Final demo summary plus release gate status and publish pack path.",
             "readme": "README documents Release Candidate and Publish Pack workflow.",
             "api_docs": "API docs list /release/quality-gate and /release/publish-pack.",
@@ -245,6 +246,11 @@ class ReleaseService:
                 "artifact_root": str((self.settings.storage_dir / "win_loss_packs").resolve()),
                 "endpoints": ["/learning/win-loss", "/learning/win-loss-pack"],
             },
+            "source_trust": {
+                "service_path": "app/services/source_trust.py",
+                "artifact_root": str((self.settings.storage_dir / "source_trust").resolve()),
+                "endpoints": ["/evidence/source-trust", "/evidence/source-trust-pack"],
+            },
             "api": {
                 "endpoint_count": len(paths),
                 "artifact_endpoint_count": smoke_matrix.readiness_summary.artifact_writing_endpoints,
@@ -278,6 +284,7 @@ class ReleaseService:
             "objection_packs": "Competitive objection handling packs",
             "win_loss_packs": "Win/Loss Learning Strategy packs",
             "freshness_packs": "Evidence freshness and expiry risk packs",
+            "source_trust": "Source trust gate packs",
             "portfolio_packs": "Portfolio interview packs",
             "release_packs": "GitHub publish packs",
             "ui_verification": "Dashboard Smoke and UI verification packs",
