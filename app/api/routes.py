@@ -168,6 +168,8 @@ from app.models.api import (
     RagCorpusCoverageResponse,
     RagEvalCoveragePackRequest,
     RagEvalCoveragePackResponse,
+    ReadinessScoreEvalRequest,
+    ReadinessScoreEvalResponse,
     ReadmeChecklistRequest,
     ReadmeChecklistResponse,
     ReleaseQualityGateResponse,
@@ -1473,6 +1475,38 @@ async def proposal_readiness_score_pack(
         },
     )
     return pack
+
+
+@router.post(
+    "/rfp/readiness-score-eval",
+    response_model=ReadinessScoreEvalResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def readiness_score_eval(
+    payload: ReadinessScoreEvalRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReadinessScoreEvalResponse:
+    trace_id = get_trace_id(request)
+    eval_pack = container.deal_readiness.evaluate_score_dataset(
+        trace_id=trace_id,
+        dataset_path=payload.dataset_path,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.readiness_score_eval_ran",
+        "readiness_score_eval",
+        resource_id=eval_pack.artifact_path,
+        metadata={
+            "artifact_path": eval_pack.artifact_path,
+            "status": eval_pack.status,
+            "score": eval_pack.score,
+            "scenario_count": eval_pack.scenario_count,
+            "failed_count": eval_pack.failed_count,
+        },
+    )
+    return eval_pack
 
 
 @router.post(

@@ -39,6 +39,7 @@ The v0.2 API also exposes proof-oriented coverage endpoints:
 
 - `GET /rag/corpus-coverage`: summarizes corpus coverage by source, topic, and evidence readiness.
 - `POST /rag/eval-coverage-pack`: writes a RAG Eval Coverage Pack under `storage/rag_coverage/`.
+- `POST /rfp/readiness-score-eval`: runs deterministic readiness scorer regression scenarios from `sample_data/readiness_score_eval_dataset.json` and writes traceable eval artifacts under `storage/readiness_score_evals/`.
 - `GET /proposal/agent-council`: returns local multi-role council eval scenarios for role coverage, turn order, tool governance, and handoff routing.
 - `POST /proposal/agent-council-pack`: writes the Proposal Agent Council Pack under `storage/agent_council/`.
 - `POST /proposal/approval-simulation`: returns local HITL approval simulation assertions for queue coverage, checkpoint keys, human-gate impact, and reject/block behavior.

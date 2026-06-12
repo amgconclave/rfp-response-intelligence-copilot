@@ -1462,6 +1462,19 @@ Writes Markdown/JSON Proposal Readiness Score Pack artifacts under `storage/read
 
 The pack includes the base readiness scorecard, section completeness by proposal section, evidence coverage by category, compliance/security/privacy risk, reviewer bottleneck routing, score trace analysis, durable approval workflow checkpoints, human-review queue items, governance controls, executive artifact links, endpoint references, local proof commands, limitations, Markdown, JSON, and trace ID.
 
+### `POST /rfp/readiness-score-eval`
+
+Runs the deterministic local Readiness Score Eval Pack against `sample_data/readiness_score_eval_dataset.json` by default and writes Markdown/JSON under `storage/readiness_score_evals/`.
+
+```json
+{
+  "dataset_path": "sample_data/readiness_score_eval_dataset.json",
+  "write_artifact": true
+}
+```
+
+The response includes scenario pass/fail results, expected-vs-actual score bands, readiness levels, pack statuses, required trace components, workflow checkpoint assertions, HITL queue assertions, experiment comparison, trace analysis, governance summary, proof commands, limitations, artifact paths, Markdown, and trace ID. It is local-only and does not call an LLM or vector store.
+
 ### `POST /rfp/amendment-impact`
 
 Compares a baseline RFP analysis against a revised RFP/addendum and returns deterministic requirement impact, owner routing, readiness impact, and a checkpointed workflow. If called with `{}`, it compares `sample_data/acme_enterprise_rfp.md` to `sample_data/acme_enterprise_rfp_addendum.md`.

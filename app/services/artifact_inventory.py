@@ -654,6 +654,12 @@ class ArtifactInventoryService:
                 ),
             ),
             self._spec(
+                "readiness_score_evals",
+                "readiness_score_evals",
+                "POST /rfp/readiness-score-eval",
+                "Readiness scorer regression eval pack with scenarios, trace analysis, and governance assertions.",
+            ),
+            self._spec(
                 "pricing_memos",
                 "pricing_memos",
                 "POST /rfp/pricing-risk-memo",

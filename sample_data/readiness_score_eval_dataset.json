@@ -1,0 +1,275 @@
+{
+  "dataset_id": "readiness-score-regression-v1",
+  "description": "Deterministic local regression scenarios for the Proposal Readiness Score Pack scorer.",
+  "scenarios": [
+    {
+      "scenario_id": "ready_supported_package",
+      "title": "Ready package with complete evidence and draft sections",
+      "persona": "Proposal Manager",
+      "business_risk": "A healthy package should not create false reviewer bottlenecks.",
+      "requirement_matrix": [
+        {
+          "requirement_id": "req_security_sso",
+          "category": "security",
+          "requirement_text": "Vendor must support SSO and encryption controls.",
+          "priority": "high",
+          "owner_role": "security",
+          "status": "evidence_found",
+          "risk_level": "medium",
+          "evidence_refs": ["security_policy.md"],
+          "suggested_response": "Use approved SSO and encryption evidence.",
+          "missing_evidence": []
+        },
+        {
+          "requirement_id": "req_compliance_soc2",
+          "category": "compliance",
+          "requirement_text": "Vendor must document SOC 2-oriented audit controls.",
+          "priority": "medium",
+          "owner_role": "compliance",
+          "status": "evidence_found",
+          "risk_level": "medium",
+          "evidence_refs": ["compliance_policy.md"],
+          "suggested_response": "Cite compliance evidence and audit trail controls.",
+          "missing_evidence": []
+        },
+        {
+          "requirement_id": "req_implementation_plan",
+          "category": "implementation",
+          "requirement_text": "Vendor must provide onboarding timeline and owners.",
+          "priority": "medium",
+          "owner_role": "solutions",
+          "status": "evidence_found",
+          "risk_level": "medium",
+          "evidence_refs": ["implementation_guide.md"],
+          "suggested_response": "Use implementation guide timeline and owner model.",
+          "missing_evidence": []
+        }
+      ],
+      "draft_response": {
+        "sections": [
+          {
+            "title": "Executive Summary",
+            "body": "The proposal is ready for final executive review with cited evidence.",
+            "requirement_ids": []
+          },
+          {
+            "title": "Security Response",
+            "body": "SSO and encryption controls are supported by approved security evidence.",
+            "requirement_ids": ["req_security_sso"]
+          },
+          {
+            "title": "Compliance Response",
+            "body": "SOC 2-oriented controls are mapped to compliance evidence.",
+            "requirement_ids": ["req_compliance_soc2"]
+          },
+          {
+            "title": "Implementation Response",
+            "body": "Onboarding timeline and owner model are grounded in implementation evidence.",
+            "requirement_ids": ["req_implementation_plan"]
+          }
+        ],
+        "citations": [],
+        "risks": [],
+        "assumptions": [],
+        "revision_notes": [],
+        "trace_id": "readiness-eval-ready-draft"
+      },
+      "expected": {
+        "min_score": 95,
+        "max_score": 100,
+        "readiness_level": "ready",
+        "pack_status": "ready_for_executive_review",
+        "min_human_review_queue": 0,
+        "min_workflow_checkpoints": 3,
+        "required_trace_components": ["final_readiness_score"],
+        "required_workflow_states": ["executive_submission_gate"],
+        "required_governance_controls": ["durable_checkpoint_ids"]
+      },
+      "remediation": []
+    },
+    {
+      "scenario_id": "compliance_blocker_requires_hitl",
+      "title": "Compliance blocker creates HITL queue and blocked pack status",
+      "persona": "Compliance Lead",
+      "business_risk": "Unsupported regulated claims must block submission until a human exception is approved.",
+      "requirement_matrix": [
+        {
+          "requirement_id": "req_security_sso",
+          "category": "security",
+          "requirement_text": "Vendor must support SSO and encryption controls.",
+          "priority": "high",
+          "owner_role": "security",
+          "status": "evidence_found",
+          "risk_level": "medium",
+          "evidence_refs": ["security_policy.md"],
+          "suggested_response": "Use approved security posture.",
+          "missing_evidence": []
+        },
+        {
+          "requirement_id": "req_fedramp_high",
+          "category": "compliance",
+          "requirement_text": "Vendor must provide FedRAMP High authorization.",
+          "priority": "high",
+          "owner_role": "legal",
+          "status": "blocked",
+          "risk_level": "high",
+          "evidence_refs": [],
+          "suggested_response": "Do not claim unsupported FedRAMP authorization.",
+          "missing_evidence": ["No FedRAMP High authorization evidence found."]
+        }
+      ],
+      "review_findings": [
+        {
+          "severity": "high",
+          "category": "missing_evidence",
+          "message": "FedRAMP High evidence is missing for req_fedramp_high.",
+          "related_requirement_id": "req_fedramp_high",
+          "related_question": null,
+          "citation_refs": [],
+          "recommendation": "Route an exception to legal and security before submission."
+        }
+      ],
+      "action_plan": [
+        {
+          "task_id": "task_req_fedramp_high_legal",
+          "owner_role": "legal",
+          "title": "Legal: approve FedRAMP exception",
+          "description": "Decide whether the unsupported regulated claim blocks this bid.",
+          "priority": "high",
+          "due_hint": "before executive review",
+          "source_requirement_id": "req_fedramp_high",
+          "risk_level": "high",
+          "status": "blocked",
+          "evidence_refs": []
+        }
+      ],
+      "draft_response": {
+        "sections": [
+          {
+            "title": "Executive Summary",
+            "body": "Submission is blocked until the compliance exception is resolved.",
+            "requirement_ids": []
+          },
+          {
+            "title": "Security Response",
+            "body": "SSO and encryption controls are supported.",
+            "requirement_ids": ["req_security_sso"]
+          }
+        ],
+        "citations": [],
+        "risks": ["FedRAMP High claim is unsupported."],
+        "assumptions": [],
+        "revision_notes": [],
+        "trace_id": "readiness-eval-compliance-draft"
+      },
+      "expected": {
+        "min_score": 55,
+        "max_score": 70,
+        "readiness_level": "at_risk",
+        "pack_status": "blocked_by_compliance_risk",
+        "min_human_review_queue": 1,
+        "min_workflow_checkpoints": 3,
+        "required_trace_components": [
+          "blocked_requirements",
+          "missing_evidence",
+          "coverage_shortfall",
+          "review_board_risk",
+          "final_readiness_score"
+        ],
+        "required_workflow_states": ["compliance_gate", "executive_submission_gate"],
+        "required_governance_controls": ["human_in_the_loop_exception_gate"]
+      },
+      "remediation": [
+        "Attach approved FedRAMP evidence or remove the claim.",
+        "Capture legal/security exception approval before executive review."
+      ]
+    },
+    {
+      "scenario_id": "eval_quality_gate_failure",
+      "title": "Standard eval failure lowers readiness despite complete matrix evidence",
+      "persona": "AI Governance Reviewer",
+      "business_risk": "A package with citations can still be unsafe if standard eval quality gates fail.",
+      "requirement_matrix": [
+        {
+          "requirement_id": "req_security_sso",
+          "category": "security",
+          "requirement_text": "Vendor must support SSO and encryption controls.",
+          "priority": "high",
+          "owner_role": "security",
+          "status": "evidence_found",
+          "risk_level": "medium",
+          "evidence_refs": ["security_policy.md"],
+          "suggested_response": "Use approved security evidence.",
+          "missing_evidence": []
+        },
+        {
+          "requirement_id": "req_privacy_dpa",
+          "category": "privacy",
+          "requirement_text": "Vendor must document DPA and subprocessor controls.",
+          "priority": "high",
+          "owner_role": "privacy",
+          "status": "evidence_found",
+          "risk_level": "medium",
+          "evidence_refs": ["dpa_privacy_policy.md"],
+          "suggested_response": "Use DPA privacy policy evidence.",
+          "missing_evidence": []
+        }
+      ],
+      "eval_metrics": {
+        "question_count": 3,
+        "retrieval_precision_at_k": 0.5,
+        "citation_coverage": 0.4,
+        "missing_evidence_detection_count": 1,
+        "average_latency_ms": 25,
+        "input_tokens": 120,
+        "output_tokens": 80,
+        "estimated_cost": 0.0,
+        "passed": false,
+        "details": []
+      },
+      "draft_response": {
+        "sections": [
+          {
+            "title": "Executive Summary",
+            "body": "Evidence exists, but quality gates require reviewer follow-up.",
+            "requirement_ids": []
+          },
+          {
+            "title": "Security Response",
+            "body": "SSO and encryption controls are supported by cited evidence.",
+            "requirement_ids": ["req_security_sso"]
+          },
+          {
+            "title": "Privacy Response",
+            "body": "DPA and subprocessor controls are supported by cited evidence.",
+            "requirement_ids": ["req_privacy_dpa"]
+          }
+        ],
+        "citations": [],
+        "risks": ["Standard eval did not pass."],
+        "assumptions": [],
+        "revision_notes": [],
+        "trace_id": "readiness-eval-quality-draft"
+      },
+      "expected": {
+        "min_score": 78,
+        "max_score": 86,
+        "readiness_level": "mostly_ready",
+        "pack_status": "needs_owner_followup",
+        "min_human_review_queue": 1,
+        "min_workflow_checkpoints": 3,
+        "required_trace_components": [
+          "eval_quality_gate",
+          "citation_eval_shortfall",
+          "final_readiness_score"
+        ],
+        "required_workflow_states": ["eval_quality_gate", "executive_submission_gate"],
+        "required_governance_controls": ["deterministic_score_trace"]
+      },
+      "remediation": [
+        "Inspect eval failures before final response export.",
+        "Improve retrieval/citation quality and rerun the readiness eval pack."
+      ]
+    }
+  ]
+}

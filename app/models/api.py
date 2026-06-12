@@ -1196,6 +1196,32 @@ class ProposalReadinessScorePackResponse(BaseModel):
     trace_id: str
 
 
+class ReadinessScoreEvalRequest(BaseModel):
+    dataset_path: str = "sample_data/readiness_score_eval_dataset.json"
+    write_artifact: bool = True
+
+
+class ReadinessScoreEvalResponse(BaseModel):
+    title: str
+    status: str
+    score: int
+    scenario_count: int
+    passed_count: int
+    failed_count: int
+    scenarios: list[dict[str, Any]] = Field(default_factory=list)
+    experiment_comparison: dict[str, Any] = Field(default_factory=dict)
+    trace_analysis: dict[str, Any] = Field(default_factory=dict)
+    governance_summary: dict[str, Any] = Field(default_factory=dict)
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    endpoint_references: list[dict[str, str]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
 class RfpAmendmentImpactRequest(BaseModel):
     baseline_analysis: AnalyzeResponse | None = None
     analysis: AnalyzeResponse | None = None

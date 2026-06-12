@@ -2,6 +2,7 @@ import json
 import re
 from collections import Counter
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from app.core.config import Settings
@@ -12,6 +13,7 @@ from app.models.api import (
     EvaluationMetrics,
     ExecutiveRiskReportResponse,
     ProposalReadinessScorePackResponse,
+    ReadinessScoreEvalResponse,
 )
 from app.models.domain import DraftResponse, RequirementMatrixRow, ReviewFinding, StakeholderTask
 
@@ -259,6 +261,114 @@ class DealReadinessService:
             trace_id=trace_id,
         )
 
+    def evaluate_score_dataset(
+        self,
+        trace_id: str,
+        dataset_path: str = "sample_data/readiness_score_eval_dataset.json",
+        write_artifact: bool = True,
+    ) -> ReadinessScoreEvalResponse:
+        dataset = self._load_readiness_eval_dataset(dataset_path)
+        scenarios = dataset.get("scenarios", [])
+        generated_at = datetime.now(UTC).isoformat()
+        scenario_results = [
+            self._evaluate_readiness_scenario(trace_id, index + 1, scenario)
+            for index, scenario in enumerate(scenarios)
+        ]
+        passed_count = sum(1 for scenario in scenario_results if scenario["status"] == "pass")
+        failed_count = len(scenario_results) - passed_count
+        score = int(round((passed_count / len(scenario_results)) * 100)) if scenario_results else 0
+        status = "pass" if scenario_results and failed_count == 0 else "fail"
+        trace_analysis = self._readiness_eval_trace_analysis(scenario_results)
+        experiment_comparison = self._readiness_eval_experiment_comparison(scenario_results)
+        endpoint_references = self._readiness_eval_endpoint_references()
+        local_commands = self._readiness_eval_local_commands(dataset_path)
+        limitations = self._readiness_eval_limitations()
+        governance_summary = {
+            "dataset_path": dataset_path,
+            "release_gate": "pass" if status == "pass" else "blocked",
+            "patterns_implemented": [
+                "eval_datasets",
+                "experiment_comparison",
+                "trace_analysis",
+                "human_in_the_loop",
+                "governance",
+            ],
+            "required_assertion_types": sorted(
+                {
+                    assertion["assertion_type"]
+                    for scenario in scenario_results
+                    for assertion in scenario["assertions"]
+                }
+            ),
+            "human_review_queue_scenarios": sum(
+                1 for scenario in scenario_results if scenario["actual"]["human_review_queue_count"] > 0
+            ),
+            "workflow_checkpoint_scenarios": sum(
+                1 for scenario in scenario_results if scenario["actual"]["workflow_checkpoint_count"] > 0
+            ),
+            "approval_guidance": (
+                "Readiness scorer regression checks passed."
+                if status == "pass"
+                else "Hold readiness scorer changes until failed scenarios are investigated."
+            ),
+        }
+        payload = {
+            "title": "Readiness Score Eval Pack",
+            "status": status,
+            "score": score,
+            "scenario_count": len(scenario_results),
+            "passed_count": passed_count,
+            "failed_count": failed_count,
+            "generated_at": generated_at,
+            "scenarios": scenario_results,
+            "experiment_comparison": experiment_comparison,
+            "trace_analysis": trace_analysis,
+            "governance_summary": governance_summary,
+            "endpoint_references": endpoint_references,
+            "local_proof_commands": local_commands,
+            "limitations": limitations,
+            "artifact_paths": {},
+        }
+        markdown = self._render_readiness_eval_markdown(payload)
+        artifact_path: str | None = None
+        json_artifact_path: str | None = None
+        if write_artifact:
+            pack_dir = self.settings.storage_dir / "readiness_score_evals"
+            pack_dir.mkdir(parents=True, exist_ok=True)
+            safe_trace_id = re.sub(r"[^a-zA-Z0-9_-]+", "-", trace_id).strip("-") or "local"
+            markdown_path = pack_dir / f"readiness_score_eval_pack_{safe_trace_id}.md"
+            json_path = pack_dir / f"readiness_score_eval_pack_{safe_trace_id}.json"
+            artifact_path = str(markdown_path.resolve())
+            json_artifact_path = str(json_path.resolve())
+            payload["artifact_paths"] = {
+                "readiness_score_eval_markdown": artifact_path,
+                "readiness_score_eval_json": json_artifact_path,
+            }
+            markdown = self._render_readiness_eval_markdown(payload)
+            markdown_path.write_text(markdown, encoding="utf-8")
+            json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+        return ReadinessScoreEvalResponse(
+            title="Readiness Score Eval Pack",
+            status=status,
+            score=score,
+            scenario_count=len(scenario_results),
+            passed_count=passed_count,
+            failed_count=failed_count,
+            scenarios=scenario_results,
+            experiment_comparison=experiment_comparison,
+            trace_analysis=trace_analysis,
+            governance_summary=governance_summary,
+            artifact_path=artifact_path,
+            json_artifact_path=json_artifact_path,
+            markdown=markdown,
+            endpoint_references=endpoint_references,
+            local_proof_commands=local_commands,
+            limitations=limitations,
+            generated_at=generated_at,
+            trace_id=trace_id,
+        )
+
     def _score(
         self,
         matrix: list[RequirementMatrixRow],
@@ -287,6 +397,277 @@ class DealReadinessService:
             if eval_metrics.citation_coverage < 0.75:
                 score -= int(round((0.75 - eval_metrics.citation_coverage) * 20))
         return max(0, min(100, int(round(score))))
+
+    def _load_readiness_eval_dataset(self, dataset_path: str) -> dict[str, Any]:
+        path = Path(dataset_path)
+        if not path.is_absolute():
+            path = Path.cwd() / path
+        if not path.exists():
+            sample_path = self.settings.sample_data_dir / dataset_path
+            if sample_path.exists():
+                path = sample_path
+        if not path.exists():
+            raise FileNotFoundError(f"Readiness score eval dataset not found: {dataset_path}")
+        dataset = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(dataset.get("scenarios"), list):
+            raise ValueError("Readiness score eval dataset must include a scenarios list.")
+        return dataset
+
+    def _evaluate_readiness_scenario(
+        self,
+        trace_id: str,
+        sequence: int,
+        scenario: dict[str, Any],
+    ) -> dict[str, Any]:
+        scenario_id = scenario.get("scenario_id") or f"scenario-{sequence}"
+        matrix = [RequirementMatrixRow(**row) for row in scenario.get("requirement_matrix", [])]
+        findings = [ReviewFinding(**finding) for finding in scenario.get("review_findings", [])]
+        tasks = [StakeholderTask(**task) for task in scenario.get("action_plan", [])]
+        eval_metrics = (
+            EvaluationMetrics(**scenario["eval_metrics"])
+            if scenario.get("eval_metrics")
+            else None
+        )
+        draft = DraftResponse(**scenario["draft_response"]) if scenario.get("draft_response") else None
+        scorecard = self.create_scorecard(
+            trace_id=f"{trace_id}-{scenario_id}-scorecard",
+            requirement_matrix=matrix,
+            review_findings=findings,
+            action_plan=tasks,
+            eval_metrics=eval_metrics,
+        )
+        score_pack = self.create_score_pack(
+            trace_id=f"{trace_id}-{scenario_id}-pack",
+            requirement_matrix=matrix,
+            review_findings=findings,
+            action_plan=tasks,
+            eval_metrics=eval_metrics,
+            draft_response=draft,
+            readiness_scorecard=scorecard,
+            write_artifact=False,
+        )
+        assertions = self._readiness_eval_assertions(scenario, scorecard, score_pack)
+        status = "pass" if all(assertion["passed"] for assertion in assertions) else "fail"
+        deductions = [
+            item
+            for item in scorecard.score_trace
+            if item.get("impact", 0) < 0
+        ]
+        return {
+            "scenario_id": scenario_id,
+            "title": scenario.get("title", scenario_id),
+            "persona": scenario.get("persona", "Proposal Manager"),
+            "status": status,
+            "business_risk": scenario.get("business_risk", ""),
+            "actual": {
+                "readiness_score": scorecard.readiness_score,
+                "readiness_level": scorecard.readiness_level,
+                "pack_status": score_pack.status,
+                "evidence_coverage": scorecard.evidence_coverage,
+                "blocker_count": len(scorecard.blockers),
+                "human_review_queue_count": len(scorecard.human_review_queue),
+                "workflow_checkpoint_count": len(scorecard.approval_workflow),
+                "largest_deductions": sorted(
+                    deductions,
+                    key=lambda item: abs(item.get("impact", 0)),
+                    reverse=True,
+                )[:4],
+            },
+            "expected": scenario.get("expected", {}),
+            "assertions": assertions,
+            "trace_span": {
+                "span_id": f"readiness-eval-{sequence}",
+                "operation": "deal_readiness.evaluate_score_dataset",
+                "scenario_id": scenario_id,
+                "input_rows": len(matrix),
+                "review_findings": len(findings),
+                "action_items": len(tasks),
+                "score_trace_components": [item["component"] for item in scorecard.score_trace],
+                "artifact_policy": "no scenario artifacts; aggregate eval pack only",
+            },
+            "remediation": scenario.get("remediation", []),
+        }
+
+    def _readiness_eval_assertions(
+        self,
+        scenario: dict[str, Any],
+        scorecard: DealReadinessScorecardResponse,
+        score_pack: ProposalReadinessScorePackResponse,
+    ) -> list[dict[str, Any]]:
+        expected = scenario.get("expected", {})
+        assertions = []
+
+        def add(assertion_type: str, passed: bool, expected_value: Any, actual_value: Any, rationale: str) -> None:
+            assertions.append(
+                {
+                    "assertion_type": assertion_type,
+                    "passed": passed,
+                    "expected": expected_value,
+                    "actual": actual_value,
+                    "rationale": rationale,
+                }
+            )
+
+        min_score = expected.get("min_score", 0)
+        max_score = expected.get("max_score", 100)
+        add(
+            "score_band",
+            min_score <= scorecard.readiness_score <= max_score,
+            f"{min_score}..{max_score}",
+            scorecard.readiness_score,
+            "Scenario score remains inside the expected deterministic band.",
+        )
+        if expected.get("readiness_level"):
+            add(
+                "readiness_level",
+                scorecard.readiness_level == expected["readiness_level"],
+                expected["readiness_level"],
+                scorecard.readiness_level,
+                "Readiness level supports the intended executive decision posture.",
+            )
+        if expected.get("pack_status"):
+            add(
+                "pack_status",
+                score_pack.status == expected["pack_status"],
+                expected["pack_status"],
+                score_pack.status,
+                "Score Pack status routes the scenario to the correct owner gate.",
+            )
+        add(
+            "human_review_queue",
+            len(scorecard.human_review_queue) >= expected.get("min_human_review_queue", 0),
+            expected.get("min_human_review_queue", 0),
+            len(scorecard.human_review_queue),
+            "Human-in-the-loop queue exposure is preserved for risky scenarios.",
+        )
+        add(
+            "workflow_checkpoints",
+            len(scorecard.approval_workflow) >= expected.get("min_workflow_checkpoints", 1),
+            expected.get("min_workflow_checkpoints", 1),
+            len(scorecard.approval_workflow),
+            "Durable approval checkpoints remain available for reviewer replay.",
+        )
+        trace_components = {item["component"] for item in scorecard.score_trace}
+        for component in expected.get("required_trace_components", []):
+            add(
+                "trace_component",
+                component in trace_components,
+                component,
+                sorted(trace_components),
+                "Score trace contains the expected deduction or final summary component.",
+            )
+        workflow_states = {item.get("state") for item in scorecard.approval_workflow}
+        for state in expected.get("required_workflow_states", []):
+            add(
+                "workflow_state",
+                state in workflow_states,
+                state,
+                sorted(state for state in workflow_states if state),
+                "Approval workflow includes the expected governance state.",
+            )
+        controls = set(scorecard.governance_summary.get("controls", []))
+        for control in expected.get("required_governance_controls", []):
+            add(
+                "governance_control",
+                control in controls,
+                control,
+                sorted(controls),
+                "Governance controls remain explicit in the scorecard response.",
+            )
+        return assertions
+
+    def _readiness_eval_trace_analysis(self, scenario_results: list[dict[str, Any]]) -> dict[str, Any]:
+        component_counts: Counter[str] = Counter()
+        category_impact: Counter[str] = Counter()
+        largest_deductions = []
+        for scenario in scenario_results:
+            for item in scenario["actual"]["largest_deductions"]:
+                component_counts[item["component"]] += 1
+                category_impact[item["category"]] += abs(item.get("impact", 0))
+                largest_deductions.append(
+                    {
+                        "scenario_id": scenario["scenario_id"],
+                        "component": item["component"],
+                        "category": item["category"],
+                        "impact": item["impact"],
+                        "running_score": item["running_score"],
+                        "rationale": item["rationale"],
+                    }
+                )
+        return {
+            "trace_span_count": len(scenario_results),
+            "component_counts": dict(sorted(component_counts.items())),
+            "deductions_by_category": dict(sorted(category_impact.items())),
+            "largest_deductions": sorted(
+                largest_deductions,
+                key=lambda item: abs(item["impact"]),
+                reverse=True,
+            )[:8],
+            "traceability_note": (
+                "Each scenario keeps score movement, workflow state, and HITL queue assertions together."
+            ),
+        }
+
+    def _readiness_eval_experiment_comparison(self, scenario_results: list[dict[str, Any]]) -> dict[str, Any]:
+        if not scenario_results:
+            return {
+                "best_scenario": None,
+                "weakest_scenario": None,
+                "score_spread": 0,
+                "status_counts": {},
+                "decision": "No scenarios supplied.",
+            }
+        by_score = sorted(scenario_results, key=lambda item: item["actual"]["readiness_score"])
+        status_counts = Counter(scenario["status"] for scenario in scenario_results)
+        failed = [scenario["scenario_id"] for scenario in scenario_results if scenario["status"] != "pass"]
+        return {
+            "best_scenario": by_score[-1]["scenario_id"],
+            "weakest_scenario": by_score[0]["scenario_id"],
+            "score_spread": by_score[-1]["actual"]["readiness_score"] - by_score[0]["actual"]["readiness_score"],
+            "status_counts": dict(sorted(status_counts.items())),
+            "failed_scenarios": failed,
+            "decision": (
+                "Promote readiness scoring changes."
+                if not failed
+                else "Investigate failed readiness scoring scenarios before release."
+            ),
+        }
+
+    def _readiness_eval_endpoint_references(self) -> list[dict[str, str]]:
+        return [
+            {
+                "method": "POST",
+                "path": "/rfp/readiness-score-eval",
+                "purpose": "Runs the local Readiness Score Eval Pack against deterministic scenarios.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/readiness-scorecard",
+                "purpose": "Produces the scorecard under test.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/proposal-readiness-score-pack",
+                "purpose": "Produces the executive pack status under test.",
+            },
+        ]
+
+    def _readiness_eval_local_commands(self, dataset_path: str) -> list[str]:
+        return [
+            "python -m pytest tests\\test_readiness_score_eval.py -q",
+            "python -m pytest -q",
+            "python -m ruff check .",
+            "python scripts\\dashboard_smoke.py",
+            "python -m app.demo",
+            f"Get-Content {dataset_path}",
+        ]
+
+    def _readiness_eval_limitations(self) -> list[str]:
+        return [
+            "Readiness eval scenarios are deterministic regression fixtures, not legal approval.",
+            "The dataset validates scorer behavior and routing signals; it does not replace reviewer signoff.",
+            "No external model or vector-store calls are required for this eval pack.",
+        ]
 
     def _score_trace(
         self,
@@ -1503,6 +1884,115 @@ class DealReadinessService:
         lines.extend(f"```powershell\n{command}\n```" for command in pack["local_proof_commands"])
         lines.extend(["", "## Limitations", ""])
         lines.extend(f"- {item}" for item in pack["limitations"])
+        return "\n".join(lines).strip() + "\n"
+
+    def _render_readiness_eval_markdown(self, eval_pack: dict[str, Any]) -> str:
+        lines = [
+            "# Readiness Score Eval Pack",
+            "",
+            f"- Generated at: {eval_pack['generated_at']}",
+            f"- Status: {eval_pack['status']}",
+            f"- Score: {eval_pack['score']}",
+            f"- Scenarios: {eval_pack['passed_count']}/{eval_pack['scenario_count']} passed",
+            "",
+            "## Governance Summary",
+            "",
+        ]
+        for key, value in eval_pack["governance_summary"].items():
+            lines.append(f"- {self._md_cell(key)}: {self._md_cell(value)}")
+        lines.extend(
+            [
+                "",
+                "## Scenario Results",
+                "",
+                "| Scenario | Persona | Status | Score | Level | Pack Status | HITL Queue | Checkpoints |",
+                "| --- | --- | --- | ---: | --- | --- | ---: | ---: |",
+            ]
+        )
+        for scenario in eval_pack["scenarios"]:
+            actual = scenario["actual"]
+            lines.append(
+                "| {scenario_id} | {persona} | {status} | {score} | {level} | {pack_status} | {queue} | "
+                "{checkpoints} |".format(
+                    scenario_id=scenario["scenario_id"],
+                    persona=self._md_cell(scenario["persona"]),
+                    status=scenario["status"],
+                    score=actual["readiness_score"],
+                    level=actual["readiness_level"],
+                    pack_status=actual["pack_status"],
+                    queue=actual["human_review_queue_count"],
+                    checkpoints=actual["workflow_checkpoint_count"],
+                )
+            )
+        lines.extend(
+            [
+                "",
+                "## Failed Assertions",
+                "",
+                "| Scenario | Type | Expected | Actual | Rationale |",
+                "| --- | --- | --- | --- | --- |",
+            ]
+        )
+        failed_assertions = [
+            (scenario, assertion)
+            for scenario in eval_pack["scenarios"]
+            for assertion in scenario["assertions"]
+            if not assertion["passed"]
+        ]
+        if failed_assertions:
+            for scenario, assertion in failed_assertions:
+                lines.append(
+                    "| {scenario_id} | {assertion_type} | {expected} | {actual} | {rationale} |".format(
+                        scenario_id=scenario["scenario_id"],
+                        assertion_type=assertion["assertion_type"],
+                        expected=self._md_cell(assertion["expected"]),
+                        actual=self._md_cell(assertion["actual"]),
+                        rationale=self._md_cell(assertion["rationale"]),
+                    )
+                )
+        else:
+            lines.append("| None | all | expected behavior | observed behavior | All scenario assertions passed. |")
+        comparison = eval_pack["experiment_comparison"]
+        lines.extend(
+            [
+                "",
+                "## Experiment Comparison",
+                "",
+                f"- Best scenario: {comparison.get('best_scenario')}",
+                f"- Weakest scenario: {comparison.get('weakest_scenario')}",
+                f"- Score spread: {comparison.get('score_spread')}",
+                f"- Decision: {comparison.get('decision')}",
+                "",
+                "## Trace Analysis",
+                "",
+                f"- Trace span count: {eval_pack['trace_analysis']['trace_span_count']}",
+                f"- Traceability note: {eval_pack['trace_analysis']['traceability_note']}",
+                "",
+                "| Scenario | Component | Category | Impact | Running Score | Rationale |",
+                "| --- | --- | --- | ---: | ---: | --- |",
+            ]
+        )
+        for item in eval_pack["trace_analysis"]["largest_deductions"]:
+            lines.append(
+                "| {scenario_id} | {component} | {category} | {impact} | {running_score} | {rationale} |".format(
+                    **{**item, "rationale": self._md_cell(item["rationale"])},
+                )
+            )
+        lines.extend(["", "## Artifact Paths", ""])
+        if eval_pack["artifact_paths"]:
+            for label, path in eval_pack["artifact_paths"].items():
+                lines.append(f"- {label}: {path}")
+        else:
+            lines.append("- Artifact writing disabled for this run.")
+        lines.extend(["", "## Endpoint References", ""])
+        lines.extend(
+            f"- `{item['method']} {item['path']}`: {item['purpose']}"
+            for item in eval_pack["endpoint_references"]
+        )
+        lines.extend(["", "## Local Proof Commands", ""])
+        lines.extend(f"```powershell\n{command}\n```" for command in eval_pack["local_proof_commands"])
+        lines.extend(["", "## Limitations", ""])
+        lines.extend(f"- {item}" for item in eval_pack["limitations"])
         return "\n".join(lines).strip() + "\n"
 
     def _append_list(self, lines: list[str], items: list[Any]) -> None:

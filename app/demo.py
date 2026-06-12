@@ -171,6 +171,11 @@ async def main() -> None:
         readiness_scorecard=scorecard,
         executive_report=executive_report,
     )
+    readiness_score_eval = container.deal_readiness.evaluate_score_dataset(
+        trace_id="demo-readiness-score-eval",
+        dataset_path="sample_data/readiness_score_eval_dataset.json",
+        write_artifact=True,
+    )
     revised_analysis = container.analysis.analyze(
         (container.settings.sample_data_dir / "acme_enterprise_rfp_addendum.md").read_text(encoding="utf-8"),
         "demo-amendment-revised",
@@ -871,6 +876,13 @@ async def main() -> None:
     print(f"Executive risk report: {executive_report.artifact_path}")
     print(f"Proposal readiness score pack: {readiness_pack.artifact_path}")
     print(
+        "Readiness score eval: "
+        f"status={readiness_score_eval.status} "
+        f"score={readiness_score_eval.score} "
+        f"scenarios={readiness_score_eval.passed_count}/{readiness_score_eval.scenario_count}"
+    )
+    print(f"Readiness Score Eval Pack: {readiness_score_eval.artifact_path}")
+    print(
         "Amendment impact: "
         f"status={amendment_impact.status} "
         f"changes={amendment_impact.summary['change_count']} "
@@ -1357,6 +1369,8 @@ async def main() -> None:
         f"answer_reuse_coverage_pack={answer_reuse_coverage_pack.artifact_path} "
         f"readiness={scorecard.readiness_score}/{scorecard.readiness_level} "
         f"readiness_pack={readiness_pack.artifact_path} "
+        f"readiness_score_eval={readiness_score_eval.status}/{readiness_score_eval.score} "
+        f"readiness_score_eval_pack={readiness_score_eval.artifact_path} "
         f"amendment_impact={amendment_impact.status}/{amendment_impact.summary['change_count']} "
         f"amendment_impact_pack={amendment_impact_pack.artifact_path} "
         f"win score={win_strategy.win_score}/{win_strategy.win_level} "

@@ -380,6 +380,7 @@ class UIVerificationService:
                     "/rfp/readiness-scorecard",
                     "/rfp/executive-risk-report",
                     "/rfp/proposal-readiness-score-pack",
+                    "/rfp/readiness-score-eval",
                 ],
                 "generated_artifact_tab": True,
                 "artifact_root": "readiness_packs",
@@ -748,6 +749,15 @@ class UIVerificationService:
                 "path": "/rfp/proposal-readiness-score-pack",
                 "purpose": "Deal Readiness tab generated Score Pack.",
                 "expected_artifacts": ["storage/readiness_packs/*.md", "storage/readiness_packs/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/readiness-score-eval",
+                "purpose": "Deal Readiness tab local scorer regression Eval Pack.",
+                "expected_artifacts": [
+                    "storage/readiness_score_evals/*.md",
+                    "storage/readiness_score_evals/*.json",
+                ],
             },
             {
                 "method": "POST",

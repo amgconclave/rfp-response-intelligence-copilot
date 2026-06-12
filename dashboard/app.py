@@ -497,7 +497,7 @@ with tabs[10]:
     if latest_eval:
         payload["eval_metrics"] = latest_eval
 
-    cols = st.columns(3)
+    cols = st.columns(4)
     if cols[0].button("Create readiness scorecard", disabled=not bool(payload)):
         scorecard = post_json("/rfp/readiness-scorecard", payload)
         st.session_state.readiness_scorecard = scorecard
@@ -539,6 +539,27 @@ with tabs[10]:
             "Download Readiness Score Pack Markdown",
             score_pack["markdown"],
             file_name="proposal_readiness_score_pack.md",
+        )
+
+    if cols[3].button("Run readiness score eval"):
+        readiness_eval = post_json(
+            "/rfp/readiness-score-eval",
+            {
+                "dataset_path": "sample_data/readiness_score_eval_dataset.json",
+                "write_artifact": True,
+            },
+        )
+        st.session_state.readiness_score_eval = readiness_eval
+        st.success(f"Exported readiness score eval: {readiness_eval['artifact_path']}")
+        st.metric("Eval status", readiness_eval["status"])
+        st.metric("Eval score", readiness_eval["score"])
+        st.write("Experiment comparison", readiness_eval["experiment_comparison"])
+        st.write("Governance summary", readiness_eval["governance_summary"])
+        st.dataframe(readiness_eval["scenarios"], use_container_width=True)
+        st.download_button(
+            "Download Readiness Score Eval Markdown",
+            readiness_eval["markdown"],
+            file_name="readiness_score_eval_pack.md",
         )
 
     if not payload:

@@ -43,7 +43,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `ReviewerEscalationService`: converts reviewer board, workflow, and signoff ledger signals into SLA escalation items, role-crew queues, checkpointed routing, conditional transitions, and local escalation artifacts.
 - `ReviewerSignoffLedgerService`: converts reviewer boards and workflow replays into durable local signoff readiness ledgers with policy gates, outstanding owner actions, transition logs, and human-review queues.
 - `ActionPlanService`: turns requirements, gaps, and review findings into stakeholder tasks.
-- `DealReadinessService`: scores launch readiness, executive risk, and blockers.
+- `DealReadinessService`: scores launch readiness, executive risk, blockers, Proposal Readiness Score Packs, and local readiness scorer eval packs with scenario assertions, trace analysis, and experiment comparison.
 - `WinStrategyService`: simulates competitor posture, pricing risk, and pursuit strategy.
 - `CompetitiveObjectionHandlingService`: generates cited competitor, pricing, security, compliance, and implementation objection responses with confidence and reviewer workflow artifacts.
 - `WinLossLearningService`: ingests fake post-RFP outcomes and turns winning evidence/loss patterns into retrieval, eval, and response guidance recommendations.
