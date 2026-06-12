@@ -184,6 +184,10 @@ from app.models.api import (
     ReviewerCollaborationWorkflowResponse,
     ReviewerCollectionRequest,
     ReviewerCollectionResponse,
+    ReviewerEscalationPackRequest,
+    ReviewerEscalationPackResponse,
+    ReviewerEscalationRequest,
+    ReviewerEscalationResponse,
     ReviewerQuickstartResponse,
     ReviewerSignoffLedgerPackRequest,
     ReviewerSignoffLedgerPackResponse,
@@ -1078,6 +1082,113 @@ async def reviewer_signoff_pack(
             "json_artifact_path": pack.json_artifact_path,
             "ledger_status": pack.ledger.ledger_status,
             "records": len(pack.ledger.records),
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/rfp/reviewer-escalations",
+    response_model=ReviewerEscalationResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def reviewer_escalations(
+    payload: ReviewerEscalationRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewerEscalationResponse:
+    trace_id = get_trace_id(request)
+    collaboration = payload.collaboration
+    if collaboration is None:
+        inputs = _reviewer_collaboration_inputs(payload, trace_id, container)
+        collaboration = container.reviewer_collaboration.create_board(
+            trace_id=f"{trace_id}-collaboration",
+            **inputs,
+        )
+    workflow = payload.workflow or container.reviewer_workflow.build_workflow(
+        trace_id=f"{trace_id}-workflow",
+        collaboration=collaboration,
+    )
+    ledger = payload.ledger or container.reviewer_signoff.ledger(
+        trace_id=f"{trace_id}-ledger",
+        collaboration=collaboration,
+        workflow=workflow,
+        signoff_overrides=payload.signoff_overrides,
+    )
+    escalation = container.reviewer_escalation.escalation_plan(
+        trace_id=trace_id,
+        collaboration=collaboration,
+        workflow=workflow,
+        ledger=ledger,
+        sla_hours=payload.sla_hours,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.reviewer_escalations_created",
+        "reviewer_escalations",
+        metadata={
+            "status": escalation.status,
+            "escalations": escalation.summary["escalation_count"],
+            "critical": escalation.summary["critical_count"],
+            "high": escalation.summary["high_count"],
+        },
+    )
+    return escalation
+
+
+@router.post(
+    "/rfp/reviewer-escalation-pack",
+    response_model=ReviewerEscalationPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def reviewer_escalation_pack(
+    payload: ReviewerEscalationPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewerEscalationPackResponse:
+    trace_id = get_trace_id(request)
+    collaboration = payload.collaboration
+    if collaboration is None:
+        inputs = _reviewer_collaboration_inputs(payload, trace_id, container)
+        collaboration = container.reviewer_collaboration.create_board(
+            trace_id=f"{trace_id}-collaboration",
+            **inputs,
+        )
+    workflow = payload.workflow or container.reviewer_workflow.build_workflow(
+        trace_id=f"{trace_id}-workflow",
+        collaboration=collaboration,
+    )
+    ledger = payload.ledger or container.reviewer_signoff.ledger(
+        trace_id=f"{trace_id}-ledger",
+        collaboration=collaboration,
+        workflow=workflow,
+        signoff_overrides=payload.signoff_overrides,
+    )
+    escalation = payload.escalation or container.reviewer_escalation.escalation_plan(
+        trace_id=f"{trace_id}-escalation",
+        collaboration=collaboration,
+        workflow=workflow,
+        ledger=ledger,
+        sla_hours=payload.sla_hours,
+    )
+    pack = container.reviewer_escalation.pack(
+        trace_id=trace_id,
+        escalation=escalation,
+        collaboration=collaboration,
+        workflow=workflow,
+        ledger=ledger,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.reviewer_escalation_pack_created",
+        "reviewer_escalation_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.escalation.status,
+            "escalations": pack.escalation.summary["escalation_count"],
         },
     )
     return pack

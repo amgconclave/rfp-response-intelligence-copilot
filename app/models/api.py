@@ -498,6 +498,75 @@ class ReviewerSignoffLedgerPackResponse(BaseModel):
     trace_id: str
 
 
+class ReviewerEscalationItem(BaseModel):
+    escalation_id: str
+    reviewer_role: str
+    reviewer_name: str
+    severity: str
+    source: str
+    status: str
+    escalation_state: str
+    policy_gate: str
+    due_hint: str
+    escalation_owner: str
+    escalation_path: list[str] = Field(default_factory=list)
+    trigger: str
+    recommended_action: str
+    related_requirement_ids: list[str] = Field(default_factory=list)
+    related_comment_ids: list[str] = Field(default_factory=list)
+    outstanding_items: list[str] = Field(default_factory=list)
+    trace_refs: list[str] = Field(default_factory=list)
+
+
+class ReviewerEscalationCheckpoint(BaseModel):
+    checkpoint_id: str
+    sequence: int
+    state: str
+    status: str
+    owner_role: str
+    decision: str
+    rationale: str
+    next_state: str | None = None
+    blocking_count: int = 0
+
+
+class ReviewerEscalationRequest(ReviewerSignoffLedgerRequest):
+    ledger: ReviewerSignoffLedgerResponse | None = None
+    sla_hours: dict[str, int] = Field(default_factory=dict)
+
+
+class ReviewerEscalationResponse(BaseModel):
+    title: str
+    status: str
+    current_state: str
+    escalation_items: list[ReviewerEscalationItem]
+    summary: dict[str, Any]
+    checkpoints: list[ReviewerEscalationCheckpoint]
+    transitions: list[dict[str, Any]] = Field(default_factory=list)
+    role_crew_queue: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ReviewerEscalationPackRequest(ReviewerEscalationRequest):
+    escalation: ReviewerEscalationResponse | None = None
+    write_artifact: bool = True
+
+
+class ReviewerEscalationPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    escalation: ReviewerEscalationResponse
+    collaboration: ReviewerCollaborationResponse
+    workflow: ReviewerCollaborationWorkflowResponse
+    ledger: ReviewerSignoffLedgerResponse
+    trace_id: str
+
+
 class ActionPlanRequest(BaseModel):
     rfp_document_id: str | None = None
     analyzed_payload: AnalyzeResponse | None = None

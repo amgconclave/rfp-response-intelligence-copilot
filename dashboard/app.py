@@ -2094,7 +2094,7 @@ with tabs[33]:
     if st.session_state.get("win_strategy"):
         payload["win_strategy"] = st.session_state.win_strategy
 
-    cols = st.columns(4)
+    cols = st.columns(8)
     if cols[0].button("Generate objection handling"):
         st.session_state.objection_handling = post_json("/rfp/objection-handling", payload)
     if cols[1].button("Export Objection Handling Pack"):
@@ -2502,6 +2502,33 @@ with tabs[35]:
         st.session_state.reviewer_workflow = pack["workflow"]
         st.session_state.reviewer_collaboration = pack["collaboration"]
         st.success(f"Reviewer Signoff Pack generated under reviewer_signoffs: {pack['artifact_path']}")
+    if cols[6].button("Load escalations"):
+        escalation_payload = {**collaboration_payload}
+        if st.session_state.get("reviewer_collaboration"):
+            escalation_payload["collaboration"] = st.session_state.reviewer_collaboration
+        if st.session_state.get("reviewer_workflow"):
+            escalation_payload["workflow"] = st.session_state.reviewer_workflow
+        if st.session_state.get("reviewer_signoff_ledger"):
+            escalation_payload["ledger"] = st.session_state.reviewer_signoff_ledger
+        escalation = post_json("/rfp/reviewer-escalations", escalation_payload)
+        st.session_state.reviewer_escalations = escalation
+    if cols[7].button("Export Escalation Pack"):
+        escalation_pack_payload = {**collaboration_payload, "write_artifact": True}
+        if st.session_state.get("reviewer_collaboration"):
+            escalation_pack_payload["collaboration"] = st.session_state.reviewer_collaboration
+        if st.session_state.get("reviewer_workflow"):
+            escalation_pack_payload["workflow"] = st.session_state.reviewer_workflow
+        if st.session_state.get("reviewer_signoff_ledger"):
+            escalation_pack_payload["ledger"] = st.session_state.reviewer_signoff_ledger
+        if st.session_state.get("reviewer_escalations"):
+            escalation_pack_payload["escalation"] = st.session_state.reviewer_escalations
+        pack = post_json("/rfp/reviewer-escalation-pack", escalation_pack_payload)
+        st.session_state.reviewer_escalation_pack = pack
+        st.session_state.reviewer_escalations = pack["escalation"]
+        st.session_state.reviewer_signoff_ledger = pack["ledger"]
+        st.session_state.reviewer_workflow = pack["workflow"]
+        st.session_state.reviewer_collaboration = pack["collaboration"]
+        st.success(f"Reviewer SLA Escalation Pack generated under reviewer_escalations: {pack['artifact_path']}")
 
     board = st.session_state.get("reviewer_collaboration")
     if board:
@@ -2604,6 +2631,37 @@ with tabs[35]:
             "Download Reviewer Signoff Markdown",
             signoff_pack["markdown"],
             file_name="reviewer_signoff_ledger_pack.md",
+        )
+
+    escalation = st.session_state.get("reviewer_escalations")
+    if escalation:
+        st.write("Reviewer SLA escalation plan")
+        escalation_cols = st.columns(4)
+        escalation_cols[0].metric("Escalation", escalation["status"])
+        escalation_cols[1].metric("State", escalation["current_state"])
+        escalation_cols[2].metric("Items", escalation["summary"]["escalation_count"])
+        escalation_cols[3].metric("Critical", escalation["summary"]["critical_count"])
+        st.write("Escalation items")
+        st.dataframe(escalation["escalation_items"], use_container_width=True)
+        st.write("Role crew queue")
+        st.dataframe(escalation["role_crew_queue"], use_container_width=True)
+        st.write("Checkpoints")
+        st.dataframe(escalation["checkpoints"], use_container_width=True)
+        st.write("Transitions")
+        st.dataframe(escalation["transitions"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(escalation["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(escalation["limitations"])
+
+    escalation_pack = st.session_state.get("reviewer_escalation_pack")
+    if escalation_pack:
+        st.write("Generated escalation artifact path", escalation_pack["artifact_path"])
+        st.write("Generated escalation JSON path", escalation_pack["json_artifact_path"])
+        st.download_button(
+            "Download Reviewer SLA Escalation Markdown",
+            escalation_pack["markdown"],
+            file_name="reviewer_sla_escalation_pack.md",
         )
 
 

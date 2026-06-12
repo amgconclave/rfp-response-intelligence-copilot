@@ -55,6 +55,7 @@ from app.services.retrieval_experiments import RetrievalExperimentComparisonServ
 from app.services.review_board import RfpReviewBoardService
 from app.services.reviewer import ReviewerQuickstartService
 from app.services.reviewer_collaboration import ReviewerCollaborationService
+from app.services.reviewer_escalation import ReviewerEscalationService
 from app.services.reviewer_signoff import ReviewerSignoffLedgerService
 from app.services.reviewer_workflow import ReviewerWorkflowService
 from app.services.rfp_analysis import RfpAnalysisService
@@ -124,6 +125,7 @@ class ServiceContainer:
         self.reviewer_collaboration = ReviewerCollaborationService(settings)
         self.reviewer_workflow = ReviewerWorkflowService(settings)
         self.reviewer_signoff = ReviewerSignoffLedgerService(settings)
+        self.reviewer_escalation = ReviewerEscalationService(settings)
         self.ui_verification = UIVerificationService(settings)
         self.verification_evidence = VerificationEvidenceService(settings)
         self.final_handoff = FinalHandoffService(settings)

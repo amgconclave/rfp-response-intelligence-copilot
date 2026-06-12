@@ -354,6 +354,8 @@ class UIVerificationService:
                     "/rfp/reviewer-workflow-pack",
                     "/rfp/reviewer-signoff-ledger",
                     "/rfp/reviewer-signoff-pack",
+                    "/rfp/reviewer-escalations",
+                    "/rfp/reviewer-escalation-pack",
                 ],
                 "generated_artifact_tab": True,
                 "artifact_root": "review_boards",
@@ -714,6 +716,20 @@ class UIVerificationService:
                 "path": "/rfp/reviewer-signoff-pack",
                 "purpose": "Reviewer Collaboration generated signoff ledger pack.",
                 "expected_artifacts": ["storage/reviewer_signoffs/*.md", "storage/reviewer_signoffs/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/reviewer-escalations",
+                "purpose": "Reviewer Collaboration SLA escalation plan with role crew routing.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/reviewer-escalation-pack",
+                "purpose": "Reviewer Collaboration generated SLA escalation pack.",
+                "expected_artifacts": [
+                    "storage/reviewer_escalations/*.md",
+                    "storage/reviewer_escalations/*.json",
+                ],
             },
             {
                 "method": "POST",

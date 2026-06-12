@@ -630,6 +630,20 @@ async def main() -> None:
         reviewer_signoff,
         write_artifact=True,
     )
+    reviewer_escalations = container.reviewer_escalation.escalation_plan(
+        "demo-reviewer-escalations",
+        reviewer_collaboration,
+        reviewer_workflow,
+        reviewer_signoff,
+    )
+    reviewer_escalation_pack = container.reviewer_escalation.pack(
+        "demo-reviewer-escalation-pack",
+        reviewer_escalations,
+        reviewer_collaboration,
+        reviewer_workflow,
+        reviewer_signoff,
+        write_artifact=True,
+    )
     exception_register = container.submission_exceptions.create_register(
         trace_id="demo-exception-register",
         submission_decision=submission_decision,
@@ -1171,6 +1185,16 @@ async def main() -> None:
     print(f"Reviewer Signoff Pack JSON: {reviewer_signoff_pack.json_artifact_path}")
     print("Reviewer signoff directory: storage/reviewer_signoffs")
     print(
+        "Reviewer SLA escalations: "
+        f"status={reviewer_escalations.status} "
+        f"items={reviewer_escalations.summary['escalation_count']} "
+        f"critical={reviewer_escalations.summary['critical_count']} "
+        f"state={reviewer_escalations.current_state}"
+    )
+    print(f"Reviewer SLA Escalation Pack: {reviewer_escalation_pack.artifact_path}")
+    print(f"Reviewer SLA Escalation Pack JSON: {reviewer_escalation_pack.json_artifact_path}")
+    print("Reviewer escalation directory: storage/reviewer_escalations")
+    print(
         "Submission exceptions: "
         f"status={exception_register.register_status} "
         f"exceptions={exception_register.summary['exception_count']} "
@@ -1384,6 +1408,9 @@ async def main() -> None:
         f"reviewer_signoff={reviewer_signoff.ledger_status}/"
         f"{reviewer_signoff.summary['record_count']} "
         f"reviewer_signoff_pack={reviewer_signoff_pack.artifact_path} "
+        f"reviewer_escalations={reviewer_escalations.status}/"
+        f"{reviewer_escalations.summary['escalation_count']} "
+        f"reviewer_escalation_pack={reviewer_escalation_pack.artifact_path} "
         f"exceptions={exception_register.register_status}/"
         f"{exception_register.summary['exception_count']} "
         f"exception_pack={exception_pack.artifact_path} "

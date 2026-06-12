@@ -1254,6 +1254,36 @@ Writes the reviewer signoff ledger as Markdown and JSON under `storage/reviewer_
 
 The pack is intended for local review-board evidence: signoff readiness, durable workflow replay context, named policy gates, outstanding owner actions, transition history, proof commands, and limitations.
 
+### `POST /rfp/reviewer-escalations`
+
+Builds a local reviewer SLA escalation plan from the collaboration board, workflow replay, and signoff ledger. If called with `{}`, the endpoint derives the local sample RFP reviewer inputs first. It supports optional `sla_hours` overrides by role or severity.
+
+```json
+{
+  "collaboration": {},
+  "workflow": {},
+  "ledger": {},
+  "sla_hours": {
+    "critical": 2,
+    "legal": 4
+  }
+}
+```
+
+The response includes `status`, `current_state`, `escalation_items`, `summary`, checkpointed escalation routing, traceable transitions, role crew queue, proof commands, limitations, and `trace_id`.
+
+### `POST /rfp/reviewer-escalation-pack`
+
+Writes the reviewer SLA escalation plan as Markdown and JSON under `storage/reviewer_escalations/`.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack is intended for local review-board operations: owner escalations, SLA hints, role crew delegation, blocked checkpoint evidence, conditional routing, replay guidance, proof commands, and limitations.
+
 ### `POST /rfp/exception-register`
 
 Creates a local submission exception register from a submission decision plus optional reviewer collaboration board. If called with `{}`, the endpoint derives sample RFP signals locally. Each exception has a waiver type, severity, owner, approver, expiry date, required evidence, linked requirements/artifacts, risk acceptance text, and escalation path.

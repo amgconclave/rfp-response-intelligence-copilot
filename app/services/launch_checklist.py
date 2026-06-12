@@ -58,6 +58,8 @@ class LaunchChecklistService:
                 "POST /rfp/reviewer-collaboration-pack",
                 "POST /rfp/reviewer-signoff-ledger",
                 "POST /rfp/reviewer-signoff-pack",
+                "POST /rfp/reviewer-escalations",
+                "POST /rfp/reviewer-escalation-pack",
                 "POST /rfp/exception-register",
                 "POST /rfp/exception-pack",
                 "POST /rfp/proposal-readiness-score-pack",
@@ -218,6 +220,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\review_boards -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "reviewer-escalations|Reviewer SLA Escalation|reviewer_escalations" '
+                    "app dashboard docs README.md tests Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\reviewer_escalations -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -532,6 +542,7 @@ class LaunchChecklistService:
             "procurement_risk_desk": "storage/procurement_risk_desk",
             "review_boards": "storage/review_boards",
             "reviewer_signoffs": "storage/reviewer_signoffs",
+            "reviewer_escalations": "storage/reviewer_escalations",
             "exception_registers": "storage/exception_registers",
             "answer_reuse_library": "storage/answer_reuse_library",
             "answer_reuse_drift": "storage/answer_reuse_drift",
@@ -803,6 +814,25 @@ class LaunchChecklistService:
                 200,
                 "Writes reviewer signoff ledger Markdown and JSON artifacts.",
                 ["storage/reviewer_signoffs/*.md", "storage/reviewer_signoffs/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Reviewer SLA Escalations",
+                "POST",
+                "/rfp/reviewer-escalations",
+                "enterprise",
+                200,
+                "Returns reviewer SLA escalation items, role crew queue, checkpoints, and transitions.",
+                body="{}",
+            ),
+            self._row(
+                "Reviewer SLA Escalation Pack",
+                "POST",
+                "/rfp/reviewer-escalation-pack",
+                "artifact",
+                200,
+                "Writes reviewer SLA escalation Markdown and JSON artifacts.",
+                ["storage/reviewer_escalations/*.md", "storage/reviewer_escalations/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

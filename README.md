@@ -433,6 +433,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /rfp/reviewer-workflow-pack`: writes Markdown/JSON Reviewer Workflow artifacts under `storage/review_boards/`.
 - `POST /rfp/reviewer-signoff-ledger`: creates a durable local reviewer signoff readiness ledger with policy gates, outstanding items, transition log, and human review queue.
 - `POST /rfp/reviewer-signoff-pack`: writes Markdown/JSON Reviewer Signoff Ledger artifacts under `storage/reviewer_signoffs/`.
+- `POST /rfp/reviewer-escalations`: creates a local reviewer SLA escalation plan with role crew routing, checkpoints, conditional transitions, and owner actions.
+- `POST /rfp/reviewer-escalation-pack`: writes Markdown/JSON Reviewer SLA Escalation artifacts under `storage/reviewer_escalations/`.
 - `POST /rfp/exception-register`: creates waiver records with approvers, expiry, required evidence, linked artifacts, and approval queue.
 - `POST /rfp/exception-pack`: writes Markdown/JSON Submission Exception Register artifacts under `storage/exception_registers/`.
 - `POST /rfp/action-plan`: creates deterministic cross-functional stakeholder tasks from analysis, matrix, customer fit/profile, and review findings.

@@ -329,6 +329,14 @@ class ArtifactInventoryService:
                 "Select-Object FullName,Length,LastWriteTime"
             ),
             (
+                'rg "reviewer-escalations|Reviewer SLA Escalation|reviewer_escalations" '
+                "app dashboard docs README.md tests Makefile"
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\reviewer_escalations -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
                 'rg "exception-register|exception-pack|Submission Exception|exception_registers" '
                 "app dashboard docs README.md tests Makefile"
             ),
@@ -487,6 +495,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /rfp/reviewer-signoff-pack to write the Reviewer Signoff Ledger Pack "
                 "under storage/reviewer_signoffs/."
+            ),
+            (
+                "Call POST /rfp/reviewer-escalation-pack to write the Reviewer SLA Escalation Pack "
+                "under storage/reviewer_escalations/."
             ),
             (
                 "Call POST /rfp/exception-pack to write the Submission Exception Register Pack "
@@ -766,6 +778,15 @@ class ArtifactInventoryService:
                 "reviewer_signoffs",
                 "POST /rfp/reviewer-signoff-pack",
                 "Reviewer signoff readiness ledger with governance gates and human review queue artifacts.",
+            ),
+            self._spec(
+                "reviewer_escalations",
+                "reviewer_escalations",
+                "POST /rfp/reviewer-escalation-pack",
+                (
+                    "Reviewer SLA escalation artifacts with owner routing, role crew queue, checkpoints, "
+                    "conditional transitions, and local proof commands."
+                ),
             ),
             self._spec(
                 "exception_registers",
