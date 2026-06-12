@@ -2694,7 +2694,7 @@ with tabs[36]:
     st.caption(
         "Score source documents by age, renewal date, owner coverage, unsupported-claim language, and endpoint use."
     )
-    cols = st.columns(2)
+    cols = st.columns(4)
     if cols[0].button("Load Freshness Report"):
         st.session_state.evidence_freshness = get_json("/evidence/freshness")
     if cols[1].button("Generate Freshness Pack"):
@@ -2702,6 +2702,13 @@ with tabs[36]:
         st.session_state.evidence_freshness_pack = pack
         st.session_state.evidence_freshness = pack["freshness"]
         st.success(f"Evidence Freshness Pack generated under freshness_packs: {pack['artifact_path']}")
+    if cols[2].button("Load SLA Ledger"):
+        st.session_state.evidence_freshness_sla = get_json("/evidence/freshness-sla")
+    if cols[3].button("Generate SLA Pack"):
+        pack = post_json("/evidence/freshness-sla-pack", {"write_artifact": True})
+        st.session_state.evidence_freshness_sla_pack = pack
+        st.session_state.evidence_freshness_sla = pack["sla"]
+        st.success(f"Evidence Freshness SLA Pack generated under freshness_sla: {pack['artifact_path']}")
 
     freshness = st.session_state.get("evidence_freshness")
     if freshness:
@@ -2769,6 +2776,41 @@ with tabs[36]:
             "Download Evidence Freshness Markdown",
             pack["markdown"],
             file_name="evidence_freshness_pack.md",
+        )
+
+    sla = st.session_state.get("evidence_freshness_sla")
+    if sla:
+        st.write("Owner SLA ledger")
+        summary = sla["summary"]
+        sla_cols = st.columns(4)
+        sla_cols[0].metric("SLA status", sla["status"])
+        sla_cols[1].metric("Items", summary["sla_item_count"])
+        sla_cols[2].metric("Breached", summary["breached_count"])
+        sla_cols[3].metric("Blocked endpoints", summary["blocked_endpoint_count"])
+        st.dataframe(sla["ledger_items"], use_container_width=True)
+        st.write("Owner rollups")
+        st.dataframe(sla["owner_rollups"], use_container_width=True)
+        if sla["endpoint_impact"]:
+            st.write("Endpoint impact")
+            st.dataframe(sla["endpoint_impact"], use_container_width=True)
+        st.write("Role crew queue")
+        st.dataframe(sla["role_crew_queue"], use_container_width=True)
+        st.write("SLA state machine")
+        st.dataframe(sla["checkpoints"], use_container_width=True)
+        st.dataframe(sla["transitions"], use_container_width=True)
+        st.write("SLA governance policy")
+        st.json(sla["governance_policy"])
+        st.write("SLA proof commands")
+        st.code("\n".join(sla["local_proof_commands"]), language="powershell")
+
+    sla_pack = st.session_state.get("evidence_freshness_sla_pack")
+    if sla_pack:
+        st.write("Generated SLA artifact path", sla_pack["artifact_path"])
+        st.write("Generated SLA JSON path", sla_pack["json_artifact_path"])
+        st.download_button(
+            "Download Evidence Freshness SLA Markdown",
+            sla_pack["markdown"],
+            file_name="evidence_freshness_sla_pack.md",
         )
 
 

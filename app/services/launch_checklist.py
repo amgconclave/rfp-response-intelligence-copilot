@@ -320,6 +320,14 @@ class LaunchChecklistService:
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
+                    'rg "freshness-sla|Evidence Freshness SLA|freshness_sla|owner SLA" '
+                    "app dashboard docs README.md tests Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\freshness_sla -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
                     'rg "evidence/conflicts|evidence/conflict-pack|Evidence Conflict|'
                     'conflict_packs|Conflict Resolver" app dashboard docs README.md tests Makefile'
                 ),
@@ -571,6 +579,7 @@ class LaunchChecklistService:
             "win_loss_replay": "storage/win_loss_replay",
             "retrieval_experiments": "storage/retrieval_experiments",
             "freshness_packs": "storage/freshness_packs",
+            "freshness_sla": "storage/freshness_sla",
             "conflict_packs": "storage/conflict_packs",
             "citation_lineage": "storage/citation_lineage",
             "source_trust": "storage/source_trust",
@@ -1534,6 +1543,27 @@ class LaunchChecklistService:
                 200,
                 "Writes Evidence Freshness and Expiry Risk Markdown and JSON.",
                 ["storage/freshness_packs/*.md", "storage/freshness_packs/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Evidence Freshness SLA",
+                "GET",
+                "/evidence/freshness-sla",
+                "evidence",
+                200,
+                (
+                    "Returns owner SLA ledger rows, escalation owners, endpoint impact, role crew queues, "
+                    "and traceable freshness remediation checkpoints."
+                ),
+            ),
+            self._row(
+                "Evidence Freshness SLA Pack",
+                "POST",
+                "/evidence/freshness-sla-pack",
+                "artifact",
+                200,
+                "Writes Evidence Freshness SLA Ledger Markdown and JSON.",
+                ["storage/freshness_sla/*.md", "storage/freshness_sla/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

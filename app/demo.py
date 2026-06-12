@@ -423,6 +423,16 @@ async def main() -> None:
         evidence_freshness,
         write_artifact=True,
     )
+    evidence_freshness_sla = container.evidence_sla.ledger(
+        "demo-evidence-freshness-sla",
+        evidence_freshness,
+    )
+    evidence_freshness_sla_pack = container.evidence_sla.pack(
+        "demo-evidence-freshness-sla-pack",
+        evidence_freshness_sla,
+        evidence_freshness,
+        write_artifact=True,
+    )
     evidence_conflicts = container.evidence_conflicts.conflict_report("demo-evidence-conflicts")
     evidence_conflict_pack = container.evidence_conflicts.conflict_pack(
         "demo-evidence-conflict-pack",
@@ -1067,6 +1077,16 @@ async def main() -> None:
     print(f"Evidence Freshness Pack JSON: {evidence_freshness_pack.json_artifact_path}")
     print("Freshness packs directory: storage/freshness_packs")
     print(
+        "Evidence freshness SLA: "
+        f"status={evidence_freshness_sla.status} "
+        f"items={evidence_freshness_sla.summary['sla_item_count']} "
+        f"breached={evidence_freshness_sla.summary['breached_count']} "
+        f"blocked_endpoints={evidence_freshness_sla.summary['blocked_endpoint_count']}"
+    )
+    print(f"Evidence Freshness SLA Pack: {evidence_freshness_sla_pack.artifact_path}")
+    print(f"Evidence Freshness SLA Pack JSON: {evidence_freshness_sla_pack.json_artifact_path}")
+    print("Freshness SLA directory: storage/freshness_sla")
+    print(
         "Evidence conflicts: "
         f"conflicts={evidence_conflicts.summary['conflict_count']} "
         f"blocked={evidence_conflicts.summary['blocking_conflict_count']} "
@@ -1512,6 +1532,8 @@ async def main() -> None:
         f"rag_coverage_pack={rag_coverage_pack.artifact_path} "
         f"freshness={evidence_freshness.summary['average_freshness_score']} "
         f"freshness_packs={evidence_freshness_pack.artifact_path} "
+        f"freshness_sla={evidence_freshness_sla.status}/{evidence_freshness_sla.summary['sla_item_count']} "
+        f"freshness_sla_pack={evidence_freshness_sla_pack.artifact_path} "
         f"conflicts={evidence_conflicts.summary['conflict_count']} "
         f"conflict_packs={evidence_conflict_pack.artifact_path} "
         f"citation_lineage={citation_lineage.score}/{citation_lineage.summary['citation_count']} "

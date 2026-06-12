@@ -42,6 +42,15 @@ async def test_evidence_freshness_service_scores_sources_and_flags_risks(tmp_pat
     assert any(item["workflow_state"] == "blocked_source_quarantine" for item in report.human_review_queue)
     assert report.governance_policy["policy_id"] == "local-evidence-freshness-gate-v1"
     assert any(span["span_id"] == "freshness.route_human_review" for span in report.trace_spans)
+    sla = container.evidence_sla.ledger("freshness-sla-service-test", report)
+    assert sla.status == "blocked"
+    assert sla.summary["sla_item_count"] >= 1
+    assert sla.summary["breached_count"] >= 1
+    assert sla.summary["blocked_endpoint_count"] >= 1
+    assert "state machine workflow" in sla.summary["patterns_applied"]
+    assert any(item.workflow_state == "quarantine_source" for item in sla.ledger_items)
+    assert any(row["process_mode"] == "sequential_blocking_review" for row in sla.role_crew_queue)
+    assert any(checkpoint["state"] == "endpoint_release_gate" for checkpoint in sla.checkpoints)
     repository.reset()
     get_settings.cache_clear()
     get_container.cache_clear()
@@ -80,6 +89,29 @@ def test_evidence_freshness_endpoints_write_pack_and_artifacts(client, auth_head
     assert pack["pack"]["renewal_calendar"]
     assert pack["pack"]["owner_followups"]
 
+    sla_response = client.get("/evidence/freshness-sla", headers=auth_headers)
+    assert sla_response.status_code == 200
+    sla = sla_response.json()
+    assert sla["status"] == "blocked"
+    assert sla["summary"]["sla_item_count"] >= 1
+    assert sla["summary"]["breached_count"] >= 1
+    assert sla["endpoint_impact"]
+    assert sla["owner_rollups"]
+    assert sla["role_crew_queue"]
+    assert sla["governance_policy"]["policy_id"] == "local-freshness-sla-ledger-v1"
+
+    sla_pack_response = client.post("/evidence/freshness-sla-pack", headers=auth_headers, json={"write_artifact": True})
+    assert sla_pack_response.status_code == 200
+    sla_pack = sla_pack_response.json()
+    assert sla_pack["artifact_path"]
+    assert sla_pack["json_artifact_path"]
+    assert Path(sla_pack["artifact_path"]).exists()
+    assert Path(sla_pack["json_artifact_path"]).exists()
+    assert "freshness_sla" in sla_pack["artifact_path"]
+    assert "Evidence Freshness SLA Ledger Pack" in sla_pack["markdown"]
+    assert sla_pack["pack"]["summary"]["sla_item_count"] >= 1
+    assert sla_pack["sla"]["summary"]["blocked_endpoint_count"] >= 1
+
 
 def test_freshness_dashboard_smoke_launch_contract_and_inventory_wiring(client, auth_headers):
     ingest_corpus(client, auth_headers)
@@ -93,6 +125,8 @@ def test_freshness_dashboard_smoke_launch_contract_and_inventory_wiring(client, 
     endpoint_paths = {endpoint["path"]: endpoint for endpoint in smoke["endpoint_references"]}
     assert endpoint_paths["/evidence/freshness"]["status"] == "pass"
     assert endpoint_paths["/evidence/freshness-pack"]["status"] == "pass"
+    assert endpoint_paths["/evidence/freshness-sla"]["status"] == "pass"
+    assert endpoint_paths["/evidence/freshness-sla-pack"]["status"] == "pass"
 
     launch_response = client.get("/ops/smoke-matrix", headers=auth_headers)
     assert launch_response.status_code == 200
@@ -100,6 +134,7 @@ def test_freshness_dashboard_smoke_launch_contract_and_inventory_wiring(client, 
     paths = {row["path"]: row for row in launch["rows"]}
     assert "/evidence/freshness" in paths
     assert "storage/freshness_packs/*.md" in paths["/evidence/freshness-pack"]["required_artifact_expectations"]
+    assert "storage/freshness_sla/*.md" in paths["/evidence/freshness-sla-pack"]["required_artifact_expectations"]
 
     inventory_response = client.get("/artifacts/inventory", headers=auth_headers)
     assert inventory_response.status_code == 200
@@ -107,10 +142,18 @@ def test_freshness_dashboard_smoke_launch_contract_and_inventory_wiring(client, 
     directories = {Path(item["directory"]).name: item for item in inventory["directories"]}
     assert "freshness_packs" in directories
     assert directories["freshness_packs"]["producer_endpoint"] == "POST /evidence/freshness-pack"
+    assert "freshness_sla" in directories
+    assert directories["freshness_sla"]["producer_endpoint"] == "POST /evidence/freshness-sla-pack"
 
     contract_response = client.get("/api/contract-audit", headers=auth_headers)
     assert contract_response.status_code == 200
     contract = contract_response.json()
     evidence_endpoints = {endpoint["path"] for endpoint in contract["endpoint_inventory"]["evidence"]}
-    assert {"/evidence/freshness", "/evidence/freshness-pack"} <= evidence_endpoints
+    assert {
+        "/evidence/freshness",
+        "/evidence/freshness-pack",
+        "/evidence/freshness-sla",
+        "/evidence/freshness-sla-pack",
+    } <= evidence_endpoints
     assert "/evidence/freshness-pack" not in contract["generated_artifact_endpoint_coverage"]["missing_paths"]
+    assert "/evidence/freshness-sla-pack" not in contract["generated_artifact_endpoint_coverage"]["missing_paths"]

@@ -393,6 +393,14 @@ class ArtifactInventoryService:
                 "Select-Object FullName,Length,LastWriteTime"
             ),
             (
+                'rg "freshness-sla|Evidence Freshness SLA|freshness_sla|owner SLA" '
+                "app dashboard docs README.md tests Makefile"
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\freshness_sla -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
                 'rg "evidence/conflicts|evidence/conflict-pack|Evidence Conflict|'
                 'conflict_packs|Conflict Resolver" app dashboard docs README.md tests sample_data Makefile'
             ),
@@ -539,6 +547,10 @@ class ArtifactInventoryService:
             (
                 "Call POST /evidence/freshness-pack to write the Evidence Freshness Pack "
                 "under storage/freshness_packs/."
+            ),
+            (
+                "Call POST /evidence/freshness-sla-pack to write the Evidence Freshness SLA Ledger Pack "
+                "under storage/freshness_sla/."
             ),
             (
                 "Call POST /evidence/conflict-pack to write the Evidence Conflict Resolver Pack "
@@ -882,6 +894,12 @@ class ArtifactInventoryService:
                 "freshness_packs",
                 "POST /evidence/freshness-pack",
                 "Evidence freshness, renewal, owner, endpoint, and unsupported-claim risk artifacts.",
+            ),
+            self._spec(
+                "freshness_sla",
+                "freshness_sla",
+                "POST /evidence/freshness-sla-pack",
+                "Evidence freshness owner SLA ledger artifacts with endpoint blocks and escalation queues.",
             ),
             self._spec(
                 "conflict_packs",

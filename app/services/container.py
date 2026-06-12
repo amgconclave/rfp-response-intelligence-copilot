@@ -32,6 +32,7 @@ from app.services.evaluation import EvaluationService
 from app.services.evidence_conflicts import EvidenceConflictService
 from app.services.evidence_freshness import EvidenceFreshnessService
 from app.services.evidence_gap import EvidenceGapService
+from app.services.evidence_sla import EvidenceFreshnessSlaService
 from app.services.final_handoff import FinalHandoffService
 from app.services.git_readiness import GitReadinessService
 from app.services.governed_retrieval import GovernedRetrievalService
@@ -167,6 +168,7 @@ class ServiceContainer:
         self.evaluation = EvaluationService(self.retrieval, self.generation)
         self.evidence_conflicts = EvidenceConflictService(self.repo, settings)
         self.evidence_freshness = EvidenceFreshnessService(self.repo, settings)
+        self.evidence_sla = EvidenceFreshnessSlaService(settings)
         self.citation_lineage = CitationLineageService(self.repo, settings)
         self.objection_handling = CompetitiveObjectionHandlingService(
             self.repo,

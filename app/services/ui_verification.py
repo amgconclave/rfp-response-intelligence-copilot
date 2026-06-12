@@ -602,7 +602,12 @@ class UIVerificationService:
             },
             {
                 "label": "Evidence Freshness",
-                "endpoint_paths": ["/evidence/freshness", "/evidence/freshness-pack"],
+                "endpoint_paths": [
+                    "/evidence/freshness",
+                    "/evidence/freshness-pack",
+                    "/evidence/freshness-sla",
+                    "/evidence/freshness-sla-pack",
+                ],
                 "generated_artifact_tab": True,
                 "artifact_root": "freshness_packs",
             },
@@ -1143,6 +1148,17 @@ class UIVerificationService:
                 "path": "/evidence/freshness-pack",
                 "purpose": "Evidence Freshness generated expiry risk pack.",
                 "expected_artifacts": ["storage/freshness_packs/*.md", "storage/freshness_packs/*.json"],
+            },
+            {
+                "method": "GET",
+                "path": "/evidence/freshness-sla",
+                "purpose": "Evidence Freshness owner SLA ledger and endpoint impact view.",
+            },
+            {
+                "method": "POST",
+                "path": "/evidence/freshness-sla-pack",
+                "purpose": "Evidence Freshness owner SLA ledger generated Markdown and JSON pack.",
+                "expected_artifacts": ["storage/freshness_sla/*.md", "storage/freshness_sla/*.json"],
             },
             {
                 "method": "GET",

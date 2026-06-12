@@ -1805,6 +1805,56 @@ class EvidenceFreshnessPackResponse(BaseModel):
     trace_id: str
 
 
+class EvidenceFreshnessSlaItem(BaseModel):
+    ledger_id: str
+    filename: str
+    document_type: str
+    policy_owner: str
+    escalation_owner: str
+    severity: str
+    sla_status: str
+    workflow_state: str
+    days_until_renewal: int | None = None
+    days_past_due: int
+    response_sla_hours: int
+    required_action: str
+    blocked_endpoints: list[str] = Field(default_factory=list)
+    risk_drivers: list[str] = Field(default_factory=list)
+    evidence_flags: list[str] = Field(default_factory=list)
+
+
+class EvidenceFreshnessSlaResponse(BaseModel):
+    title: str
+    status: str
+    current_state: str
+    generated_at: str
+    summary: dict[str, Any]
+    ledger_items: list[EvidenceFreshnessSlaItem]
+    owner_rollups: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_impact: list[dict[str, Any]] = Field(default_factory=list)
+    role_crew_queue: list[dict[str, Any]] = Field(default_factory=list)
+    checkpoints: list[dict[str, Any]] = Field(default_factory=list)
+    transitions: list[dict[str, Any]] = Field(default_factory=list)
+    governance_policy: dict[str, Any] = Field(default_factory=dict)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class EvidenceFreshnessSlaPackRequest(BaseModel):
+    write_artifact: bool = True
+
+
+class EvidenceFreshnessSlaPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    sla: EvidenceFreshnessSlaResponse
+    freshness: EvidenceFreshnessResponse
+    trace_id: str
+
+
 class EvidenceConflictClaim(BaseModel):
     claim_id: str
     topic: str

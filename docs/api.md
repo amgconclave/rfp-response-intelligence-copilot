@@ -193,6 +193,27 @@ Writes Markdown and JSON Evidence Freshness + Expiry Risk Pack artifacts under i
 
 The pack includes the source freshness matrix, renewal calendar, owner follow-ups, durable workflow checkpoints, human review queue, governance rules, trace spans, unsupported-claim flags, endpoint references, exact local proof commands, limitations, embedded freshness JSON, Markdown, JSON, and trace ID.
 
+### `GET /evidence/freshness-sla`
+
+Returns an Evidence Freshness SLA Ledger that converts stale, expired, missing-renewal, and unsupported-claim source risks into owner-routed SLA rows. The response includes escalation owners, endpoint impact, role crew queues, deterministic response windows, traceable state-machine checkpoints, transitions, governance policy, local proof commands, and limitations.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/evidence/freshness-sla" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /evidence/freshness-sla-pack`
+
+Writes Markdown and JSON Evidence Freshness SLA Ledger artifacts under ignored `storage/freshness_sla/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes SLA ledger rows, owner rollups, endpoint impact, role crew assignments, state-machine checkpoints, governance rules, exact local proof commands, limitations, embedded freshness summary, Markdown, JSON, and trace ID.
+
 ### `GET /evidence/conflicts`
 
 Returns the Evidence Conflict Resolver report. It scans the local evidence corpus for source-precedence, scope, and ambiguity conflicts such as demo-only pricing versus enterprise scope, local-demo subprocessors versus optional cloud providers, DR targets versus absolute SLA language, and local API-key auth versus production SSO.

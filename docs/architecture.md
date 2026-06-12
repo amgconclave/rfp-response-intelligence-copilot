@@ -55,6 +55,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `ContractRiskService`: identifies risky customer terms and writes negotiation briefs.
 - `EvidenceGapService`: produces source request packs for unsupported claims.
 - `EvidenceConflictService`: detects cited source-precedence, scope, and ambiguity conflicts before draft approval.
+- `EvidenceFreshnessSlaService`: converts freshness risks into typed owner SLA ledger rows, endpoint blocks, role crew queues, and traceable remediation state transitions.
 - `CitationLineageService`: verifies generated answer and draft citations against local repository document/chunk IDs, stale snippets, generated-claim flags, owners, and endpoint impact.
 - `SourceTrustGateService`: consolidates freshness, conflict, and citation-lineage signals into source trust scores, retrieval policies, and owner approval queues.
 - `GovernedRetrievalService`: applies source-trust retrieval policies to real retrieval candidates, producing allowed citations, blocked/suppressed rows, HITL reviewer queues, and trace spans before answer generation.

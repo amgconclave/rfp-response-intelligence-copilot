@@ -78,6 +78,9 @@ from app.models.api import (
     EvidenceFreshnessPackRequest,
     EvidenceFreshnessPackResponse,
     EvidenceFreshnessResponse,
+    EvidenceFreshnessSlaPackRequest,
+    EvidenceFreshnessSlaPackResponse,
+    EvidenceFreshnessSlaResponse,
     EvidenceGapRequest,
     EvidenceGapResponse,
     ExecutiveRiskReportRequest,
@@ -3749,6 +3752,69 @@ async def evidence_freshness_pack(
             "json_artifact_path": pack.json_artifact_path,
             "sources": pack.freshness.summary["source_count"],
             "expired": pack.freshness.summary["expired_count"],
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/evidence/freshness-sla",
+    response_model=EvidenceFreshnessSlaResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def evidence_freshness_sla(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> EvidenceFreshnessSlaResponse:
+    trace_id = get_trace_id(request)
+    await _freshness_inputs(container)
+    freshness = container.evidence_freshness.freshness_report(f"{trace_id}-freshness")
+    sla = container.evidence_sla.ledger(trace_id, freshness)
+    container.audit.record(
+        trace_id,
+        "evidence.freshness_sla_viewed",
+        "evidence_freshness_sla",
+        metadata={
+            "status": sla.status,
+            "items": sla.summary["sla_item_count"],
+            "breached": sla.summary["breached_count"],
+            "blocked_endpoints": sla.summary["blocked_endpoint_count"],
+        },
+    )
+    return sla
+
+
+@router.post(
+    "/evidence/freshness-sla-pack",
+    response_model=EvidenceFreshnessSlaPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def evidence_freshness_sla_pack(
+    request: Request,
+    payload: EvidenceFreshnessSlaPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> EvidenceFreshnessSlaPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or EvidenceFreshnessSlaPackRequest()
+    await _freshness_inputs(container)
+    freshness = container.evidence_freshness.freshness_report(f"{trace_id}-freshness")
+    sla = container.evidence_sla.ledger(f"{trace_id}-sla", freshness)
+    pack = container.evidence_sla.pack(
+        trace_id,
+        sla,
+        freshness,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "evidence.freshness_sla_pack_generated",
+        "evidence_freshness_sla_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.sla.status,
+            "items": pack.sla.summary["sla_item_count"],
         },
     )
     return pack
