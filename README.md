@@ -164,11 +164,13 @@ curl -X POST "http://127.0.0.1:8000/learning/win-loss" -H "X-API-Key: local-demo
 curl -X POST "http://127.0.0.1:8000/learning/win-loss-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 ```
 
-The same tab plans governed win/loss policy activation with typed policy rules, traceable state transitions, eval/red-team checkpoints, owner approvals, and rollback triggers. The generated Policy Activation Pack writes Markdown/JSON under `storage/win_loss_policy/`:
+The same tab plans governed win/loss policy activation with typed policy rules, traceable state transitions, eval/red-team checkpoints, owner approvals, and rollback triggers. The generated Policy Activation Pack writes Markdown/JSON under `storage/win_loss_policy/`. It can also replay the learned policy against local eval and red-team fixtures before rollout, writing a Backtest Pack under `storage/win_loss_replay/`:
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/learning/win-loss-policy" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 curl -X POST "http://127.0.0.1:8000/learning/win-loss-policy-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
+curl -X POST "http://127.0.0.1:8000/learning/win-loss-replay" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
+curl -X POST "http://127.0.0.1:8000/learning/win-loss-replay-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 ```
 
 The Retrieval Experiments tab compares baseline, win/loss source-boosted, loss-gap guarded, and balanced governed retrieval policies against the local eval dataset. It returns per-question diagnostics, local trace spans, an approval-oriented governance decision, and a generated pack under `storage/retrieval_experiments/`:
@@ -448,6 +450,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /learning/win-loss-pack`: writes a Markdown/JSON Win/Loss Learning Strategy Pack under `storage/win_loss_packs/`.
 - `POST /learning/win-loss-policy`: returns a governed activation plan with policy rules, state transitions, checkpoints, owner reviews, rollback plan, proof commands, and limitations.
 - `POST /learning/win-loss-policy-pack`: writes a Markdown/JSON Win/Loss Policy Activation Pack under `storage/win_loss_policy/`.
+- `POST /learning/win-loss-replay`: backtests the learned policy against eval and red-team fixtures with trace spans, policy deltas, governance status, and HITL review queue.
+- `POST /learning/win-loss-replay-pack`: writes a Markdown/JSON Win/Loss Replay Backtest Pack under `storage/win_loss_replay/`.
 - `POST /rag/retrieval-experiments`: compares local retrieval policies over the eval dataset with diagnostics, trace spans, and governance recommendation.
 - `POST /rag/retrieval-experiment-pack`: writes a Markdown/JSON Retrieval Experiment Comparison Pack under `storage/retrieval_experiments/`.
 - `GET /ops/proposal-observability`: returns a proposal observability control plane with trace map, retrieval diagnostics, experiment comparison, provider/cost signals, governance findings, and human-review signals.
@@ -571,7 +575,7 @@ Run the API and dashboard, then capture:
 - Objection Handling Pack tab showing objection coverage, confidence, reviewer status, route decisions, checkpointed workflow transitions, eval assertions, citations, missing evidence, endpoint references, proof commands, claim-level evidence audit routes, and generated `storage/objection_packs/` plus `storage/objection_audits/` artifact paths.
 - Reviewer Collaboration tab showing reviewer assignments, decision comments, approval status, redline summary, checkpointed workflow replay, signoff ledger, traceable transitions, proof commands, and generated `storage/review_boards/` plus `storage/reviewer_signoffs/` artifact paths.
 - Submission Exceptions tab showing waiver records, approvers, expiry, evidence requirements, approval queue, proof commands, and generated `storage/exception_registers/` artifact path.
-- Win/Loss Learning tab showing outcome count, win rate, winning evidence patterns, losing risk patterns, retrieval/eval recommendations, response guidance updates, policy activation state machine, owner review queue, rollback plan, proof commands, limitations, and generated `storage/win_loss_packs/` plus `storage/win_loss_policy/` artifact paths.
+- Win/Loss Learning tab showing outcome count, win rate, winning evidence patterns, losing risk patterns, retrieval/eval recommendations, response guidance updates, policy activation state machine, owner review queue, rollback plan, replay backtest results, proof commands, limitations, and generated `storage/win_loss_packs/`, `storage/win_loss_policy/`, plus `storage/win_loss_replay/` artifact paths.
 - Retrieval Experiments tab showing policy comparison scores, per-question diagnostics, local trace spans, governance decision, proof commands, limitations, and generated `storage/retrieval_experiments/` artifact path.
 - Proposal Intake Triage tab showing intake signals, owner task delegation, conditional route, checkpointed transitions, dependency contract, eval assertions, and generated `storage/proposal_intake/` artifact path.
 - Proposal Observability tab showing trace map, retrieval diagnostics, experiment comparison, provider/cost signals, governance findings, HITL signals, proof commands, limitations, and generated `storage/proposal_observability/` artifact path.

@@ -720,6 +720,17 @@ async def main() -> None:
         activation_plan=win_loss_policy,
         write_artifact=True,
     )
+    win_loss_replay = container.win_loss_replay.replay(
+        trace_id="demo-win-loss-replay",
+        learning=win_loss_learning,
+        activation_plan=win_loss_policy,
+        retrieval_experiment=retrieval_experiments,
+    )
+    win_loss_replay_pack = container.win_loss_replay.replay_pack(
+        trace_id="demo-win-loss-replay-pack",
+        replay=win_loss_replay,
+        write_artifact=True,
+    )
     proposal_observability = container.proposal_observability.report(
         trace_id="demo-proposal-observability",
         workflow=buyer_intelligence,
@@ -1218,6 +1229,18 @@ async def main() -> None:
     print(f"Win/Loss Policy Pack JSON: {win_loss_policy_pack.json_artifact_path}")
     print("Win/Loss policy directory: storage/win_loss_policy")
     print(
+        "Win/Loss replay backtest: "
+        f"status={win_loss_replay.status} "
+        f"eval={win_loss_replay.replay_summary['passed_eval_cases']}/"
+        f"{win_loss_replay.replay_summary['eval_case_count']} "
+        f"red_team={win_loss_replay.replay_summary['passed_red_team_cases']}/"
+        f"{win_loss_replay.replay_summary['red_team_case_count']} "
+        f"review={len(win_loss_replay.human_review_queue)}"
+    )
+    print(f"Win/Loss Replay Pack: {win_loss_replay_pack.artifact_path}")
+    print(f"Win/Loss Replay Pack JSON: {win_loss_replay_pack.json_artifact_path}")
+    print("Win/Loss replay directory: storage/win_loss_replay")
+    print(
         "Retrieval experiments: "
         f"status={retrieval_experiments.status} "
         f"recommended={retrieval_experiments.recommended_policy_id} "
@@ -1375,6 +1398,8 @@ async def main() -> None:
         f"win_loss_packs={win_loss_pack.artifact_path} "
         f"win_loss_policy={win_loss_policy.status}/{len(win_loss_policy.policy_rules)} "
         f"win_loss_policy_pack={win_loss_policy_pack.artifact_path} "
+        f"win_loss_replay={win_loss_replay.status}/{len(win_loss_replay.human_review_queue)} "
+        f"win_loss_replay_pack={win_loss_replay_pack.artifact_path} "
         f"retrieval_experiments={retrieval_experiments.recommended_policy_id}/{retrieval_experiments.status} "
         f"retrieval_experiment_pack={retrieval_experiment_pack.artifact_path} "
         f"proposal_observability={proposal_observability.status}/"

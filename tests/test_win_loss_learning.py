@@ -114,3 +114,64 @@ def test_win_loss_policy_pack_writes_artifacts_and_dashboard_smoke_tracks_it(cli
 
     audit = client.get("/audit/events", headers=auth_headers).json()
     assert any(event["action"] == "learning.win_loss_policy_pack_generated" for event in audit["events"])
+
+
+def test_win_loss_replay_backtest_compares_learned_policy_and_routes_review(client, auth_headers):
+    ingest_corpus(client, auth_headers)
+
+    response = client.post(
+        "/learning/win-loss-replay",
+        headers=auth_headers,
+        json={
+            "outcomes_fixture_path": "sample_data/rfp_outcomes.json",
+            "eval_dataset_path": "sample_data/eval_dataset.json",
+            "red_team_dataset_path": "sample_data/red_team_questions.json",
+            "activation_mode": "shadow_eval",
+        },
+    )
+
+    assert response.status_code == 200
+    replay = response.json()
+    assert replay["title"] == "Win/Loss Replay Backtest"
+    assert replay["replay_summary"]["eval_case_count"] == 12
+    assert replay["replay_summary"]["red_team_case_count"] == 8
+    assert "experiment_comparison" in replay["replay_summary"]["patterns_used"]
+    assert "human_in_the_loop" in replay["replay_summary"]["patterns_used"]
+    assert replay["policy_delta"]["recommended_policy_id"]
+    assert replay["eval_case_results"]
+    assert replay["red_team_case_results"]
+    assert replay["trace_spans"]
+    assert replay["governance_decision"]["status"] in {"ready_for_shadow_eval", "human_review_required"}
+    assert any("/learning/win-loss-replay-pack" in command for command in replay["local_proof_commands"])
+
+    audit = client.get("/audit/events", headers=auth_headers).json()
+    assert any(event["action"] == "learning.win_loss_replay_backtested" for event in audit["events"])
+
+
+def test_win_loss_replay_pack_writes_artifacts_and_dashboard_smoke_tracks_it(client, auth_headers):
+    ingest_corpus(client, auth_headers)
+
+    response = client.post(
+        "/learning/win-loss-replay-pack",
+        headers=auth_headers,
+        json={"write_artifact": True},
+    )
+
+    assert response.status_code == 200
+    pack = response.json()
+    assert pack["artifact_path"]
+    assert pack["json_artifact_path"]
+    assert Path(pack["artifact_path"]).exists()
+    assert Path(pack["json_artifact_path"]).exists()
+    assert "win_loss_replay" in pack["artifact_path"]
+    assert "Win/Loss Replay Backtest Pack" in pack["markdown"]
+    assert pack["pack"]["policy_delta"]
+    assert pack["replay"]["red_team_case_results"]
+
+    smoke = client.get("/ui/dashboard-smoke", headers=auth_headers).json()
+    assert smoke["status"] == "pass"
+    assert any(endpoint["path"] == "/learning/win-loss-replay" for endpoint in smoke["endpoint_references"])
+    assert any(endpoint["path"] == "/learning/win-loss-replay-pack" for endpoint in smoke["endpoint_references"])
+
+    audit = client.get("/audit/events", headers=auth_headers).json()
+    assert any(event["action"] == "learning.win_loss_replay_pack_generated" for event in audit["events"])

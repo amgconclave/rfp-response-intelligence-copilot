@@ -336,6 +336,8 @@ class ApiContractService:
             "storage/answer_reuse_approvals": "answer_reuse_approvals",
             "/learning/win-loss-pack": "win_loss_pack",
             "storage/win_loss_packs": "win_loss_packs",
+            "/learning/win-loss-replay-pack": "win_loss_replay_pack",
+            "storage/win_loss_replay": "win_loss_replay",
             "/rag/retrieval-experiment-pack": "retrieval_experiment_pack",
             "storage/retrieval_experiments": "retrieval_experiments",
             "/evidence/source-trust-pack": "source_trust_pack",

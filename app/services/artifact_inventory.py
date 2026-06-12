@@ -819,6 +819,12 @@ class ArtifactInventoryService:
                 "Win/loss learning strategy pack with retrieval, eval, and response guidance updates.",
             ),
             self._spec(
+                "win_loss_replay",
+                "win_loss_replay",
+                "POST /learning/win-loss-replay-pack",
+                "Win/loss replay backtest pack with policy deltas, trace spans, and HITL review queue.",
+            ),
+            self._spec(
                 "retrieval_experiments",
                 "retrieval_experiments",
                 "POST /rag/retrieval-experiment-pack",

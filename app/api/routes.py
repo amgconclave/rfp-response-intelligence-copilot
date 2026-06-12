@@ -231,6 +231,10 @@ from app.models.api import (
     WinLossPolicyActivationResponse,
     WinLossPolicyPackRequest,
     WinLossPolicyPackResponse,
+    WinLossReplayPackRequest,
+    WinLossReplayPackResponse,
+    WinLossReplayRequest,
+    WinLossReplayResponse,
     WinLossStrategyPackRequest,
     WinLossStrategyPackResponse,
     WinStrategyRequest,
@@ -4989,6 +4993,102 @@ async def win_loss_policy_pack(
             "json_artifact_path": pack.json_artifact_path,
             "status": activation_plan.status,
             "policy_rules": len(activation_plan.policy_rules),
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/learning/win-loss-replay",
+    response_model=WinLossReplayResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def win_loss_replay(
+    request: Request,
+    payload: WinLossReplayRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> WinLossReplayResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or WinLossReplayRequest()
+    try:
+        learning, comparison = await _win_loss_policy_inputs(request_payload, trace_id, container)
+        activation_plan = request_payload.activation_plan or container.win_loss_policy.activation_plan(
+            trace_id=f"{trace_id}-policy",
+            learning=learning,
+            retrieval_experiment=comparison,
+            activation_mode=request_payload.activation_mode,
+        )
+        replay = container.win_loss_replay.replay(
+            trace_id=trace_id,
+            learning=learning,
+            activation_plan=activation_plan,
+            retrieval_experiment=comparison,
+            eval_dataset_path=request_payload.eval_dataset_path,
+            red_team_dataset_path=request_payload.red_team_dataset_path,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    container.audit.record(
+        trace_id,
+        "learning.win_loss_replay_backtested",
+        "win_loss_replay",
+        metadata={
+            "status": replay.status,
+            "eval_cases": replay.replay_summary["eval_case_count"],
+            "red_team_cases": replay.replay_summary["red_team_case_count"],
+            "approval_required": replay.governance_decision["approval_required"],
+        },
+    )
+    return replay
+
+
+@router.post(
+    "/learning/win-loss-replay-pack",
+    response_model=WinLossReplayPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def win_loss_replay_pack(
+    request: Request,
+    payload: WinLossReplayPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> WinLossReplayPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or WinLossReplayPackRequest()
+    try:
+        replay = request_payload.replay
+        if replay is None:
+            learning, comparison = await _win_loss_policy_inputs(request_payload, f"{trace_id}-replay", container)
+            activation_plan = request_payload.activation_plan or container.win_loss_policy.activation_plan(
+                trace_id=f"{trace_id}-policy",
+                learning=learning,
+                retrieval_experiment=comparison,
+                activation_mode=request_payload.activation_mode,
+            )
+            replay = container.win_loss_replay.replay(
+                trace_id=f"{trace_id}-replay",
+                learning=learning,
+                activation_plan=activation_plan,
+                retrieval_experiment=comparison,
+                eval_dataset_path=request_payload.eval_dataset_path,
+                red_team_dataset_path=request_payload.red_team_dataset_path,
+            )
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    pack = container.win_loss_replay.replay_pack(
+        trace_id=trace_id,
+        replay=replay,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "learning.win_loss_replay_pack_generated",
+        "win_loss_replay_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": replay.status,
+            "human_review_items": len(replay.human_review_queue),
         },
     )
     return pack

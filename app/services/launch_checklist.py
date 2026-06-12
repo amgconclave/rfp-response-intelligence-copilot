@@ -539,6 +539,7 @@ class LaunchChecklistService:
             "bid_packs": "storage/bid_packs",
             "objection_packs": "storage/objection_packs",
             "win_loss_packs": "storage/win_loss_packs",
+            "win_loss_replay": "storage/win_loss_replay",
             "retrieval_experiments": "storage/retrieval_experiments",
             "freshness_packs": "storage/freshness_packs",
             "conflict_packs": "storage/conflict_packs",
@@ -1356,6 +1357,28 @@ class LaunchChecklistService:
                 200,
                 "Writes Win/Loss Learning Strategy Pack Markdown and JSON.",
                 ["storage/win_loss_packs/*.md", "storage/win_loss_packs/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Win/Loss Replay Backtest",
+                "POST",
+                "/learning/win-loss-replay",
+                "enterprise",
+                200,
+                (
+                    "Backtests learned win/loss policy activation against eval and red-team fixtures with "
+                    "trace spans, governance decision, and human review queue."
+                ),
+                body='{"eval_dataset_path":"sample_data/eval_dataset.json"}',
+            ),
+            self._row(
+                "Win/Loss Replay Pack",
+                "POST",
+                "/learning/win-loss-replay-pack",
+                "artifact",
+                200,
+                "Writes Win/Loss Replay Backtest Pack Markdown and JSON.",
+                ["storage/win_loss_replay/*.md", "storage/win_loss_replay/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

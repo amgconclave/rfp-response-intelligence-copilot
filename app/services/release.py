@@ -165,6 +165,9 @@ class ReleaseService:
                 "Competitive Objection Handling Pack writes Markdown and JSON under storage/objection_packs."
             ),
             "win_loss_pack": "Win/Loss Learning Strategy Pack writes Markdown and JSON under storage/win_loss_packs.",
+            "win_loss_replay_pack": (
+                "Win/Loss Replay Backtest Pack writes Markdown and JSON under storage/win_loss_replay."
+            ),
             "retrieval_experiment_pack": (
                 "Retrieval Experiment Comparison Pack writes Markdown and JSON under storage/retrieval_experiments."
             ),
@@ -254,6 +257,11 @@ class ReleaseService:
                 "artifact_root": str((self.settings.storage_dir / "win_loss_packs").resolve()),
                 "endpoints": ["/learning/win-loss", "/learning/win-loss-pack"],
             },
+            "win_loss_replay": {
+                "service_path": "app/services/win_loss_replay.py",
+                "artifact_root": str((self.settings.storage_dir / "win_loss_replay").resolve()),
+                "endpoints": ["/learning/win-loss-replay", "/learning/win-loss-replay-pack"],
+            },
             "retrieval_experiments": {
                 "service_path": "app/services/retrieval_experiments.py",
                 "artifact_root": str((self.settings.storage_dir / "retrieval_experiments").resolve()),
@@ -298,6 +306,7 @@ class ReleaseService:
             "bid_packs": "Bid/No-Bid scenario simulator and ROI Impact packs",
             "objection_packs": "Competitive objection handling packs",
             "win_loss_packs": "Win/Loss Learning Strategy packs",
+            "win_loss_replay": "Win/Loss Replay Backtest packs",
             "retrieval_experiments": "Retrieval Experiment Comparison packs",
             "freshness_packs": "Evidence freshness and expiry risk packs",
             "source_trust": "Source trust gate packs",

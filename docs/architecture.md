@@ -45,6 +45,8 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `WinStrategyService`: simulates competitor posture, pricing risk, and pursuit strategy.
 - `CompetitiveObjectionHandlingService`: generates cited competitor, pricing, security, compliance, and implementation objection responses with confidence and reviewer workflow artifacts.
 - `WinLossLearningService`: ingests fake post-RFP outcomes and turns winning evidence/loss patterns into retrieval, eval, and response guidance recommendations.
+- `WinLossPolicyActivationService`: converts win/loss learning and retrieval experiments into governed activation rules, checkpoints, state transitions, owner review queues, and rollback plans.
+- `WinLossReplayService`: backtests learned activation plans against local eval and red-team fixtures with trace spans, policy deltas, governance decisions, and HITL review queues.
 - `RetrievalExperimentComparisonService`: compares local retrieval policies over eval fixtures, emits diagnostics and trace spans, and recommends a governed shadow-eval policy without mutating the vector index.
 - `ProposalObservabilityService`: aggregates buyer workflow traces, agent turns, decision provenance, retrieval diagnostics, experiment comparison, provider/cost posture, governance findings, and HITL signals into local control-plane artifacts.
 - `ProviderResilienceService`: maps mock, OpenAI, and Azure OpenAI provider routes into typed readiness contracts, dependency-injection expectations, fallback decisions, state-machine checkpoints, traceable transitions, and local runbook artifacts.

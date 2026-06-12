@@ -1341,6 +1341,42 @@ class WinLossPolicyPackResponse(BaseModel):
     trace_id: str
 
 
+class WinLossReplayRequest(WinLossPolicyActivationRequest):
+    eval_dataset_path: str = "sample_data/eval_dataset.json"
+    red_team_dataset_path: str = "sample_data/red_team_questions.json"
+    activation_plan: WinLossPolicyActivationResponse | None = None
+
+
+class WinLossReplayResponse(BaseModel):
+    title: str
+    status: str
+    replay_summary: dict[str, Any]
+    eval_case_results: list[dict[str, Any]] = Field(default_factory=list)
+    red_team_case_results: list[dict[str, Any]] = Field(default_factory=list)
+    policy_delta: dict[str, Any]
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    governance_decision: dict[str, Any]
+    human_review_queue: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class WinLossReplayPackRequest(WinLossReplayRequest):
+    replay: WinLossReplayResponse | None = None
+    write_artifact: bool = True
+
+
+class WinLossReplayPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    replay: WinLossReplayResponse
+    trace_id: str
+
+
 class ComplianceRequirementLink(BaseModel):
     requirement_id: str
     requirement_text: str

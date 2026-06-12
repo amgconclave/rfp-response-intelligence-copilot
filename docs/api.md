@@ -698,6 +698,31 @@ Writes Markdown and JSON Win/Loss Policy Activation Pack artifacts under ignored
 
 The pack includes activation status, recommended policy, source-boost and gap-guardrail rules, state transitions, eval/red-team checkpoints, owner approvals, rollback triggers, proof commands, limitations, embedded activation plan JSON, Markdown, JSON, and trace ID.
 
+### `POST /learning/win-loss-replay`
+
+Backtests the learned win/loss policy against local eval and red-team fixtures before rollout. The response includes replay summary, per-case eval and red-team results, policy delta versus baseline, trace spans, governance decision, human review queue, proof commands, limitations, and trace ID.
+
+```bash
+curl -X POST "http://127.0.0.1:8000/learning/win-loss-replay" \
+  -H "X-API-Key: local-demo-key" \
+  -H "Content-Type: application/json" \
+  -d "{}"
+```
+
+Optional body fields include `learning_response`, `retrieval_experiment`, `activation_plan`, `activation_mode`, `eval_dataset_path`, `red_team_dataset_path`, `outcomes_fixture_path`, `top_k`, and `policy_ids`.
+
+### `POST /learning/win-loss-replay-pack`
+
+Writes Markdown and JSON Win/Loss Replay Backtest Pack artifacts under ignored `storage/win_loss_replay/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes policy delta, eval replay rows, red-team replay rows, trace spans, governance decision, human review queue, proof commands, limitations, embedded replay JSON, Markdown, JSON, and trace ID.
+
 ### `POST /rag/retrieval-experiments`
 
 Runs a deterministic local comparison of retrieval policies over `sample_data/eval_dataset.json` by default. The comparison includes baseline vector retrieval, win/loss source boosting, loss-gap guardrails, and a balanced governed policy. It returns policy scores, per-question retrieval diagnostics, local trace spans, governance decision, proof commands, limitations, and the recommended shadow-eval policy.

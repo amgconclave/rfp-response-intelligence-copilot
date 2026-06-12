@@ -573,9 +573,11 @@ class UIVerificationService:
                     "/learning/win-loss-pack",
                     "/learning/win-loss-policy",
                     "/learning/win-loss-policy-pack",
+                    "/learning/win-loss-replay",
+                    "/learning/win-loss-replay-pack",
                 ],
                 "generated_artifact_tab": True,
-                "artifact_root": "win_loss_packs",
+                "artifact_root": "win_loss_replay",
             },
             {
                 "label": "Evidence Freshness",
@@ -1004,6 +1006,17 @@ class UIVerificationService:
                 "path": "/learning/win-loss-policy-pack",
                 "purpose": "Win/Loss Policy Activation generated Markdown and JSON pack.",
                 "expected_artifacts": ["storage/win_loss_policy/*.md", "storage/win_loss_policy/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/learning/win-loss-replay",
+                "purpose": "Win/Loss Replay Backtest compares learned policies against eval and red-team fixtures.",
+            },
+            {
+                "method": "POST",
+                "path": "/learning/win-loss-replay-pack",
+                "purpose": "Win/Loss Replay Backtest generated Markdown and JSON pack.",
+                "expected_artifacts": ["storage/win_loss_replay/*.md", "storage/win_loss_replay/*.json"],
             },
             {
                 "method": "POST",

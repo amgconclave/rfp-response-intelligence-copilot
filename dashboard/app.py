@@ -2303,6 +2303,29 @@ with tabs[34]:
         st.session_state.win_loss_policy_pack = policy_pack
         st.session_state.win_loss_policy = policy_pack["activation_plan"]
         st.success(f"Win/Loss Policy Pack generated under win_loss_policy: {policy_pack['artifact_path']}")
+    if cols[4].button("Replay Backtest"):
+        replay_payload = {**payload, "activation_mode": activation_mode}
+        if st.session_state.get("win_loss_learning"):
+            replay_payload["learning_response"] = st.session_state.win_loss_learning
+        if st.session_state.get("win_loss_policy"):
+            replay_payload["activation_plan"] = st.session_state.win_loss_policy
+        if st.session_state.get("retrieval_experiments"):
+            replay_payload["retrieval_experiment"] = st.session_state.retrieval_experiments
+        st.session_state.win_loss_replay = post_json("/learning/win-loss-replay", replay_payload)
+    if cols[5].button("Generate Replay Pack"):
+        replay_pack_payload = {**payload, "activation_mode": activation_mode, "write_artifact": True}
+        if st.session_state.get("win_loss_replay"):
+            replay_pack_payload["replay"] = st.session_state.win_loss_replay
+        elif st.session_state.get("win_loss_learning"):
+            replay_pack_payload["learning_response"] = st.session_state.win_loss_learning
+        if st.session_state.get("win_loss_policy"):
+            replay_pack_payload["activation_plan"] = st.session_state.win_loss_policy
+        if st.session_state.get("retrieval_experiments"):
+            replay_pack_payload["retrieval_experiment"] = st.session_state.retrieval_experiments
+        replay_pack = post_json("/learning/win-loss-replay-pack", replay_pack_payload)
+        st.session_state.win_loss_replay_pack = replay_pack
+        st.session_state.win_loss_replay = replay_pack["replay"]
+        st.success(f"Win/Loss Replay Pack generated under win_loss_replay: {replay_pack['artifact_path']}")
 
     learning = st.session_state.get("win_loss_learning")
     if learning:
@@ -2372,6 +2395,36 @@ with tabs[34]:
             "Download Win/Loss Policy Markdown",
             policy_pack["markdown"],
             file_name="win_loss_policy_activation_pack.md",
+        )
+
+    replay = st.session_state.get("win_loss_replay")
+    if replay:
+        st.write("Replay backtest")
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Replay status", replay["status"])
+        metric_cols[1].metric("Eval cases", replay["replay_summary"]["eval_case_count"])
+        metric_cols[2].metric("Red-team cases", replay["replay_summary"]["red_team_case_count"])
+        metric_cols[3].metric("Review items", len(replay["human_review_queue"]))
+        st.write("Policy delta")
+        st.json(replay["policy_delta"])
+        st.write("Eval replay cases")
+        st.dataframe(replay["eval_case_results"], use_container_width=True)
+        st.write("Red-team replay cases")
+        st.dataframe(replay["red_team_case_results"], use_container_width=True)
+        st.write("Governance decision")
+        st.json(replay["governance_decision"])
+        st.write("Human review queue")
+        st.dataframe(replay["human_review_queue"], use_container_width=True)
+        st.code("\n".join(replay["local_proof_commands"]), language="powershell")
+
+    replay_pack = st.session_state.get("win_loss_replay_pack")
+    if replay_pack:
+        st.write("Replay pack artifact path", replay_pack["artifact_path"])
+        st.write("Replay pack JSON path", replay_pack["json_artifact_path"])
+        st.download_button(
+            "Download Win/Loss Replay Markdown",
+            replay_pack["markdown"],
+            file_name="win_loss_replay_backtest_pack.md",
         )
 
 
