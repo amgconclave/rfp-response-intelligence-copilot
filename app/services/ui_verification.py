@@ -552,6 +552,12 @@ class UIVerificationService:
                 "artifact_root": "procurement_risk_desk",
             },
             {
+                "label": "Risk Decision Ledger",
+                "endpoint_paths": ["/procurement/risk-decision-ledger", "/procurement/risk-decision-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "procurement_risk_decisions",
+            },
+            {
                 "label": "Bid/No-Bid ROI",
                 "endpoint_paths": ["/bid/scenario-analysis", "/bid/roi-pack"],
                 "generated_artifact_tab": True,
@@ -967,6 +973,20 @@ class UIVerificationService:
                 "path": "/procurement/risk-desk-pack",
                 "purpose": "Procurement Risk Desk generated Markdown and JSON pack.",
                 "expected_artifacts": ["storage/procurement_risk_desk/*.md", "storage/procurement_risk_desk/*.json"],
+            },
+            {
+                "method": "GET",
+                "path": "/procurement/risk-decision-ledger",
+                "purpose": "Procurement Risk Decision Ledger owner decision and release gate view.",
+            },
+            {
+                "method": "POST",
+                "path": "/procurement/risk-decision-pack",
+                "purpose": "Procurement Risk Decision generated Markdown and JSON pack.",
+                "expected_artifacts": [
+                    "storage/procurement_risk_decisions/*.md",
+                    "storage/procurement_risk_decisions/*.json",
+                ],
             },
             {
                 "method": "GET",

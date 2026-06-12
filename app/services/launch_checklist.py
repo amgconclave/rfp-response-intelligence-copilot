@@ -540,6 +540,7 @@ class LaunchChecklistService:
             "compliance_packs": "storage/compliance_packs",
             "procurement_packs": "storage/procurement_packs",
             "procurement_risk_desk": "storage/procurement_risk_desk",
+            "procurement_risk_decisions": "storage/procurement_risk_decisions",
             "review_boards": "storage/review_boards",
             "reviewer_signoffs": "storage/reviewer_signoffs",
             "reviewer_escalations": "storage/reviewer_escalations",
@@ -1294,6 +1295,30 @@ class LaunchChecklistService:
                     "commercial, privacy, insurance, and implementation review."
                 ),
                 ["storage/procurement_risk_desk/*.md", "storage/procurement_risk_desk/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Procurement risk decision ledger",
+                "GET",
+                "/procurement/risk-decision-ledger",
+                "procurement",
+                200,
+                (
+                    "Returns owner decision records, release gate state, durable checkpoint metadata, "
+                    "governance gates, trace spans, and required actions for risk desk rows."
+                ),
+            ),
+            self._row(
+                "Procurement Risk Decision Pack",
+                "POST",
+                "/procurement/risk-decision-pack",
+                "artifact",
+                200,
+                (
+                    "Writes auditable human-in-the-loop decision ledger artifacts for procurement "
+                    "risk owner approvals, exceptions, conditional release, and submission holds."
+                ),
+                ["storage/procurement_risk_decisions/*.md", "storage/procurement_risk_decisions/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

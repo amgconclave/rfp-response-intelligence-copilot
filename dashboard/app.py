@@ -118,6 +118,7 @@ tabs = st.tabs(
         "Amendment Impact",
         "Access Policy",
         "Proposal Intake Triage",
+        "Risk Decision Ledger",
     ]
 )
 
@@ -4407,4 +4408,74 @@ with tabs[57]:
             "Download Proposal Intake Triage Markdown",
             pack["markdown"],
             file_name="proposal_intake_triage_pack.md",
+        )
+
+
+with tabs[58]:
+    st.subheader("Procurement Risk Decision Ledger")
+    st.caption(
+        "Convert risk desk rows into owner decisions, release gate state, durable checkpoints, "
+        "and auditable exception artifacts."
+    )
+    action_cols = st.columns(3)
+    if action_cols[0].button("Load decision ledger"):
+        st.session_state.procurement_risk_decision_ledger = get_json("/procurement/risk-decision-ledger")
+    if action_cols[1].button("Generate Decision Pack"):
+        pack = post_json("/procurement/risk-decision-pack", {"write_artifact": True})
+        st.session_state.procurement_risk_decision_pack = pack
+        st.session_state.procurement_risk_decision_ledger = pack["ledger"]
+        st.success(f"Risk Decision Pack generated under procurement_risk_decisions: {pack['artifact_path']}")
+    if action_cols[2].button("Approve sample exception"):
+        pack = post_json(
+            "/procurement/risk-decision-pack",
+            {
+                "write_artifact": True,
+                "decision_overrides": [
+                    {
+                        "risk_id": "prd_legal_terms",
+                        "decision_status": "exception_granted",
+                        "decided_by": "Local Legal Counsel",
+                        "evidence_reference": "customer_contract_terms.md",
+                        "decision_note": "Approved for demo with liability fallback language and final counsel review.",
+                        "expires_at": "2026-12-31",
+                    }
+                ],
+            },
+        )
+        st.session_state.procurement_risk_decision_pack = pack
+        st.session_state.procurement_risk_decision_ledger = pack["ledger"]
+        st.success(f"Sample exception decision recorded: {pack['artifact_path']}")
+
+    ledger = st.session_state.get("procurement_risk_decision_ledger")
+    if ledger:
+        summary = ledger["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", ledger["ledger_status"])
+        metric_cols[1].metric("Decisions", summary["decision_count"])
+        metric_cols[2].metric("Approved", summary["approved_count"])
+        metric_cols[3].metric("Pending", summary["pending_count"])
+        metric_cols[4].metric("Holds", summary["hold_submission_count"])
+        st.write("Release gate")
+        st.json(ledger["release_gate"])
+        st.write("Decision records")
+        st.dataframe(ledger["decisions"], use_container_width=True)
+        st.write("Durable state")
+        st.json(ledger["durable_state"])
+        st.write("Governance gates")
+        st.dataframe(ledger["governance_gates"], use_container_width=True)
+        st.write("Trace spans")
+        st.dataframe(ledger["trace_spans"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(ledger["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(ledger["limitations"])
+
+    pack = st.session_state.get("procurement_risk_decision_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Risk Decision Markdown",
+            pack["markdown"],
+            file_name="procurement_risk_decision_pack.md",
         )

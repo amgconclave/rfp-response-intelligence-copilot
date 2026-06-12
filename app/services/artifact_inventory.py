@@ -768,6 +768,12 @@ class ArtifactInventoryService:
                 "Owner-routed legal, pricing, data residency, insurance, and implementation risk desk artifacts.",
             ),
             self._spec(
+                "procurement_risk_decisions",
+                "procurement_risk_decisions",
+                "POST /procurement/risk-decision-pack",
+                "Owner decision, exception, release gate, and durable checkpoint artifacts for risk desk rows.",
+            ),
+            self._spec(
                 "review_boards",
                 "review_boards",
                 "POST /rfp/reviewer-collaboration-pack",

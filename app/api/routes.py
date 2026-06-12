@@ -125,6 +125,9 @@ from app.models.api import (
     ProcurementApprovalPackRequest,
     ProcurementApprovalPackResponse,
     ProcurementQuestionRiskResponse,
+    ProcurementRiskDecisionLedgerResponse,
+    ProcurementRiskDecisionPackRequest,
+    ProcurementRiskDecisionPackResponse,
     ProcurementRiskDeskPackRequest,
     ProcurementRiskDeskPackResponse,
     ProcurementRiskDeskResponse,
@@ -4884,6 +4887,81 @@ async def procurement_risk_desk_pack(
             "json_artifact_path": pack.json_artifact_path,
             "risks": pack.risk_desk.summary["risk_count"],
             "blocked": pack.risk_desk.summary["blocked_count"],
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/procurement/risk-decision-ledger",
+    response_model=ProcurementRiskDecisionLedgerResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def procurement_risk_decision_ledger(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProcurementRiskDecisionLedgerResponse:
+    trace_id = get_trace_id(request)
+    inputs = await _procurement_risk_desk_inputs(trace_id, container)
+    risk_desk = await container.procurement_risk_desk.risk_desk(
+        trace_id=f"{trace_id}-risk-desk",
+        **inputs,
+    )
+    ledger = container.procurement_risk_decisions.decision_ledger(trace_id, risk_desk)
+    container.audit.record(
+        trace_id,
+        "procurement.risk_decision_ledger_viewed",
+        "procurement_risk_decision_ledger",
+        metadata={
+            "decisions": ledger.summary["decision_count"],
+            "pending": ledger.summary["pending_count"],
+            "holds": ledger.summary["hold_submission_count"],
+            "status": ledger.ledger_status,
+        },
+    )
+    return ledger
+
+
+@router.post(
+    "/procurement/risk-decision-pack",
+    response_model=ProcurementRiskDecisionPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def procurement_risk_decision_pack(
+    request: Request,
+    payload: ProcurementRiskDecisionPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProcurementRiskDecisionPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProcurementRiskDecisionPackRequest()
+    risk_desk = request_payload.risk_desk
+    if risk_desk is None:
+        inputs = await _procurement_risk_desk_inputs(trace_id, container)
+        risk_desk = await container.procurement_risk_desk.risk_desk(
+            trace_id=f"{trace_id}-risk-desk",
+            **inputs,
+        )
+    ledger = request_payload.ledger or container.procurement_risk_decisions.decision_ledger(
+        trace_id,
+        risk_desk,
+        request_payload.decision_overrides,
+    )
+    pack = container.procurement_risk_decisions.decision_pack(
+        trace_id,
+        ledger,
+        risk_desk,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "procurement.risk_decision_pack_generated",
+        "procurement_risk_decision_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "decisions": pack.ledger.summary["decision_count"],
+            "status": pack.ledger.ledger_status,
         },
     )
     return pack

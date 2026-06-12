@@ -592,6 +592,16 @@ async def main() -> None:
         procurement_risk_desk,
         write_artifact=True,
     )
+    procurement_risk_decision_ledger = container.procurement_risk_decisions.decision_ledger(
+        "demo-procurement-risk-decision-ledger",
+        procurement_risk_desk,
+    )
+    procurement_risk_decision_pack = container.procurement_risk_decisions.decision_pack(
+        "demo-procurement-risk-decision-pack",
+        procurement_risk_decision_ledger,
+        procurement_risk_desk,
+        write_artifact=True,
+    )
     reviewer_collaboration = container.reviewer_collaboration.create_board(
         trace_id="demo-reviewer-collaboration",
         requirement_matrix=matrix,
@@ -1156,6 +1166,16 @@ async def main() -> None:
     print(f"Procurement Risk Desk Pack JSON: {procurement_risk_desk_pack.json_artifact_path}")
     print("Procurement risk desk directory: storage/procurement_risk_desk")
     print(
+        "Procurement Risk Decision Ledger: "
+        f"status={procurement_risk_decision_ledger.ledger_status} "
+        f"decisions={procurement_risk_decision_ledger.summary['decision_count']} "
+        f"pending={procurement_risk_decision_ledger.summary['pending_count']} "
+        f"holds={procurement_risk_decision_ledger.summary['hold_submission_count']}"
+    )
+    print(f"Procurement Risk Decision Pack: {procurement_risk_decision_pack.artifact_path}")
+    print(f"Procurement Risk Decision Pack JSON: {procurement_risk_decision_pack.json_artifact_path}")
+    print("Procurement risk decisions directory: storage/procurement_risk_decisions")
+    print(
         "Reviewer collaboration: "
         f"status={reviewer_collaboration.board_status} "
         f"assignments={len(reviewer_collaboration.assignments)} "
@@ -1399,6 +1419,9 @@ async def main() -> None:
         f"procurement_packs={procurement_approval_pack.artifact_path} "
         f"procurement_risk_desk={procurement_risk_desk.summary['average_risk_score']} "
         f"procurement_risk_desk_pack={procurement_risk_desk_pack.artifact_path} "
+        f"procurement_risk_decisions={procurement_risk_decision_ledger.ledger_status}/"
+        f"{procurement_risk_decision_ledger.summary['decision_count']} "
+        f"procurement_risk_decision_pack={procurement_risk_decision_pack.artifact_path} "
         f"reviewer_collaboration={reviewer_collaboration.board_status}/"
         f"{len(reviewer_collaboration.assignments)} "
         f"reviewer_workflow={reviewer_workflow.workflow_status}/"

@@ -242,6 +242,11 @@ class ReleaseService:
                 "artifact_root": str((self.settings.storage_dir / "procurement_risk_desk").resolve()),
                 "endpoints": ["/procurement/risk-desk", "/procurement/risk-desk-pack"],
             },
+            "procurement_risk_decisions": {
+                "service_path": "app/services/procurement_risk_decisions.py",
+                "artifact_root": str((self.settings.storage_dir / "procurement_risk_decisions").resolve()),
+                "endpoints": ["/procurement/risk-decision-ledger", "/procurement/risk-decision-pack"],
+            },
             "bid": {
                 "service_path": "app/services/bid_simulator.py",
                 "artifact_root": str((self.settings.storage_dir / "bid_packs").resolve()),
@@ -300,6 +305,7 @@ class ReleaseService:
             "compliance_packs": "Compliance evidence matrix and control mapping packs",
             "procurement_packs": "Procurement Q&A risk and approval workflow packs",
             "procurement_risk_desk": "Procurement risk desk owner routing packs",
+            "procurement_risk_decisions": "Procurement risk decision ledger packs",
             "review_boards": "Reviewer Collaboration assignment, comment, approval, and redline packs",
             "reviewer_signoffs": "Reviewer signoff readiness ledger and human review queue packs",
             "exception_registers": "Submission exception register packs",

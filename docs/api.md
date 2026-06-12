@@ -627,6 +627,37 @@ Writes Markdown and JSON Procurement Risk Desk Pack artifacts under ignored `sto
 
 The pack includes owner routing, durable workflow gates, human-review queue, trace analysis, detailed desk risks, executive notes, packet sources, proof commands, limitations, embedded risk desk JSON, Markdown, JSON, and trace ID.
 
+### `GET /procurement/risk-decision-ledger`
+
+Returns a deterministic human-in-the-loop decision ledger for Procurement Risk Desk rows. Each record includes the risk ID, owner, reviewer, decision status, decision state, release effect, approval gate, required action, source trace ID, release gate status, durable checkpoint metadata, governance gates, trace spans, proof commands, and limitations.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/procurement/risk-decision-ledger" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /procurement/risk-decision-pack`
+
+Writes Markdown and JSON Procurement Risk Decision Pack artifacts under ignored `storage/procurement_risk_decisions/` by default. Callers can provide decision overrides to model owner approvals, conditional releases, exception grants, rejected commitments, or missing-evidence holds.
+
+```json
+{
+  "write_artifact": true,
+  "decision_overrides": [
+    {
+      "risk_id": "prd_legal_terms",
+      "decision_status": "exception_granted",
+      "decided_by": "Local Legal Counsel",
+      "evidence_reference": "customer_contract_terms.md",
+      "decision_note": "Approved with fallback language and final counsel review.",
+      "expires_at": "2026-12-31"
+    }
+  ]
+}
+```
+
+The pack includes the ledger summary, release gate, decision records, durable state checkpoint, governance gates, trace spans, risk desk summary, proof commands, limitations, Markdown, JSON, and trace ID.
+
 ### `GET /bid/scenario-analysis`
 
 Returns the Bid/No-Bid Scenario Simulator with four deterministic executive scenarios: pursue, pursue with conditions, no-bid due to compliance/evidence risk, and no-bid due to commercial/timeline risk. Each scenario includes deal value, pursuit effort, pursuit cost, win probability, gross margin, risk-adjusted revenue, risk-adjusted gross profit, risk-adjusted ROI, blockers, required reviewers, evidence readiness, timeline pressure, decision recommendation, customer profile, assumptions, and coverage summary.

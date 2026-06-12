@@ -2537,6 +2537,72 @@ class ProcurementRiskDeskPackResponse(BaseModel):
     trace_id: str
 
 
+class ProcurementRiskDecisionOverride(BaseModel):
+    risk_id: str
+    decision_status: str = "approved_with_conditions"
+    decided_by: str = "Local Owner"
+    owner_role: str | None = None
+    reviewer_role: str | None = None
+    evidence_reference: str = "local packet evidence"
+    decision_note: str = "Owner accepted the risk with documented response conditions."
+    expires_at: str | None = None
+
+
+class ProcurementRiskDecisionRecord(BaseModel):
+    decision_id: str
+    risk_id: str
+    category: str
+    risk_severity: str
+    risk_score: int
+    owner_role: str
+    reviewer_role: str
+    decision_status: str
+    decision_state: str
+    release_effect: str
+    approval_gate: str
+    required_action: str
+    decided_by: str | None = None
+    evidence_reference: str | None = None
+    decision_note: str
+    expires_at: str | None = None
+    source_trace_id: str
+
+
+class ProcurementRiskDecisionLedgerRequest(BaseModel):
+    risk_desk: ProcurementRiskDeskResponse | None = None
+    decision_overrides: list[ProcurementRiskDecisionOverride] = Field(default_factory=list)
+
+
+class ProcurementRiskDecisionLedgerResponse(BaseModel):
+    title: str
+    ledger_status: str
+    decisions: list[ProcurementRiskDecisionRecord]
+    summary: dict[str, Any]
+    release_gate: dict[str, Any]
+    durable_state: dict[str, Any]
+    governance_gates: list[dict[str, Any]] = Field(default_factory=list)
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ProcurementRiskDecisionPackRequest(ProcurementRiskDecisionLedgerRequest):
+    ledger: ProcurementRiskDecisionLedgerResponse | None = None
+    write_artifact: bool = True
+
+
+class ProcurementRiskDecisionPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    ledger: ProcurementRiskDecisionLedgerResponse
+    risk_desk: ProcurementRiskDeskResponse
+    trace_id: str
+
+
 class BidScenario(BaseModel):
     scenario_id: str
     name: str
