@@ -194,6 +194,13 @@ curl -X GET "http://127.0.0.1:8000/ops/proposal-observability" -H "X-API-Key: lo
 curl -X POST "http://127.0.0.1:8000/ops/proposal-observability-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 ```
 
+The Trace Export controls convert the proposal observability control plane into local JSONL-ready spans with eval dataset manifest, retrieval diagnostics, experiment comparison, governance summary, provider posture, and HITL queue artifacts under `storage/trace_exports/`:
+
+```bash
+curl -X GET "http://127.0.0.1:8000/ops/trace-export" -H "X-API-Key: local-demo-key"
+curl -X POST "http://127.0.0.1:8000/ops/trace-export-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
+```
+
 The Artifact Inventory and README Checklist Pack include generated artifact directories, latest files, producer endpoints/commands, ignored status, reviewer purpose, freshness notes, README badge suggestions, README checklist suggestions, local commands, a deterministic reviewer proof checklist, and cleanup/regeneration notes.
 
 The Dashboard Smoke script and UI Verification Pack include expected Streamlit tab labels, endpoint references, generated-artifact tabs, local run commands, screenshot placeholders, troubleshooting, and limitations. The smoke script is source-level and does not launch a browser:
@@ -302,6 +309,7 @@ flowchart LR
 - Win/Loss Policy Activation via `POST /learning/win-loss-policy` and `POST /learning/win-loss-policy-pack`, writing Markdown/JSON under `storage/win_loss_policy/` with typed activation rules, state-machine transitions, eval/red-team checkpoints, owner review queues, rollback plan, proof commands, and limitations.
 - Retrieval Experiment Comparison via `POST /rag/retrieval-experiments` and `POST /rag/retrieval-experiment-pack`, comparing baseline, win/loss boosted, loss-gap guarded, and balanced governed retrieval policies with diagnostics, local trace spans, governance decision, and Markdown/JSON under `storage/retrieval_experiments/`.
 - Proposal Observability Control Plane via `GET /ops/proposal-observability` and `POST /ops/proposal-observability-pack`, writing Markdown/JSON under `storage/proposal_observability/` with trace analysis, retrieval diagnostics, experiment comparison, provider posture, governance findings, and HITL signals.
+- Proposal Trace Export via `GET /ops/trace-export` and `POST /ops/trace-export-pack`, writing Markdown/JSON/JSONL under `storage/trace_exports/` with JSONL-ready spans, eval dataset manifest, retrieval diagnostics, experiment comparison, governance summary, provider posture, and HITL queue.
 - Proposal Assurance Bundle via `GET /proposal/assurance-bundle` and `POST /proposal/assurance-bundle-pack`, writing Markdown/JSON under `storage/proposal_assurance/` with checksummed control manifests, reviewer queues, checkpointed transitions, eval assertions, and local/mock provider boundaries.
 - Evidence Conflict Resolver via `GET /evidence/conflicts` and `POST /evidence/conflict-pack`, writing Markdown/JSON under `storage/conflict_packs/` with cited source-precedence conflicts, scope ambiguity, reviewer owners, endpoint impact, and resolution guidance.
 - Citation Lineage + Integrity Audit via `GET /evidence/citation-lineage` and `POST /evidence/citation-lineage-pack`, writing Markdown/JSON under `storage/citation_lineage/` with repository document/chunk verification, stale citation flags, generated-claim flags, owner follow-ups, endpoint impact, and proof commands.
@@ -499,6 +507,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /proposal/quality-benchmark-pack`: writes a Markdown/JSON Proposal Quality Benchmark Pack under `storage/proposal_benchmarks/`.
 - `GET /proposal/assurance-bundle`: returns a checksummed proposal assurance manifest across buyer workflow, replay, contracts, council, provenance, certification, observability, benchmark, and provider controls.
 - `POST /proposal/assurance-bundle-pack`: writes a Markdown/JSON Proposal Assurance Bundle Pack under `storage/proposal_assurance/`.
+- `GET /ops/trace-export`: returns JSONL-ready proposal trace spans with eval dataset manifest, retrieval diagnostics, experiment comparison, governance summary, provider posture, and HITL queue.
+- `POST /ops/trace-export-pack`: writes Markdown, JSON, and JSONL Proposal Trace Export artifacts under `storage/trace_exports/`.
 - `GET /privacy/retention-guardrails`: returns privacy/retention surface risk, local policy evidence, missing controls, redaction rules, prompt/logging guidance, and owner actions.
 - `POST /privacy/retention-pack`: writes a Markdown/JSON Privacy Retention Guardrail Pack under `storage/privacy_packs/`.
 - `GET /governance/model-risk-register`: returns model/provider risk register items, mitigation controls, local evidence, release gates, reviewer queue, proof commands, and limitations.

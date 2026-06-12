@@ -824,6 +824,30 @@ Writes Markdown and JSON Proposal Observability Pack artifacts under ignored `st
 
 The pack includes the trace map, risky retrieval diagnostics, experiment comparison, provider and cost signals, governance findings, human-review signals, proof commands, limitations, embedded observability JSON, Markdown, JSON, and trace ID.
 
+### `GET /ops/trace-export`
+
+Returns a JSONL-ready proposal trace export derived from the proposal observability control plane. It includes normalized spans, eval dataset manifest, retrieval diagnostics, experiment comparison, governance summary, provider posture, HITL queue, proof commands, limitations, and trace ID. No external tracing backend is called.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/ops/trace-export" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /ops/trace-export-pack`
+
+Writes Markdown, JSON, and JSONL Proposal Trace Export artifacts under ignored `storage/trace_exports/` by default.
+
+```json
+{
+  "dataset_path": "sample_data/eval_dataset.json",
+  "outcomes_fixture_path": "sample_data/rfp_outcomes.json",
+  "top_k": 4,
+  "write_artifact": true
+}
+```
+
+The pack includes JSONL span preview, exported span records, eval dataset manifest, retrieval diagnostics, experiment comparison, governance summary, HITL queue, provider summary, proof commands, limitations, Markdown, JSON, JSONL, and trace ID.
+
 ### `POST /api/reviewer-collection`
 
 Writes a Markdown and JSON Reviewer Collection Pack under ignored `storage/api_contracts/` by default. The collection includes endpoint inventory grouped by domain, sample curl and PowerShell commands with `X-API-Key`, demo-token flow, expected status codes, auth notes, generated artifact endpoints, RAG/eval/red-team verification order, recruiter and engineer explanation, local-only limitations, embedded API Contract Snapshot, Markdown, JSON, and trace ID.

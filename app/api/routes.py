@@ -234,6 +234,10 @@ from app.models.api import (
     SubmissionRegressionResponse,
     TimelinePlanRequest,
     TimelinePlanResponse,
+    TraceExportPackRequest,
+    TraceExportPackResponse,
+    TraceExportRequest,
+    TraceExportResponse,
     UIVerificationPackRequest,
     UIVerificationPackResponse,
     UsageResponse,
@@ -5527,6 +5531,93 @@ async def proposal_observability_pack(
             "artifact_path": pack.artifact_path,
             "json_artifact_path": pack.json_artifact_path,
             "status": observability.status,
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/ops/trace-export",
+    response_model=TraceExportResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def trace_export(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> TraceExportResponse:
+    trace_id = get_trace_id(request)
+    request_payload = TraceExportRequest()
+    observability = await _proposal_observability_report(
+        trace_id=f"{trace_id}-observability",
+        container=container,
+        dataset_path=request_payload.dataset_path,
+        outcomes_fixture_path=request_payload.outcomes_fixture_path,
+        top_k=request_payload.top_k,
+    )
+    export = container.trace_export.export(
+        trace_id=trace_id,
+        observability=observability,
+        dataset_path=request_payload.dataset_path,
+        outcomes_fixture_path=request_payload.outcomes_fixture_path,
+        top_k=request_payload.top_k,
+    )
+    container.audit.record(
+        trace_id,
+        "ops.trace_export_viewed",
+        "trace_export",
+        metadata={
+            "status": export.status,
+            "span_count": export.span_count,
+            "diagnostics": export.retrieval_diagnostics["diagnostic_count"],
+        },
+    )
+    return export
+
+
+@router.post(
+    "/ops/trace-export-pack",
+    response_model=TraceExportPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def trace_export_pack(
+    request: Request,
+    payload: TraceExportPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> TraceExportPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or TraceExportPackRequest()
+    export = request_payload.trace_export
+    if export is None:
+        observability = await _proposal_observability_report(
+            trace_id=f"{trace_id}-observability",
+            container=container,
+            dataset_path=request_payload.dataset_path,
+            outcomes_fixture_path=request_payload.outcomes_fixture_path,
+            top_k=request_payload.top_k,
+        )
+        export = container.trace_export.export(
+            trace_id=trace_id,
+            observability=observability,
+            dataset_path=request_payload.dataset_path,
+            outcomes_fixture_path=request_payload.outcomes_fixture_path,
+            top_k=request_payload.top_k,
+        )
+    pack = container.trace_export.pack(
+        trace_id=trace_id,
+        trace_export=export,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "ops.trace_export_pack_generated",
+        "trace_export_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "jsonl_artifact_path": pack.jsonl_artifact_path,
+            "status": export.status,
+            "span_count": export.span_count,
         },
     )
     return pack

@@ -786,6 +786,18 @@ async def main() -> None:
         proposal_observability,
         write_artifact=True,
     )
+    trace_export = container.trace_export.export(
+        trace_id="demo-trace-export",
+        observability=proposal_observability,
+        dataset_path="sample_data/eval_dataset.json",
+        outcomes_fixture_path="sample_data/rfp_outcomes.json",
+        top_k=4,
+    )
+    trace_export_pack = container.trace_export.pack(
+        "demo-trace-export-pack",
+        trace_export,
+        write_artifact=True,
+    )
     proposal_quality_benchmark = container.proposal_benchmark.benchmark(
         trace_id="demo-proposal-quality-benchmark",
         certification=submission_certification,
@@ -1364,6 +1376,17 @@ async def main() -> None:
     print(f"Proposal Observability Pack JSON: {proposal_observability_pack.json_artifact_path}")
     print("Proposal observability directory: storage/proposal_observability")
     print(
+        "Proposal trace export: "
+        f"status={trace_export.status} "
+        f"spans={trace_export.span_count} "
+        f"diagnostics={trace_export.retrieval_diagnostics['diagnostic_count']} "
+        f"review={trace_export.governance_summary['human_review_signal_count']}"
+    )
+    print(f"Proposal Trace Export Pack: {trace_export_pack.artifact_path}")
+    print(f"Proposal Trace Export Pack JSON: {trace_export_pack.json_artifact_path}")
+    print(f"Proposal Trace Export Pack JSONL: {trace_export_pack.jsonl_artifact_path}")
+    print("Proposal trace export directory: storage/trace_exports")
+    print(
         "Verification evidence: "
         f"status={verification_evidence.status} "
         f"score={verification_evidence.score} "
@@ -1520,6 +1543,8 @@ async def main() -> None:
         f"proposal_observability={proposal_observability.status}/"
         f"{proposal_observability.summary['trace_span_count']} "
         f"proposal_observability_pack={proposal_observability_pack.artifact_path} "
+        f"trace_export={trace_export.status}/{trace_export.span_count} "
+        f"trace_export_pack={trace_export_pack.artifact_path} "
         f"verification_evidence={verification_evidence.status}/{verification_evidence.score} "
         f"verification_evidence_pack={verification_evidence_pack.artifact_path} "
         f"red_team={red_team['passed']} brief={leadership_brief.artifact_path}"

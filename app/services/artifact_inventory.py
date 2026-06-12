@@ -239,6 +239,14 @@ class ArtifactInventoryService:
                 "Select-Object FullName,Length,LastWriteTime"
             ),
             (
+                'rg "ops/trace-export|Proposal Trace Export|trace_exports|jsonl" '
+                "app dashboard docs README.md tests Makefile"
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\trace_exports -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
                 'rg "handoff/final-audit|handoff/final-pack|Final Handoff|final_handoff|'
                 'README Consistency|final audit" app dashboard docs README.md tests scripts sample_data Makefile'
             ),
@@ -987,6 +995,15 @@ class ArtifactInventoryService:
                 (
                     "Observability control-plane artifacts with trace analysis, retrieval diagnostics, "
                     "experiment comparison, provider posture, governance, and HITL signals."
+                ),
+            ),
+            self._spec(
+                "trace_exports",
+                "trace_exports",
+                "POST /ops/trace-export-pack",
+                (
+                    "JSONL-ready proposal trace export artifacts with eval dataset manifest, "
+                    "retrieval diagnostics, governance summary, provider posture, and HITL queue."
                 ),
             ),
             self._spec(

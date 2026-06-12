@@ -2568,6 +2568,46 @@ class ProposalObservabilityPackResponse(BaseModel):
     trace_id: str
 
 
+class TraceExportRequest(BaseModel):
+    dataset_path: str = "sample_data/eval_dataset.json"
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json"
+    top_k: int = 4
+
+
+class TraceExportResponse(BaseModel):
+    title: str
+    status: str
+    generated_at: str
+    span_count: int
+    exported_spans: list[dict[str, Any]] = Field(default_factory=list)
+    jsonl_preview: list[str] = Field(default_factory=list)
+    eval_dataset_manifest: dict[str, Any] = Field(default_factory=dict)
+    retrieval_diagnostics: dict[str, Any] = Field(default_factory=dict)
+    experiment_comparison: dict[str, Any] = Field(default_factory=dict)
+    governance_summary: dict[str, Any] = Field(default_factory=dict)
+    human_review_queue: list[dict[str, Any]] = Field(default_factory=list)
+    provider_summary: dict[str, Any] = Field(default_factory=dict)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class TraceExportPackRequest(TraceExportRequest):
+    trace_export: TraceExportResponse | None = None
+    write_artifact: bool = True
+
+
+class TraceExportPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    jsonl_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    trace_export: TraceExportResponse
+    trace_id: str
+
+
 class ProcurementQuestionRiskItem(BaseModel):
     question_id: str
     question_type: str

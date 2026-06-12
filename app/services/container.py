@@ -69,6 +69,7 @@ from app.services.submission_decision import SubmissionDecisionService
 from app.services.submission_exceptions import SubmissionExceptionService
 from app.services.submission_regression import SubmissionRegressionService
 from app.services.timeline_orchestration import TimelineOrchestrationService
+from app.services.trace_export import TraceExportService
 from app.services.ui_verification import UIVerificationService
 from app.services.verification_evidence import VerificationEvidenceService
 from app.services.win_loss_learning import WinLossLearningService
@@ -100,6 +101,7 @@ class ServiceContainer:
         self.approval_simulation = ProposalApprovalSimulationService(settings)
         self.submission_certification = ProposalSubmissionCertificationService(settings)
         self.proposal_observability = ProposalObservabilityService(settings)
+        self.trace_export = TraceExportService(settings)
         self.provider_resilience = ProviderResilienceService(settings)
         self.bid_simulator = BidScenarioSimulatorService(settings)
         self.customer_intelligence = CustomerIntelligenceService(settings)

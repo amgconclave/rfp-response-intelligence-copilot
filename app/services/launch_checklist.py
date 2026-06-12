@@ -1153,6 +1153,27 @@ class LaunchChecklistService:
                 '{"write_artifact":true}',
             ),
             self._row(
+                "Proposal Trace Export",
+                "GET",
+                "/ops/trace-export",
+                "ops",
+                200,
+                (
+                    "Returns JSONL-ready proposal trace spans, eval dataset manifest, retrieval diagnostics, "
+                    "governance summary, provider posture, and HITL queue."
+                ),
+            ),
+            self._row(
+                "Proposal Trace Export Pack",
+                "POST",
+                "/ops/trace-export-pack",
+                "artifact",
+                200,
+                "Writes trace export Markdown, JSON, and JSONL span artifacts.",
+                ["storage/trace_exports/*.md", "storage/trace_exports/*.json", "storage/trace_exports/*.jsonl"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
                 "Runtime demo readiness",
                 "GET",
                 "/runtime/demo-readiness",

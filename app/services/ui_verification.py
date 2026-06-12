@@ -442,6 +442,12 @@ class UIVerificationService:
                 "artifact_root": "proposal_observability",
             },
             {
+                "label": "Trace Export",
+                "endpoint_paths": ["/ops/trace-export", "/ops/trace-export-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "trace_exports",
+            },
+            {
                 "label": "Amendment Impact",
                 "endpoint_paths": ["/rfp/amendment-impact", "/rfp/amendment-impact-pack"],
                 "generated_artifact_tab": True,
@@ -906,6 +912,21 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/proposal_observability/*.md",
                     "storage/proposal_observability/*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/ops/trace-export",
+                "purpose": "Trace Export tab JSONL-ready proposal trace span view.",
+            },
+            {
+                "method": "POST",
+                "path": "/ops/trace-export-pack",
+                "purpose": "Trace Export generated Markdown, JSON, and JSONL artifacts.",
+                "expected_artifacts": [
+                    "storage/trace_exports/*.md",
+                    "storage/trace_exports/*.json",
+                    "storage/trace_exports/*.jsonl",
                 ],
             },
             {"method": "GET", "path": "/handoff/final-audit", "purpose": "Final Handoff tab audit."},

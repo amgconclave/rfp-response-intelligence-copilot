@@ -4175,7 +4175,7 @@ with tabs[51]:
         "outcomes_fixture_path": obs_outcomes_path,
         "top_k": int(obs_top_k),
     }
-    action_cols = st.columns(2)
+    action_cols = st.columns(4)
     if action_cols[0].button("Load observability report"):
         st.session_state.proposal_observability = get_json("/ops/proposal-observability")
     if action_cols[1].button("Generate Observability Pack"):
@@ -4183,6 +4183,13 @@ with tabs[51]:
         st.session_state.proposal_observability_pack = pack
         st.session_state.proposal_observability = pack["observability"]
         st.success(f"Proposal Observability Pack generated under proposal_observability: {pack['artifact_path']}")
+    if action_cols[2].button("Load Trace Export"):
+        st.session_state.trace_export = get_json("/ops/trace-export")
+    if action_cols[3].button("Generate Trace Export Pack"):
+        pack = post_json("/ops/trace-export-pack", {**payload, "write_artifact": True})
+        st.session_state.trace_export_pack = pack
+        st.session_state.trace_export = pack["trace_export"]
+        st.success(f"Trace Export Pack generated under trace_exports: {pack['artifact_path']}")
 
     observability = st.session_state.get("proposal_observability")
     if observability:
@@ -4228,6 +4235,35 @@ with tabs[51]:
             "Download Proposal Observability Markdown",
             pack["markdown"],
             file_name="proposal_observability_pack.md",
+        )
+
+    trace_export = st.session_state.get("trace_export")
+    if trace_export:
+        st.write("Trace Export")
+        trace_cols = st.columns(5)
+        trace_cols[0].metric("Export", trace_export["status"])
+        trace_cols[1].metric("Spans", trace_export["span_count"])
+        trace_cols[2].metric("Diagnostics", trace_export["retrieval_diagnostics"]["diagnostic_count"])
+        trace_cols[3].metric("Review", trace_export["governance_summary"]["human_review_signal_count"])
+        trace_cols[4].metric("Provider", trace_export["provider_summary"]["provider_mode"])
+        st.write("Eval dataset manifest")
+        st.json(trace_export["eval_dataset_manifest"])
+        st.write("Exported spans")
+        st.dataframe(trace_export["exported_spans"], use_container_width=True)
+        st.write("JSONL preview")
+        st.code("\n".join(trace_export["jsonl_preview"]), language="json")
+        st.write("Trace export proof commands")
+        st.code("\n".join(trace_export["local_proof_commands"]), language="powershell")
+
+    trace_pack = st.session_state.get("trace_export_pack")
+    if trace_pack:
+        st.write("Trace export artifact path", trace_pack["artifact_path"])
+        st.write("Trace export JSON path", trace_pack["json_artifact_path"])
+        st.write("Trace export JSONL path", trace_pack["jsonl_artifact_path"])
+        st.download_button(
+            "Download Proposal Trace Export Markdown",
+            trace_pack["markdown"],
+            file_name="proposal_trace_export_pack.md",
         )
 
 

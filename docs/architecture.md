@@ -63,6 +63,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `BuyerStructuredContractService`: validates buyer workflow, replay, council, and provenance outputs against Pydantic contracts, dependency-injected model lists, role coverage for sales, presales, compliance, procurement, and proposal management, and eval-friendly assertions.
 - `ProposalQualityBenchmarkService`: benchmarks certification, observability, and provider-resilience controls with typed scenarios, role scorecards, checkpointed transitions, and eval assertions for local reviewer regression.
 - `ProposalAssuranceBundleService`: consolidates buyer workflow, replay, contracts, council, provenance, certification, observability, benchmark, and provider-resilience outputs into a checksummed local assurance manifest with reviewer queue, checkpointed transitions, and eval assertions.
+- `TraceExportService`: converts proposal observability into JSONL-ready local spans with eval dataset manifest, retrieval diagnostics, experiment comparison, governance summary, provider posture, and HITL queue artifacts.
 - `TimelineOrchestrationService`: creates proposal milestones and submission calendar packs.
 - `SubmissionDecisionService`: builds final go/no-go scores and executive memos.
 - `LeadershipBriefService`: consolidates portfolio-level readouts for recruiters and stakeholders.
@@ -128,6 +129,7 @@ Generated files are not committed. They are reproducible outputs from local API 
 - `storage/buyer_contracts/`
 - `storage/proposal_benchmarks/`
 - `storage/proposal_assurance/`
+- `storage/trace_exports/`
 - `storage/agent_council/`
 - `storage/decision_provenance/`
 - `storage/portfolio_packs/`

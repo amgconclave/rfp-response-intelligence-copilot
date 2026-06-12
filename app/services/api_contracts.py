@@ -225,6 +225,8 @@ class ApiContractService:
             "/proposal/decision-provenance-pack",
             "/proposal/submission-certification",
             "/proposal/submission-certification-pack",
+            "/ops/trace-export",
+            "/ops/trace-export-pack",
             "/ops/verification-evidence",
             "/ops/verification-evidence-pack",
             "/ops/smoke-matrix",
@@ -367,6 +369,8 @@ class ApiContractService:
             "storage/verification_evidence": "verification_evidence",
             "/ops/provider-resilience-pack": "provider_resilience_pack",
             "storage/provider_resilience": "provider_resilience",
+            "/ops/trace-export-pack": "trace_export_pack",
+            "storage/trace_exports": "trace_exports",
         }
         missing = [path for path, token in required.items() if token not in demo]
         return ApiContractCheck(
@@ -647,6 +651,7 @@ class ApiContractService:
             "/proposal/intake-triage-pack": '{"write_artifact":true}',
             "/proposal/decision-provenance-pack": '{"write_artifact":true}',
             "/proposal/submission-certification-pack": '{"write_artifact":true}',
+            "/ops/trace-export-pack": '{"write_artifact":true}',
             "/ops/verification-evidence": '{"command_results":[]}',
             "/ops/verification-evidence-pack": '{"write_artifact":true}',
         }
