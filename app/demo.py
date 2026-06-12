@@ -253,6 +253,21 @@ async def main() -> None:
         win_strategy=win_strategy,
         contract_risk=contract_risk,
     )
+    clarification_questions = await container.clarification_questions.create_questions(
+        trace_id="demo-clarification-questions",
+        analysis=analysis,
+        requirement_matrix=matrix,
+        evidence_gaps=evidence_gaps,
+        review_findings=package_review.findings,
+        readiness_scorecard=scorecard,
+        contract_risk=contract_risk,
+        top_k=4,
+        max_questions=8,
+    )
+    clarification_pack = container.clarification_questions.question_pack(
+        trace_id="demo-clarification-pack",
+        clarification_questions=clarification_questions,
+    )
     leadership_brief = container.leadership_brief.export_brief(
         trace_id="demo-leadership-brief",
         documents_ingested=documents_loaded,
@@ -973,6 +988,16 @@ async def main() -> None:
         f"high severity count={evidence_gap_summary['high_severity_count']}"
     )
     print(f"Source request artifact: {source_request_pack.artifact_path}")
+    print(
+        "Clarification questions: "
+        f"status={clarification_questions.status} "
+        f"questions={clarification_questions.summary['question_count']} "
+        f"buyer={clarification_questions.summary['buyer_question_count']} "
+        f"review={clarification_questions.summary['approval_required_count']}"
+    )
+    print(f"Clarification Question Pack: {clarification_pack.artifact_path}")
+    print(f"Clarification Question Pack JSON: {clarification_pack.json_artifact_path}")
+    print("Clarification questions directory: storage/clarification_questions")
     print(f"Leadership brief: {leadership_brief.artifact_path}")
     print(f"Timeline milestone count: {timeline_plan.summary['milestone_count']}")
     print(f"Timeline blocked count: {timeline_plan.summary['blocked_count']}")
@@ -1496,6 +1521,9 @@ async def main() -> None:
         f"negotiation_brief={negotiation_brief.artifact_path} "
         f"gap count={evidence_gap_summary['gap_count']} "
         f"source_request_pack={source_request_pack.artifact_path} "
+        f"clarification_questions={clarification_questions.status}/"
+        f"{clarification_questions.summary['question_count']} "
+        f"clarification_pack={clarification_pack.artifact_path} "
         f"milestone count={timeline_plan.summary['milestone_count']} "
         f"submission_calendar={submission_calendar.artifact_path} "
         f"submission_decision={submission_decision.decision}/{submission_decision.score} "

@@ -67,6 +67,8 @@ class LaunchChecklistService:
                 "POST /bid/roi-pack",
                 "POST /rfp/objection-handling",
                 "POST /rfp/objection-handling-pack",
+                "POST /rfp/clarification-questions",
+                "POST /rfp/clarification-question-pack",
                 "POST /rfp/answer-reuse-library",
                 "POST /rfp/answer-reuse-library-pack",
                 "POST /rfp/answer-reuse-drift",
@@ -1456,6 +1458,28 @@ class LaunchChecklistService:
                     "and proof commands."
                 ),
                 ["storage/objection_audits/*.md", "storage/objection_audits/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Clarification questions",
+                "POST",
+                "/rfp/clarification-questions",
+                "enterprise",
+                200,
+                (
+                    "Returns buyer and internal SME clarification questions with HITL routing, "
+                    "evidence status, trace spans, and eval assertions."
+                ),
+                body='{"top_k":4,"max_questions":8}',
+            ),
+            self._row(
+                "Clarification Question Pack",
+                "POST",
+                "/rfp/clarification-question-pack",
+                "artifact",
+                200,
+                "Writes clarification question workflow, reviewer queue, trace spans, and proof commands.",
+                ["storage/clarification_questions/*.md", "storage/clarification_questions/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

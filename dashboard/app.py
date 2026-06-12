@@ -121,6 +121,7 @@ tabs = st.tabs(
         "Risk Decision Ledger",
         "Review Gate",
         "Release Room",
+        "Clarification Questions",
     ]
 )
 
@@ -4828,4 +4829,86 @@ with tabs[60]:
             "Download Release Room Markdown",
             pack["markdown"],
             file_name="proposal_release_room_pack.md",
+        )
+
+
+with tabs[61]:
+    st.subheader("Clarification Questions")
+    st.caption(
+        "Turn evidence gaps, high-risk requirements, review findings, readiness blockers, and contract risks into "
+        "buyer/internal clarification questions with reviewer routing and traceable workflow checkpoints."
+    )
+    clarification_top_k = st.number_input("Clarification Top K", min_value=1, max_value=10, value=4, step=1)
+    clarification_max = st.number_input("Max clarification questions", min_value=1, max_value=12, value=8, step=1)
+    clarification_payload = {
+        "top_k": int(clarification_top_k),
+        "max_questions": int(clarification_max),
+    }
+    if st.session_state.get("analysis"):
+        clarification_payload["analysis"] = st.session_state.analysis
+    if st.session_state.get("matrix"):
+        clarification_payload["matrix"] = st.session_state.matrix
+    if st.session_state.get("evidence_gaps"):
+        clarification_payload["evidence_gaps"] = st.session_state.evidence_gaps
+    if st.session_state.get("readiness"):
+        clarification_payload["readiness_scorecard"] = st.session_state.readiness
+    if st.session_state.get("contract_risk"):
+        clarification_payload["contract_risk"] = st.session_state.contract_risk
+
+    cols = st.columns(2)
+    if cols[0].button("Generate clarification questions"):
+        st.session_state.clarification_questions = post_json("/rfp/clarification-questions", clarification_payload)
+    if cols[1].button("Generate Clarification Pack"):
+        pack_payload = {**clarification_payload, "write_artifact": True}
+        if st.session_state.get("clarification_questions"):
+            pack_payload["clarification_questions"] = st.session_state.clarification_questions
+        pack = post_json("/rfp/clarification-question-pack", pack_payload)
+        st.session_state.clarification_question_pack = pack
+        st.session_state.clarification_questions = pack["clarification_questions"]
+        st.success(f"Clarification Question Pack generated under clarification_questions: {pack['artifact_path']}")
+
+    clarification = st.session_state.get("clarification_questions")
+    if clarification:
+        summary = clarification["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", clarification["status"])
+        metric_cols[1].metric("Questions", summary["question_count"])
+        metric_cols[2].metric("Buyer", summary["buyer_question_count"])
+        metric_cols[3].metric("Review", summary["approval_required_count"])
+        metric_cols[4].metric("Coverage", summary["citation_coverage"])
+        st.write("Questions")
+        st.dataframe(
+            [
+                {
+                    "id": item["clarification_id"],
+                    "category": item["category"],
+                    "audience": item["audience"],
+                    "priority": item["priority"],
+                    "approval": item["approval_status"],
+                    "owner": item["owner_role"],
+                    "question": item["question_text"],
+                }
+                for item in clarification["questions"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Reviewer queue")
+        st.dataframe(clarification["reviewer_queue"], use_container_width=True)
+        st.write("Workflow summary")
+        st.json(clarification["workflow_summary"])
+        st.write("Trace spans")
+        st.dataframe(clarification["trace_spans"], use_container_width=True)
+        st.write("Eval assertions")
+        st.dataframe(clarification["eval_assertions"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(clarification["local_proof_commands"]), language="powershell")
+
+    pack = st.session_state.get("clarification_question_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Clarification Question Markdown",
+            pack["markdown"],
+            file_name="clarification_question_pack.md",
         )

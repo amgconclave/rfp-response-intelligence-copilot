@@ -1797,6 +1797,31 @@ Writes Markdown and JSON under `storage/source_requests/` by default. The endpoi
 
 The source request pack includes source request emails/tasks, owner matrix, acceptance criteria, impacted response sections, red-team risks, readiness/win/contract context, exact local commands, JD skills demonstrated, and five interviewer talking points. The response includes `artifact_path`, `json_artifact_path`, `markdown`, `pack`, and `trace_id`.
 
+### `POST /rfp/clarification-questions`
+
+Generates an RFP Clarification Question Workflow from evidence gaps, high-risk requirement rows, review findings, readiness blockers, and contract risks. The response separates buyer-facing clarification questions from internal SME questions, attaches retrieval citations when available, routes every question to an owner and reviewer role, and includes durable workflow checkpoints, local trace spans, eval assertions, endpoint references, proof commands, limitations, and trace ID.
+
+```json
+{
+  "top_k": 4,
+  "max_questions": 8
+}
+```
+
+The endpoint accepts the same optional inputs as `/rfp/evidence-gaps`, plus optional precomputed `evidence_gaps`. Empty local payloads fall back to sample RFP inputs and the local/mock corpus.
+
+### `POST /rfp/clarification-question-pack`
+
+Writes Markdown and JSON Clarification Question Pack artifacts under ignored `storage/clarification_questions/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes question tables, buyer-ready questions, internal SME questions, reviewer queue, workflow transitions, trace spans, eval assertions, endpoint references, proof commands, limitations, embedded clarification workflow JSON, Markdown, JSON, and trace ID.
+
 ### `POST /rfp/timeline-plan`
 
 Creates a deterministic Proposal Timeline Orchestrator plan from RFP deadlines, requirement matrix rows, stakeholder tasks, evidence gaps, contract risk, win strategy, readiness scorecard, source request pack, leadership brief, review findings, and red-team summary. If called with `{}` in local demo mode, it analyzes the sample RFP and composes local signals without calling Google Calendar, Microsoft Graph, Azure, CRM, or external workflow tools.

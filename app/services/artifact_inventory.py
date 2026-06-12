@@ -698,6 +698,12 @@ class ArtifactInventoryService:
                 "Evidence gap closure requests and owner tasks.",
             ),
             self._spec(
+                "clarification_questions",
+                "clarification_questions",
+                "POST /rfp/clarification-question-pack",
+                "Buyer/internal clarification questions with HITL review routing, trace spans, and eval assertions.",
+            ),
+            self._spec(
                 "submission_calendars",
                 "submission_calendars",
                 "POST /rfp/submission-calendar-pack",

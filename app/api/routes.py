@@ -51,6 +51,10 @@ from app.models.api import (
     CitationLineageAuditResponse,
     CitationLineagePackRequest,
     CitationLineagePackResponse,
+    ClarificationQuestionPackRequest,
+    ClarificationQuestionPackResponse,
+    ClarificationQuestionRequest,
+    ClarificationQuestionResponse,
     ComplianceEvidenceMatrixResponse,
     ContractRiskRequest,
     ContractRiskResponse,
@@ -2109,6 +2113,131 @@ async def source_request_pack(
             "json_artifact_path": pack.json_artifact_path,
             "gap_count": pack.pack["summary"]["gap_count"],
             "high_severity_count": pack.pack["summary"]["high_severity_count"],
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/rfp/clarification-questions",
+    response_model=ClarificationQuestionResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def clarification_questions(
+    payload: ClarificationQuestionRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ClarificationQuestionResponse:
+    trace_id = get_trace_id(request)
+    (
+        analysis,
+        matrix,
+        review_findings,
+        red_team_summary,
+        readiness,
+        strategy,
+        contract,
+        action_plan_items,
+    ) = _evidence_gap_inputs(payload, trace_id, container)
+    gaps = payload.evidence_gaps
+    if gaps is None:
+        gaps, _ = container.evidence_gap.create_gap_plan(
+            trace_id=f"{trace_id}-gaps",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            review_findings=review_findings,
+            red_team_summary=red_team_summary,
+            readiness_scorecard=readiness,
+            win_strategy=strategy,
+            contract_risk=contract,
+            action_plan=action_plan_items,
+        )
+    questions = await container.clarification_questions.create_questions(
+        trace_id=trace_id,
+        analysis=analysis,
+        requirement_matrix=matrix,
+        evidence_gaps=gaps,
+        review_findings=review_findings,
+        readiness_scorecard=readiness,
+        contract_risk=contract,
+        top_k=payload.top_k,
+        max_questions=payload.max_questions,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.clarification_questions_created",
+        "clarification_questions",
+        metadata={
+            "question_count": questions.summary["question_count"],
+            "buyer_question_count": questions.summary["buyer_question_count"],
+            "approval_required_count": questions.summary["approval_required_count"],
+        },
+    )
+    return questions
+
+
+@router.post(
+    "/rfp/clarification-question-pack",
+    response_model=ClarificationQuestionPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def clarification_question_pack(
+    payload: ClarificationQuestionPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ClarificationQuestionPackResponse:
+    trace_id = get_trace_id(request)
+    questions = payload.clarification_questions
+    if questions is None:
+        (
+            analysis,
+            matrix,
+            review_findings,
+            red_team_summary,
+            readiness,
+            strategy,
+            contract,
+            action_plan_items,
+        ) = _evidence_gap_inputs(payload, trace_id, container)
+        gaps = payload.evidence_gaps
+        if gaps is None:
+            gaps, _ = container.evidence_gap.create_gap_plan(
+                trace_id=f"{trace_id}-gaps",
+                analysis=analysis,
+                requirement_matrix=matrix,
+                review_findings=review_findings,
+                red_team_summary=red_team_summary,
+                readiness_scorecard=readiness,
+                win_strategy=strategy,
+                contract_risk=contract,
+                action_plan=action_plan_items,
+            )
+        questions = await container.clarification_questions.create_questions(
+            trace_id=f"{trace_id}-questions",
+            analysis=analysis,
+            requirement_matrix=matrix,
+            evidence_gaps=gaps,
+            review_findings=review_findings,
+            readiness_scorecard=readiness,
+            contract_risk=contract,
+            top_k=payload.top_k,
+            max_questions=payload.max_questions,
+        )
+    pack = container.clarification_questions.question_pack(
+        trace_id=trace_id,
+        clarification_questions=questions,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.clarification_question_pack_exported",
+        "clarification_question_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "question_count": pack.pack["summary"]["question_count"],
+            "approval_required_count": pack.pack["summary"]["approval_required_count"],
         },
     )
     return pack

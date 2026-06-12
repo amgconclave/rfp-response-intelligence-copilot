@@ -398,6 +398,12 @@ class UIVerificationService:
                 "endpoint_paths": ["/rfp/evidence-gaps", "/rfp/source-request-pack"],
             },
             {
+                "label": "Clarification Questions",
+                "endpoint_paths": ["/rfp/clarification-questions", "/rfp/clarification-question-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "clarification_questions",
+            },
+            {
                 "label": "Timeline / Submission Calendar",
                 "endpoint_paths": ["/rfp/timeline-plan", "/rfp/submission-calendar-pack"],
             },
@@ -1090,6 +1096,20 @@ class UIVerificationService:
                 "path": "/rfp/objection-audit-pack",
                 "purpose": "Objection Handling generated evidence audit pack.",
                 "expected_artifacts": ["storage/objection_audits/*.md", "storage/objection_audits/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/clarification-questions",
+                "purpose": "Clarification Questions tab buyer/internal HITL question workflow.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/clarification-question-pack",
+                "purpose": "Clarification Questions generated reviewer handoff pack.",
+                "expected_artifacts": [
+                    "storage/clarification_questions/*.md",
+                    "storage/clarification_questions/*.json",
+                ],
             },
             {
                 "method": "POST",

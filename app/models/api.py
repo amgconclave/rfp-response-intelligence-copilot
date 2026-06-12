@@ -995,6 +995,85 @@ class SourceRequestPackResponse(BaseModel):
     trace_id: str
 
 
+class ClarificationQuestionRequest(EvidenceGapRequest):
+    evidence_gaps: list[EvidenceGap] | None = None
+    top_k: int = 4
+    max_questions: int = 8
+
+
+class ClarificationWorkflowTransition(BaseModel):
+    transition_id: str
+    clarification_id: str
+    sequence: int
+    from_state: str | None = None
+    to_state: str
+    status: str
+    owner_role: str
+    decision: str
+    checkpoint_key: str
+    trace_note: str
+    evidence_refs: list[str] = Field(default_factory=list)
+
+
+class ClarificationQuestionItem(BaseModel):
+    clarification_id: str
+    question_text: str
+    category: str
+    priority: str
+    audience: str
+    owner_role: str
+    reviewer_role: str
+    rationale: str
+    evidence_status: str
+    confidence: float
+    approval_status: str
+    related_requirement_ids: list[str] = Field(default_factory=list)
+    related_gap_ids: list[str] = Field(default_factory=list)
+    citations: list[Citation] = Field(default_factory=list)
+    source_snippets: list[dict[str, Any]] = Field(default_factory=list)
+    missing_evidence: list[str] = Field(default_factory=list)
+    recommended_followups: list[str] = Field(default_factory=list)
+    workflow_trace: list[ClarificationWorkflowTransition] = Field(default_factory=list)
+
+
+class ClarificationEvalAssertion(BaseModel):
+    assertion_id: str
+    description: str
+    passed: bool
+    evidence: str
+    related_clarification_ids: list[str] = Field(default_factory=list)
+
+
+class ClarificationQuestionResponse(BaseModel):
+    title: str
+    status: str
+    questions: list[ClarificationQuestionItem]
+    summary: dict[str, Any]
+    reviewer_queue: list[dict[str, Any]] = Field(default_factory=list)
+    workflow_summary: dict[str, Any] = Field(default_factory=dict)
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    eval_assertions: list[ClarificationEvalAssertion] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ClarificationQuestionPackRequest(ClarificationQuestionRequest):
+    clarification_questions: ClarificationQuestionResponse | None = None
+    write_artifact: bool = True
+
+
+class ClarificationQuestionPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    clarification_questions: ClarificationQuestionResponse
+    trace_id: str
+
+
 class TimelineMilestone(BaseModel):
     milestone_id: str
     sequence: int

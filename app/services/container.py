@@ -19,6 +19,7 @@ from app.services.buyer_contracts import BuyerStructuredContractService
 from app.services.buyer_intelligence import BuyerProposalIntelligenceService
 from app.services.ci_doctor import CiDoctorService
 from app.services.citation_lineage import CitationLineageService
+from app.services.clarification_questions import ClarificationQuestionService
 from app.services.compliance import ComplianceControlMappingService
 from app.services.contract_risk import ContractRiskService
 from app.services.corpus_coverage import CorpusCoverageService
@@ -150,6 +151,7 @@ class ServiceContainer:
         self.win_strategy = WinStrategyService(self.repo, settings)
         self.ingestion = DocumentIngestionService(self.repo, self.vector_store, settings)
         self.retrieval = RetrievalService(self.repo, self.vector_store)
+        self.clarification_questions = ClarificationQuestionService(settings, self.retrieval)
         self.retrieval_experiments = RetrievalExperimentComparisonService(
             settings,
             self.retrieval,
