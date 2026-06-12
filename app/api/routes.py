@@ -159,6 +159,9 @@ from app.models.api import (
     ProposalQualityBenchmarkResponse,
     ProposalReadinessScorePackRequest,
     ProposalReadinessScorePackResponse,
+    ProposalReviewGatePackRequest,
+    ProposalReviewGatePackResponse,
+    ProposalReviewGateResponse,
     ProposalSubmissionCertificationPackRequest,
     ProposalSubmissionCertificationPackResponse,
     ProposalSubmissionCertificationResponse,
@@ -4700,6 +4703,70 @@ async def proposal_assurance_bundle_pack(
 
 
 @router.get(
+    "/proposal/review-gate",
+    response_model=ProposalReviewGateResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_review_gate(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalReviewGateResponse:
+    trace_id = get_trace_id(request)
+    review_gate = await _proposal_review_gate_report(trace_id, container)
+    container.audit.record(
+        trace_id,
+        "proposal.review_gate_viewed",
+        "proposal_review_gate",
+        metadata={
+            "status": review_gate.status,
+            "score": review_gate.score,
+            "criteria": review_gate.summary["criterion_count"],
+            "delegations": review_gate.summary["delegation_count"],
+        },
+    )
+    return review_gate
+
+
+@router.post(
+    "/proposal/review-gate-pack",
+    response_model=ProposalReviewGatePackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_review_gate_pack(
+    request: Request,
+    payload: ProposalReviewGatePackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalReviewGatePackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProposalReviewGatePackRequest()
+    review_gate = await _proposal_review_gate_report(
+        trace_id,
+        container,
+        dataset_path=request_payload.dataset_path,
+        outcomes_fixture_path=request_payload.outcomes_fixture_path,
+        top_k=request_payload.top_k,
+    )
+    pack = container.proposal_review_gate.pack(
+        trace_id,
+        review_gate,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.review_gate_pack_generated",
+        "proposal_review_gate_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": review_gate.status,
+            "score": review_gate.score,
+        },
+    )
+    return pack
+
+
+@router.get(
     "/compliance/evidence-matrix",
     response_model=ComplianceEvidenceMatrixResponse,
     dependencies=[Depends(require_api_key)],
@@ -5771,6 +5838,34 @@ async def _proposal_assurance_bundle_report(
         observability=observability,
         benchmark=benchmark,
         provider_resilience=provider_resilience,
+    )
+
+
+async def _proposal_review_gate_report(
+    trace_id: str,
+    container: ServiceContainer,
+    dataset_path: str = "sample_data/eval_dataset.json",
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json",
+    top_k: int = 4,
+) -> ProposalReviewGateResponse:
+    assurance = await _proposal_assurance_bundle_report(
+        f"{trace_id}-assurance",
+        container,
+        dataset_path=dataset_path,
+        outcomes_fixture_path=outcomes_fixture_path,
+        top_k=top_k,
+    )
+    observability = await _proposal_observability_report(
+        f"{trace_id}-observability",
+        container,
+        dataset_path=dataset_path,
+        outcomes_fixture_path=outcomes_fixture_path,
+        top_k=top_k,
+    )
+    return container.proposal_review_gate.gate(
+        trace_id=trace_id,
+        assurance=assurance,
+        observability=observability,
     )
 
 

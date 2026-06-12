@@ -2568,6 +2568,53 @@ class ProposalObservabilityPackResponse(BaseModel):
     trace_id: str
 
 
+class ProposalReviewGateCriterion(BaseModel):
+    criterion_id: str
+    owner_role: str
+    decision_area: str
+    status: str
+    score: int
+    required_evidence: list[str] = Field(default_factory=list)
+    observed_evidence: list[str] = Field(default_factory=list)
+    open_actions: list[str] = Field(default_factory=list)
+    delegated_to: list[str] = Field(default_factory=list)
+    endpoint_refs: list[str] = Field(default_factory=list)
+
+
+class ProposalReviewGateResponse(BaseModel):
+    title: str
+    gate_id: str
+    status: str
+    score: int
+    generated_at: str
+    injected_dependencies: dict[str, Any]
+    summary: dict[str, Any]
+    criteria: list[ProposalReviewGateCriterion]
+    state_transitions: list[dict[str, Any]] = Field(default_factory=list)
+    task_delegations: list[dict[str, Any]] = Field(default_factory=list)
+    eval_assertions: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ProposalReviewGatePackRequest(BaseModel):
+    dataset_path: str = "sample_data/eval_dataset.json"
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json"
+    top_k: int = 4
+    write_artifact: bool = True
+
+
+class ProposalReviewGatePackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    review_gate: ProposalReviewGateResponse
+    trace_id: str
+
+
 class TraceExportRequest(BaseModel):
     dataset_path: str = "sample_data/eval_dataset.json"
     outcomes_fixture_path: str = "sample_data/rfp_outcomes.json"

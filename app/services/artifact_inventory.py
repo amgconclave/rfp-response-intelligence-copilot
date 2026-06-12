@@ -989,6 +989,15 @@ class ArtifactInventoryService:
                 ),
             ),
             self._spec(
+                "proposal_review_gates",
+                "proposal_review_gates",
+                "POST /proposal/review-gate-pack",
+                (
+                    "Proposal review gate artifacts with sales, presales, compliance, and procurement criteria, "
+                    "task delegations, checkpoint transitions, and eval assertions."
+                ),
+            ),
+            self._spec(
                 "proposal_observability",
                 "proposal_observability",
                 "POST /ops/proposal-observability-pack",

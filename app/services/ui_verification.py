@@ -686,6 +686,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "proposal_benchmarks",
             },
+            {
+                "label": "Review Gate",
+                "endpoint_paths": ["/proposal/review-gate", "/proposal/review-gate-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "proposal_review_gates",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -1314,6 +1320,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/proposal_assurance/*.md",
                     "storage/proposal_assurance/*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/proposal/review-gate",
+                "purpose": "Review Gate tab role criteria, task delegation, checkpoint, and eval view.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/review-gate-pack",
+                "purpose": "Review Gate generated Markdown and JSON artifacts.",
+                "expected_artifacts": [
+                    "storage/proposal_review_gates/*.md",
+                    "storage/proposal_review_gates/*.json",
                 ],
             },
         ]

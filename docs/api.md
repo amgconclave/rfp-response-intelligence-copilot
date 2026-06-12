@@ -514,6 +514,30 @@ Writes Markdown and JSON artifacts under ignored `storage/proposal_assurance/` b
 
 The pack includes a checksum manifest, control summary, reviewer queue, checkpointed transitions, eval assertions, reviewer controls, proof commands, limitations, embedded assurance JSON, Markdown, JSON, and trace ID.
 
+### `GET /proposal/review-gate`
+
+Returns the Proposal Intelligence Review Gate. It aggregates proposal assurance and observability into role-specific sales, presales, compliance, and procurement criteria with task delegations, checkpointed transitions, eval assertions, endpoint references, local proof commands, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/proposal/review-gate" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /proposal/review-gate-pack`
+
+Writes Markdown and JSON artifacts under ignored `storage/proposal_review_gates/` by default.
+
+```json
+{
+  "dataset_path": "sample_data/eval_dataset.json",
+  "outcomes_fixture_path": "sample_data/rfp_outcomes.json",
+  "top_k": 4,
+  "write_artifact": true
+}
+```
+
+The pack includes role review criteria, task delegations, checkpointed state transitions, eval assertions, reviewer controls, proof commands, limitations, embedded review gate JSON, Markdown, JSON, and trace ID.
+
 ### `GET /compliance/evidence-matrix`
 
 Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.

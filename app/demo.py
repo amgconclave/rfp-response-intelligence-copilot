@@ -826,6 +826,16 @@ async def main() -> None:
         proposal_assurance,
         write_artifact=True,
     )
+    proposal_review_gate = container.proposal_review_gate.gate(
+        trace_id="demo-proposal-review-gate",
+        assurance=proposal_assurance,
+        observability=proposal_observability,
+    )
+    proposal_review_gate_pack = container.proposal_review_gate.pack(
+        "demo-proposal-review-gate-pack",
+        proposal_review_gate,
+        write_artifact=True,
+    )
     access_policy = container.access_policy.policy(
         trace_id="demo-access-policy",
         workflow=buyer_intelligence,
@@ -1179,6 +1189,16 @@ async def main() -> None:
     print(f"Proposal Assurance Bundle Pack JSON: {proposal_assurance_pack.json_artifact_path}")
     print("Proposal assurance directory: storage/proposal_assurance")
     print(
+        "Proposal review gate: "
+        f"status={proposal_review_gate.status} "
+        f"score={proposal_review_gate.score} "
+        f"criteria={proposal_review_gate.summary['criterion_count']} "
+        f"delegations={proposal_review_gate.summary['delegation_count']}"
+    )
+    print(f"Proposal Review Gate Pack: {proposal_review_gate_pack.artifact_path}")
+    print(f"Proposal Review Gate Pack JSON: {proposal_review_gate_pack.json_artifact_path}")
+    print("Proposal review gate directory: storage/proposal_review_gates")
+    print(
         "Access policy: "
         f"status={access_policy.status} "
         f"roles={access_policy.summary['role_count']} "
@@ -1494,6 +1514,8 @@ async def main() -> None:
         f"quality_benchmark_pack={proposal_quality_benchmark_pack.artifact_path} "
         f"proposal_assurance={proposal_assurance.status}/{proposal_assurance.score} "
         f"proposal_assurance_pack={proposal_assurance_pack.artifact_path} "
+        f"proposal_review_gate={proposal_review_gate.status}/{proposal_review_gate.score} "
+        f"proposal_review_gate_pack={proposal_review_gate_pack.artifact_path} "
         f"access_policy={access_policy.status}/{access_policy.summary['role_count']} "
         f"access_policy_pack={access_policy_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "

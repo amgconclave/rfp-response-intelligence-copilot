@@ -103,6 +103,8 @@ class LaunchChecklistService:
                 "POST /proposal/submission-certification-pack",
                 "GET /proposal/assurance-bundle",
                 "POST /proposal/assurance-bundle-pack",
+                "GET /proposal/review-gate",
+                "POST /proposal/review-gate-pack",
                 "GET /ops/ci-doctor",
                 "POST /ops/audit-pack",
                 "GET /api/contract-audit",
@@ -1832,6 +1834,27 @@ class LaunchChecklistService:
                 200,
                 "Writes proposal assurance Markdown and JSON artifacts.",
                 ["storage/proposal_assurance/*.md", "storage/proposal_assurance/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Proposal Intelligence Review Gate",
+                "GET",
+                "/proposal/review-gate",
+                "proposal",
+                200,
+                (
+                    "Returns role-specific sales, presales, compliance, and procurement review criteria "
+                    "with task delegations, checkpoint transitions, eval assertions, and local/mock boundaries."
+                ),
+            ),
+            self._row(
+                "Proposal Intelligence Review Gate Pack",
+                "POST",
+                "/proposal/review-gate-pack",
+                "artifact",
+                200,
+                "Writes proposal review gate Markdown and JSON artifacts.",
+                ["storage/proposal_review_gates/*.md", "storage/proposal_review_gates/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

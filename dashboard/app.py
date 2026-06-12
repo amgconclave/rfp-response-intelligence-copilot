@@ -119,6 +119,7 @@ tabs = st.tabs(
         "Access Policy",
         "Proposal Intake Triage",
         "Risk Decision Ledger",
+        "Review Gate",
     ]
 )
 
@@ -4660,4 +4661,64 @@ with tabs[58]:
             "Download Risk Decision Markdown",
             pack["markdown"],
             file_name="procurement_risk_decision_pack.md",
+        )
+
+
+with tabs[59]:
+    st.subheader("Review Gate")
+    st.caption(
+        "Aggregate buyer-grade assurance and observability into role-specific sales, presales, compliance, "
+        "and procurement review criteria with checkpointed delegations."
+    )
+    gate_dataset_path = st.text_input("Review gate eval dataset", "sample_data/eval_dataset.json")
+    gate_outcomes_path = st.text_input("Review gate win/loss fixture", "sample_data/rfp_outcomes.json")
+    gate_top_k = st.number_input("Review gate Top K", min_value=1, max_value=10, value=4, step=1)
+    gate_payload = {
+        "dataset_path": gate_dataset_path,
+        "outcomes_fixture_path": gate_outcomes_path,
+        "top_k": int(gate_top_k),
+    }
+    action_cols = st.columns(2)
+    if action_cols[0].button("Load review gate"):
+        st.session_state.proposal_review_gate = get_json("/proposal/review-gate")
+    if action_cols[1].button("Generate Review Gate Pack"):
+        pack = post_json("/proposal/review-gate-pack", {**gate_payload, "write_artifact": True})
+        st.session_state.proposal_review_gate_pack = pack
+        st.session_state.proposal_review_gate = pack["review_gate"]
+        st.success(f"Proposal Review Gate Pack generated under proposal_review_gates: {pack['artifact_path']}")
+
+    gate = st.session_state.get("proposal_review_gate")
+    if gate:
+        summary = gate["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", gate["status"])
+        metric_cols[1].metric("Score", gate["score"])
+        metric_cols[2].metric("Criteria", summary["criterion_count"])
+        metric_cols[3].metric("Delegations", summary["delegation_count"])
+        metric_cols[4].metric("Open actions", summary["open_action_count"])
+        st.write("Summary")
+        st.json(summary)
+        st.write("Role criteria")
+        st.dataframe(gate["criteria"], use_container_width=True)
+        st.write("Task delegations")
+        st.dataframe(gate["task_delegations"], use_container_width=True)
+        st.write("State transitions")
+        st.dataframe(gate["state_transitions"], use_container_width=True)
+        st.write("Eval assertions")
+        st.dataframe(gate["eval_assertions"], use_container_width=True)
+        st.write("Endpoint references")
+        st.dataframe(gate["endpoint_references"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(gate["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(gate["limitations"])
+
+    pack = st.session_state.get("proposal_review_gate_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Proposal Review Gate Markdown",
+            pack["markdown"],
+            file_name="proposal_review_gate_pack.md",
         )
