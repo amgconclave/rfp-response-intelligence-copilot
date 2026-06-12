@@ -101,6 +101,8 @@ class LaunchChecklistService:
                 "POST /proposal/decision-provenance-pack",
                 "GET /proposal/submission-certification",
                 "POST /proposal/submission-certification-pack",
+                "GET /proposal/assurance-bundle",
+                "POST /proposal/assurance-bundle-pack",
                 "GET /ops/ci-doctor",
                 "POST /ops/audit-pack",
                 "GET /api/contract-audit",
@@ -1788,6 +1790,27 @@ class LaunchChecklistService:
                 200,
                 "Writes proposal quality benchmark Markdown and JSON artifacts.",
                 ["storage/proposal_benchmarks/*.md", "storage/proposal_benchmarks/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Proposal Assurance Bundle",
+                "GET",
+                "/proposal/assurance-bundle",
+                "proposal",
+                200,
+                (
+                    "Returns a checksummed assurance manifest across buyer workflow, replay, contracts, council, "
+                    "provenance, certification, observability, benchmark, and provider controls."
+                ),
+            ),
+            self._row(
+                "Proposal Assurance Bundle Pack",
+                "POST",
+                "/proposal/assurance-bundle-pack",
+                "artifact",
+                200,
+                "Writes proposal assurance Markdown and JSON artifacts.",
+                ["storage/proposal_assurance/*.md", "storage/proposal_assurance/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

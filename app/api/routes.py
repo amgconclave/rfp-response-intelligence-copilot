@@ -142,6 +142,9 @@ from app.models.api import (
     ProposalApprovalSimulationPackResponse,
     ProposalApprovalSimulationRequest,
     ProposalApprovalSimulationResponse,
+    ProposalAssuranceBundlePackRequest,
+    ProposalAssuranceBundlePackResponse,
+    ProposalAssuranceBundleResponse,
     ProposalDecisionProvenancePackRequest,
     ProposalDecisionProvenancePackResponse,
     ProposalDecisionProvenanceResponse,
@@ -4629,6 +4632,70 @@ async def proposal_quality_benchmark_pack(
 
 
 @router.get(
+    "/proposal/assurance-bundle",
+    response_model=ProposalAssuranceBundleResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_assurance_bundle(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalAssuranceBundleResponse:
+    trace_id = get_trace_id(request)
+    assurance = await _proposal_assurance_bundle_report(trace_id, container)
+    container.audit.record(
+        trace_id,
+        "proposal.assurance_bundle_viewed",
+        "proposal_assurance_bundle",
+        metadata={
+            "status": assurance.status,
+            "score": assurance.score,
+            "artifacts": assurance.control_summary["artifact_count"],
+            "blocking": assurance.control_summary["blocking_count"],
+        },
+    )
+    return assurance
+
+
+@router.post(
+    "/proposal/assurance-bundle-pack",
+    response_model=ProposalAssuranceBundlePackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_assurance_bundle_pack(
+    request: Request,
+    payload: ProposalAssuranceBundlePackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalAssuranceBundlePackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProposalAssuranceBundlePackRequest()
+    assurance = await _proposal_assurance_bundle_report(
+        trace_id,
+        container,
+        dataset_path=request_payload.dataset_path,
+        outcomes_fixture_path=request_payload.outcomes_fixture_path,
+        top_k=request_payload.top_k,
+    )
+    pack = container.proposal_assurance.pack(
+        trace_id,
+        assurance,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.assurance_bundle_pack_generated",
+        "proposal_assurance_bundle_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": assurance.status,
+            "score": assurance.score,
+        },
+    )
+    return pack
+
+
+@router.get(
     "/compliance/evidence-matrix",
     response_model=ComplianceEvidenceMatrixResponse,
     dependencies=[Depends(require_api_key)],
@@ -5541,6 +5608,77 @@ async def _proposal_quality_benchmark_report(
         trace_id=trace_id,
         certification=certification,
         observability=observability,
+        provider_resilience=provider_resilience,
+    )
+
+
+async def _proposal_assurance_bundle_report(
+    trace_id: str,
+    container: ServiceContainer,
+    dataset_path: str = "sample_data/eval_dataset.json",
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json",
+    top_k: int = 4,
+) -> ProposalAssuranceBundleResponse:
+    inputs = await _buyer_intelligence_inputs(f"{trace_id}-assurance-buyer", container)
+    workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+    replay = container.buyer_intelligence.replay(f"{trace_id}-replay", workflow)
+    council = container.proposal_agent_council.council(
+        trace_id=f"{trace_id}-council",
+        workflow=workflow,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    provenance = container.decision_provenance.provenance(
+        trace_id=f"{trace_id}-provenance",
+        workflow=workflow,
+        replay=replay,
+        council=council,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    contract_audit = container.buyer_contracts.audit(
+        trace_id=f"{trace_id}-contracts",
+        workflow=workflow,
+        replay=replay,
+        council=council,
+        provenance=provenance,
+    )
+    certification_outputs = await _proposal_submission_certification_outputs(
+        f"{trace_id}-certification",
+        container,
+    )
+    certification = container.submission_certification.certify(
+        trace_id=f"{trace_id}-certification",
+        **certification_outputs,
+    )
+    observability = await _proposal_observability_report(
+        f"{trace_id}-observability",
+        container,
+        dataset_path=dataset_path,
+        outcomes_fixture_path=outcomes_fixture_path,
+        top_k=top_k,
+    )
+    provider_resilience = container.provider_resilience.resilience(f"{trace_id}-provider-resilience")
+    benchmark = container.proposal_benchmark.benchmark(
+        trace_id=f"{trace_id}-benchmark",
+        certification=certification,
+        observability=observability,
+        provider_resilience=provider_resilience,
+    )
+    return container.proposal_assurance.bundle(
+        trace_id=trace_id,
+        workflow=workflow,
+        replay=replay,
+        contract_audit=contract_audit,
+        council=council,
+        provenance=provenance,
+        certification=certification,
+        observability=observability,
+        benchmark=benchmark,
         provider_resilience=provider_resilience,
     )
 

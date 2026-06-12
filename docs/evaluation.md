@@ -50,6 +50,8 @@ The v0.2 API also exposes proof-oriented coverage endpoints:
 - `POST /proposal/submission-certification-pack`: writes the Proposal Submission Certification Pack under `storage/submission_certifications/`.
 - `GET /proposal/quality-benchmark`: returns deterministic quality benchmark scenarios across certification, observability, provider resilience, checkpointing, reviewer routing, and eval assertions.
 - `POST /proposal/quality-benchmark-pack`: writes the Proposal Quality Benchmark Pack under `storage/proposal_benchmarks/`.
+- `GET /proposal/assurance-bundle`: returns a checksummed assurance manifest across buyer workflow, replay, contracts, council, provenance, certification, observability, benchmark, and provider controls.
+- `POST /proposal/assurance-bundle-pack`: writes the Proposal Assurance Bundle Pack under `storage/proposal_assurance/`.
 - `GET /ops/proposal-observability`: returns trace analysis, retrieval diagnostics, experiment comparison, provider posture, governance findings, and HITL signals.
 - `POST /ops/proposal-observability-pack`: writes the Proposal Observability Pack under `storage/proposal_observability/`.
 - `GET /handoff/final-audit`: returns the README Consistency final audit.
@@ -84,6 +86,7 @@ Expected final proof points include:
 - Proposal Decision Provenance eval assertions all pass and the graph pack is written under `storage/decision_provenance/`.
 - Proposal Observability report includes local trace spans, retrieval diagnostics, governance findings, and the pack is written under `storage/proposal_observability/`.
 - Proposal Quality Benchmark scenarios pass or route named warnings and the pack is written under `storage/proposal_benchmarks/`.
+- Proposal Assurance Bundle eval assertions pass, checksums are present, and the pack is written under `storage/proposal_assurance/`.
 - Final audit status reports `pass`.
 - Final Handoff Pack is written under `storage/final_handoff/`.
 - Verification Evidence Pack is written under `storage/verification_evidence/`.

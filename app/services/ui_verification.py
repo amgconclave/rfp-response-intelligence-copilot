@@ -647,6 +647,8 @@ class UIVerificationService:
                     "/proposal/approval-simulation-pack",
                     "/proposal/buyer-contracts",
                     "/proposal/buyer-contracts-pack",
+                    "/proposal/assurance-bundle",
+                    "/proposal/assurance-bundle-pack",
                 ],
                 "generated_artifact_tab": True,
                 "artifact_root": "buyer_intelligence",
@@ -1277,6 +1279,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/proposal_benchmarks/*.md",
                     "storage/proposal_benchmarks/*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/proposal/assurance-bundle",
+                "purpose": "Buyer Intelligence Pack tab checksummed proposal assurance manifest.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/assurance-bundle-pack",
+                "purpose": "Buyer Intelligence Pack generated assurance Markdown and JSON artifacts.",
+                "expected_artifacts": [
+                    "storage/proposal_assurance/*.md",
+                    "storage/proposal_assurance/*.json",
                 ],
             },
         ]

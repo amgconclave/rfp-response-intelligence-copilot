@@ -3592,7 +3592,7 @@ with tabs[46]:
         "Compose durable proposal workflow checkpoints, human approvals, governance gates, provider routes, "
         "shared state, local trace analysis, and replayable transition audits for buyer-grade RFP review."
     )
-    action_cols = st.columns(10)
+    action_cols = st.columns(12)
     if action_cols[0].button("Load buyer workflow"):
         st.session_state.buyer_intelligence = get_json("/proposal/buyer-intelligence")
     if action_cols[1].button("Generate Buyer Intelligence Pack"):
@@ -3629,6 +3629,13 @@ with tabs[46]:
         st.session_state.proposal_quality_benchmark_pack = pack
         st.session_state.proposal_quality_benchmark = pack["benchmark"]
         st.success(f"Proposal Quality Benchmark Pack generated under proposal_benchmarks: {pack['artifact_path']}")
+    if action_cols[10].button("Load assurance"):
+        st.session_state.proposal_assurance_bundle = get_json("/proposal/assurance-bundle")
+    if action_cols[11].button("Generate Assurance Pack"):
+        pack = post_json("/proposal/assurance-bundle-pack", {"write_artifact": True})
+        st.session_state.proposal_assurance_bundle_pack = pack
+        st.session_state.proposal_assurance_bundle = pack["assurance"]
+        st.success(f"Proposal Assurance Bundle generated under proposal_assurance: {pack['artifact_path']}")
 
     workflow = st.session_state.get("buyer_intelligence")
     if workflow:
@@ -3786,6 +3793,39 @@ with tabs[46]:
         st.write("Benchmark proof commands")
         st.code("\n".join(benchmark["local_proof_commands"]), language="powershell")
 
+    assurance = st.session_state.get("proposal_assurance_bundle")
+    if assurance:
+        assurance_cols = st.columns(5)
+        assurance_cols[0].metric("Assurance", assurance["status"])
+        assurance_cols[1].metric("Score", assurance["score"])
+        assurance_cols[2].metric("Artifacts", assurance["control_summary"]["artifact_count"])
+        assurance_cols[3].metric("Blocked", assurance["control_summary"]["blocking_count"])
+        assurance_cols[4].metric("Review items", len(assurance["reviewer_queue"]))
+        st.write("Assurance artifact manifest")
+        st.dataframe(
+            [
+                {
+                    "item": item["item_id"],
+                    "endpoint": item["source_endpoint"],
+                    "type": item["source_type"],
+                    "status": item["status"],
+                    "owner": item["owner_role"],
+                    "blocking": item["blocking"],
+                    "checksum": item["checksum"][:16],
+                }
+                for item in assurance["artifact_manifest"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Assurance reviewer queue")
+        st.dataframe(assurance["reviewer_queue"], use_container_width=True)
+        st.write("Assurance state transitions")
+        st.dataframe(assurance["state_transitions"], use_container_width=True)
+        st.write("Assurance eval assertions")
+        st.dataframe(assurance["eval_assertions"], use_container_width=True)
+        st.write("Assurance proof commands")
+        st.code("\n".join(assurance["local_proof_commands"]), language="powershell")
+
     pack = st.session_state.get("buyer_intelligence_pack")
     if pack:
         st.write("Generated artifact path", pack["artifact_path"])
@@ -3836,6 +3876,16 @@ with tabs[46]:
             "Download Quality Benchmark Markdown",
             benchmark_pack["markdown"],
             file_name="proposal_quality_benchmark_pack.md",
+        )
+
+    assurance_pack = st.session_state.get("proposal_assurance_bundle_pack")
+    if assurance_pack:
+        st.write("Assurance artifact path", assurance_pack["artifact_path"])
+        st.write("Assurance JSON path", assurance_pack["json_artifact_path"])
+        st.download_button(
+            "Download Proposal Assurance Markdown",
+            assurance_pack["markdown"],
+            file_name="proposal_assurance_bundle.md",
         )
 
 

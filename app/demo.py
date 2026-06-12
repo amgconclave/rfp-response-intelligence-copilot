@@ -797,6 +797,23 @@ async def main() -> None:
         proposal_quality_benchmark,
         write_artifact=True,
     )
+    proposal_assurance = container.proposal_assurance.bundle(
+        trace_id="demo-proposal-assurance",
+        workflow=buyer_intelligence,
+        replay=buyer_workflow_replay,
+        contract_audit=buyer_structured_contracts,
+        council=agent_council,
+        provenance=decision_provenance,
+        certification=submission_certification,
+        observability=proposal_observability,
+        benchmark=proposal_quality_benchmark,
+        provider_resilience=provider_resilience,
+    )
+    proposal_assurance_pack = container.proposal_assurance.pack(
+        "demo-proposal-assurance-pack",
+        proposal_assurance,
+        write_artifact=True,
+    )
     access_policy = container.access_policy.policy(
         trace_id="demo-access-policy",
         workflow=buyer_intelligence,
@@ -1140,6 +1157,16 @@ async def main() -> None:
     print(f"Proposal Quality Benchmark Pack JSON: {proposal_quality_benchmark_pack.json_artifact_path}")
     print("Proposal benchmark directory: storage/proposal_benchmarks")
     print(
+        "Proposal assurance bundle: "
+        f"status={proposal_assurance.status} "
+        f"score={proposal_assurance.score} "
+        f"artifacts={proposal_assurance.control_summary['artifact_count']} "
+        f"blocked={proposal_assurance.control_summary['blocking_count']}"
+    )
+    print(f"Proposal Assurance Bundle Pack: {proposal_assurance_pack.artifact_path}")
+    print(f"Proposal Assurance Bundle Pack JSON: {proposal_assurance_pack.json_artifact_path}")
+    print("Proposal assurance directory: storage/proposal_assurance")
+    print(
         "Access policy: "
         f"status={access_policy.status} "
         f"roles={access_policy.summary['role_count']} "
@@ -1442,6 +1469,8 @@ async def main() -> None:
         f"submission_certification_pack={submission_certification_pack.artifact_path} "
         f"quality_benchmark={proposal_quality_benchmark.status}/{proposal_quality_benchmark.score} "
         f"quality_benchmark_pack={proposal_quality_benchmark_pack.artifact_path} "
+        f"proposal_assurance={proposal_assurance.status}/{proposal_assurance.score} "
+        f"proposal_assurance_pack={proposal_assurance_pack.artifact_path} "
         f"access_policy={access_policy.status}/{access_policy.summary['role_count']} "
         f"access_policy_pack={access_policy_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "

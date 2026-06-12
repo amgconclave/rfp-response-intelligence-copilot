@@ -972,6 +972,15 @@ class ArtifactInventoryService:
                 ),
             ),
             self._spec(
+                "proposal_assurance",
+                "proposal_assurance",
+                "POST /proposal/assurance-bundle-pack",
+                (
+                    "Proposal assurance artifacts with checksummed control manifest, reviewer queue, "
+                    "checkpoint transitions, and eval assertions."
+                ),
+            ),
+            self._spec(
                 "proposal_observability",
                 "proposal_observability",
                 "POST /ops/proposal-observability-pack",

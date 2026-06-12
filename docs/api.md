@@ -493,6 +493,27 @@ Writes Markdown and JSON artifacts under ignored `storage/proposal_benchmarks/` 
 
 The pack includes benchmark scenarios, role scorecards, state transitions, eval assertions, reviewer controls, proof commands, limitations, embedded benchmark JSON, Markdown, JSON, and trace ID.
 
+### `GET /proposal/assurance-bundle`
+
+Returns the Proposal Assurance Bundle. It consolidates buyer workflow, replay, structured contracts, agent council, decision provenance, submission certification, observability, quality benchmark, and provider resilience into a checksummed structured manifest with reviewer queue, state transitions, eval assertions, proof commands, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/proposal/assurance-bundle" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /proposal/assurance-bundle-pack`
+
+Writes Markdown and JSON artifacts under ignored `storage/proposal_assurance/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes a checksum manifest, control summary, reviewer queue, checkpointed transitions, eval assertions, reviewer controls, proof commands, limitations, embedded assurance JSON, Markdown, JSON, and trace ID.
+
 ### `GET /compliance/evidence-matrix`
 
 Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.

@@ -2372,6 +2372,53 @@ class ProposalQualityBenchmarkPackResponse(BaseModel):
     trace_id: str
 
 
+class ProposalAssuranceEvidenceItem(BaseModel):
+    item_id: str
+    source_endpoint: str
+    source_type: str
+    status: str
+    owner_role: str
+    summary: dict[str, Any] = Field(default_factory=dict)
+    evidence_refs: list[str] = Field(default_factory=list)
+    checksum: str
+    blocking: bool
+    reviewer_action: str
+
+
+class ProposalAssuranceBundleResponse(BaseModel):
+    title: str
+    assurance_id: str
+    status: str
+    score: int
+    generated_at: str
+    injected_dependencies: dict[str, Any]
+    control_summary: dict[str, Any]
+    artifact_manifest: list[ProposalAssuranceEvidenceItem]
+    state_transitions: list[dict[str, Any]] = Field(default_factory=list)
+    reviewer_queue: list[dict[str, Any]] = Field(default_factory=list)
+    eval_assertions: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ProposalAssuranceBundlePackRequest(BaseModel):
+    dataset_path: str = "sample_data/eval_dataset.json"
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json"
+    top_k: int = 4
+    write_artifact: bool = True
+
+
+class ProposalAssuranceBundlePackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    assurance: ProposalAssuranceBundleResponse
+    trace_id: str
+
+
 class ProposalCouncilAgent(BaseModel):
     agent_id: str
     role: str

@@ -47,6 +47,7 @@ from app.services.procurement import ProcurementQuestionRiskService
 from app.services.procurement_risk_decisions import ProcurementRiskDecisionService
 from app.services.procurement_risk_desk import ProcurementRiskDeskService
 from app.services.proposal_agent_council import ProposalAgentCouncilService
+from app.services.proposal_assurance import ProposalAssuranceBundleService
 from app.services.proposal_benchmark import ProposalQualityBenchmarkService
 from app.services.proposal_intake import ProposalIntakeTriageService
 from app.services.proposal_observability import ProposalObservabilityService
@@ -92,6 +93,7 @@ class ServiceContainer:
         self.buyer_intelligence = BuyerProposalIntelligenceService(settings)
         self.buyer_contracts = BuyerStructuredContractService(settings)
         self.proposal_agent_council = ProposalAgentCouncilService(settings)
+        self.proposal_assurance = ProposalAssuranceBundleService(settings)
         self.proposal_benchmark = ProposalQualityBenchmarkService(settings)
         self.proposal_intake = ProposalIntakeTriageService(settings)
         self.decision_provenance = ProposalDecisionProvenanceService(settings)
