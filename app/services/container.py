@@ -7,6 +7,7 @@ from app.services.access_policy import AccessPolicyService
 from app.services.action_plan import StakeholderActionPlanService
 from app.services.amendment_impact import RfpAmendmentImpactService
 from app.services.answer_reuse_approval import AnswerReuseApprovalService
+from app.services.answer_reuse_coverage import AnswerReuseCoverageService
 from app.services.answer_reuse_drift import AnswerReuseDriftService
 from app.services.answer_reuse_library import AnswerReuseLibraryService
 from app.services.api_contracts import ApiContractService
@@ -103,6 +104,7 @@ class ServiceContainer:
         self.answer_reuse_library = AnswerReuseLibraryService(self.repo, settings)
         self.answer_reuse_drift = AnswerReuseDriftService(settings, self.answer_reuse_library)
         self.answer_reuse_approval = AnswerReuseApprovalService(settings, self.answer_reuse_drift)
+        self.answer_reuse_coverage = AnswerReuseCoverageService(settings, self.answer_reuse_library)
         self.compliance = ComplianceControlMappingService(self.repo, settings)
         self.contract_risk = ContractRiskService(self.repo, settings)
         self.corpus_coverage = CorpusCoverageService(self.repo, settings)

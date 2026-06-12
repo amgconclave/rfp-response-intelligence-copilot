@@ -343,6 +343,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "answer_reuse_approvals",
             },
+            {
+                "label": "Answer Reuse Coverage",
+                "endpoint_paths": ["/rfp/answer-reuse-coverage", "/rfp/answer-reuse-coverage-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "answer_reuse_coverage",
+            },
             {"label": "Action Plan / Handoff Board", "endpoint_paths": ["/rfp/action-plan", "/rfp/handoff-board"]},
             {"label": "Review Board / Red Team", "endpoint_paths": ["/rfp/review-answer", "/rfp/review-package"]},
             {
@@ -799,6 +805,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/answer_reuse_approvals/*.md",
                     "storage/answer_reuse_approvals/*.json",
+                ],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/answer-reuse-coverage",
+                "purpose": "Answer Reuse Coverage panel mapping requirements to governed snippets.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/answer-reuse-coverage-pack",
+                "purpose": "Answer Reuse Coverage generated requirement coverage pack.",
+                "expected_artifacts": [
+                    "storage/answer_reuse_coverage/*.md",
+                    "storage/answer_reuse_coverage/*.json",
                 ],
             },
             {"method": "GET", "path": "/api/contract-audit", "purpose": "API Contract tab audit snapshot."},

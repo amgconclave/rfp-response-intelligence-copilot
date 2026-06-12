@@ -283,6 +283,7 @@ flowchart LR
 - Governed Answer Reuse Library via `POST /rfp/answer-reuse-library` and `POST /rfp/answer-reuse-library-pack`, writing Markdown/JSON under `storage/answer_reuse_library/` with owner, expiry, approval status, reuse decision, citation lineage, owner queue, proof commands, and limitations.
 - Answer Reuse Drift Monitor via `POST /rfp/answer-reuse-drift` and `POST /rfp/answer-reuse-drift-pack`, writing Markdown/JSON under `storage/answer_reuse_drift/` with typed drift findings, source-overlap checks, stale claim terms, checkpointed workflow transitions, owner routing, reuse gates, proof commands, and limitations.
 - Answer Reuse Approval Ledger via `POST /rfp/answer-reuse-approval-ledger` and `POST /rfp/answer-reuse-approval-pack`, writing Markdown/JSON under `storage/answer_reuse_approvals/` with HITL checkpoints, governance decisions, owner approval queues, and trace spans.
+- Answer Reuse Coverage Map via `POST /rfp/answer-reuse-coverage` and `POST /rfp/answer-reuse-coverage-pack`, writing Markdown/JSON under `storage/answer_reuse_coverage/` with requirement-level reuse readiness, owner routes, new-answer gaps, checkpoint traces, proof commands, and limitations.
 - Local response export packs with executive summary, matrix, drafted sections, citations, risks, missing evidence, and usage summary.
 - Groundedness review board for unsupported claims, weak citations, missing evidence, high-risk requirements, and cost/latency warnings.
 - Reviewer Collaboration Workflow via `POST /rfp/reviewer-workflow` and `POST /rfp/reviewer-workflow-pack`, writing checkpointed Markdown/JSON under `storage/review_boards/` with state-machine gates, traceable transitions, approval path, replay notes, proof commands, and limitations.
@@ -431,6 +432,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /rfp/answer-reuse-drift-pack`: writes a Markdown/JSON Answer Reuse Drift Pack under `storage/answer_reuse_drift/`.
 - `POST /rfp/answer-reuse-approval-ledger`: returns durable approval records, owner checkpoints, human review queue, and trace spans for reusable answers.
 - `POST /rfp/answer-reuse-approval-pack`: writes a Markdown/JSON Answer Reuse Approval Pack under `storage/answer_reuse_approvals/`.
+- `POST /rfp/answer-reuse-coverage`: maps analyzed requirements to governed reusable snippets, owner review routes, new-answer gaps, and checkpoint transitions.
+- `POST /rfp/answer-reuse-coverage-pack`: writes a Markdown/JSON Answer Reuse Coverage Pack under `storage/answer_reuse_coverage/`.
 - `POST /rfp/export-package`: writes a local Markdown/JSON response pack under `storage/exports/`.
 - `POST /rfp/review-answer`: reviews groundedness, citation quality, missing evidence, risk, and usage for one answer.
 - `POST /rfp/review-package`: reviews a requirement matrix plus draft/export package and can create the local matrix/draft/export payload when given analysis.
@@ -578,6 +581,7 @@ Run the API and dashboard, then capture:
 - Customer Fit / Response Memory tab showing a selected profile and reusable snippets.
 - Answer Reuse Library tab showing governed snippets, owners, expiry, reuse decisions, citation lineage, and generated `storage/answer_reuse_library/` artifact path.
 - Answer Reuse Drift panel showing drift status, source-overlap score, stale claim terms, checkpointed workflow state, owner queue, and generated `storage/answer_reuse_drift/` artifact path.
+- Answer Reuse Coverage panel showing requirement-level reuse readiness, owner review queue, trace spans, workflow state, and generated `storage/answer_reuse_coverage/` artifact path.
 - Action Plan / Handoff Board tab showing task ownership and a handoff export path.
 - Deal Readiness / Executive Report tab showing readiness score, blockers, owner bottlenecks, section completeness, reviewer bottlenecks, and generated `storage/readiness_packs/` artifact path.
 - Win Strategy / Pricing Memo tab showing win score, competitor/pricing risk, cited proof points, next owner actions, and memo export path.

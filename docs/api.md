@@ -1145,6 +1145,31 @@ Writes a Markdown and JSON Answer Reuse Approval Pack under `storage/answer_reus
 }
 ```
 
+### `POST /rfp/answer-reuse-coverage`
+
+Maps analyzed RFP requirements to governed reusable snippets. The response includes requirement-level coverage status, match scores, recommended owner actions, matched snippets, missing terms, citation refs, checkpointed state transitions, trace spans, proof commands, and limitations.
+
+```json
+{
+  "analyzed_payload": {},
+  "customer_profile_id": "regulated_healthcare",
+  "min_match_score": 2,
+  "top_snippets_per_requirement": 3
+}
+```
+
+### `POST /rfp/answer-reuse-coverage-pack`
+
+Writes a Markdown and JSON Answer Reuse Coverage Pack under `storage/answer_reuse_coverage/`. The pack documents reuse-ready requirements, owner-review rows, new-answer gaps, deterministic workflow states, reviewer checklist, governance controls, proof commands, and limitations.
+
+```json
+{
+  "analyzed_payload": {},
+  "customer_profile_id": "regulated_healthcare",
+  "write_artifact": true
+}
+```
+
 ### `POST /rfp/export-package`
 
 Creates an interview-ready response package from an analyzed RFP payload or ingested RFP document ID plus an optional draft response. By default, artifacts are written under `storage/exports/` and the response also includes Markdown and structured JSON.

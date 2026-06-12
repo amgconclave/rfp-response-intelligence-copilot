@@ -3346,6 +3346,71 @@ with tabs[45]:
         st.session_state.answer_reuse_approval = pack["ledger"]
         st.success(f"Answer Reuse Approval Pack generated under answer_reuse_approvals: {pack['artifact_path']}")
 
+    st.subheader("Answer Reuse Coverage")
+    st.caption(
+        "Map analyzed RFP requirements to governed snippets, owner review routes, and new-answer gaps before drafting."
+    )
+    coverage_cols = st.columns(3)
+    coverage_payload = {
+        **payload,
+        "min_match_score": st.slider("Coverage match threshold", 1, 8, 2, key="answer_reuse_coverage_threshold"),
+        "top_snippets_per_requirement": st.slider(
+            "Snippets per requirement",
+            1,
+            5,
+            3,
+            key="answer_reuse_coverage_top_k",
+        ),
+    }
+    if coverage_cols[0].button("Analyze sample for coverage"):
+        sample_text = (SAMPLE_DIR / "acme_enterprise_rfp.md").read_text(encoding="utf-8")
+        st.session_state.answer_reuse_coverage_analysis = post_json("/rfp/analyze", {"text": sample_text})
+        st.success("Sample RFP analyzed for reuse coverage.")
+    coverage_analysis = st.session_state.get("answer_reuse_coverage_analysis") or st.session_state.get("analysis")
+    if coverage_analysis:
+        coverage_payload["analyzed_payload"] = coverage_analysis
+    if coverage_cols[1].button("Load reuse coverage", disabled=not bool(coverage_analysis)):
+        st.session_state.answer_reuse_coverage = post_json("/rfp/answer-reuse-coverage", coverage_payload)
+    if coverage_cols[2].button("Generate Coverage Pack", disabled=not bool(coverage_analysis)):
+        pack = post_json("/rfp/answer-reuse-coverage-pack", {**coverage_payload, "write_artifact": True})
+        st.session_state.answer_reuse_coverage_pack = pack
+        st.session_state.answer_reuse_coverage = pack["coverage"]
+        st.success(f"Answer Reuse Coverage Pack generated under answer_reuse_coverage: {pack['artifact_path']}")
+
+    coverage = st.session_state.get("answer_reuse_coverage")
+    if coverage:
+        summary = coverage["summary"]
+        coverage_metric_cols = st.columns(5)
+        coverage_metric_cols[0].metric("Status", coverage["status"])
+        coverage_metric_cols[1].metric("Requirements", summary["requirement_count"])
+        coverage_metric_cols[2].metric("Reuse ready", summary["reuse_ready_count"])
+        coverage_metric_cols[3].metric("Owner review", summary["owner_review_count"])
+        coverage_metric_cols[4].metric("Gaps", summary["gap_count"])
+        st.write("Requirement coverage")
+        st.dataframe(
+            [
+                {
+                    "requirement": row["requirement_id"],
+                    "category": row["category"],
+                    "status": row["coverage_status"],
+                    "score": row["coverage_score"],
+                    "owner": row["owner"],
+                    "top_snippet": row["matched_snippets"][0]["title"]
+                    if row["matched_snippets"]
+                    else "New answer required",
+                    "action": row["recommended_action"],
+                }
+                for row in coverage["requirements"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Coverage owner queue")
+        st.dataframe(coverage["owner_queue"], use_container_width=True)
+        st.write("Coverage trace spans")
+        st.dataframe(coverage["trace_spans"], use_container_width=True)
+        st.write("Coverage workflow")
+        st.json(coverage["workflow"])
+
     approval = st.session_state.get("answer_reuse_approval")
     if approval:
         summary = approval["summary"]
@@ -3487,6 +3552,16 @@ with tabs[45]:
             "Download Answer Reuse Approval Markdown",
             approval_pack["markdown"],
             file_name="answer_reuse_approval_pack.md",
+        )
+
+    coverage_pack = st.session_state.get("answer_reuse_coverage_pack")
+    if coverage_pack:
+        st.write("Generated coverage artifact path", coverage_pack["artifact_path"])
+        st.write("Generated coverage JSON path", coverage_pack["json_artifact_path"])
+        st.download_button(
+            "Download Answer Reuse Coverage Markdown",
+            coverage_pack["markdown"],
+            file_name="answer_reuse_coverage_pack.md",
         )
 
 

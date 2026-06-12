@@ -73,6 +73,8 @@ class LaunchChecklistService:
                 "POST /rfp/answer-reuse-drift-pack",
                 "POST /rfp/answer-reuse-approval-ledger",
                 "POST /rfp/answer-reuse-approval-pack",
+                "POST /rfp/answer-reuse-coverage",
+                "POST /rfp/answer-reuse-coverage-pack",
                 "POST /learning/win-loss",
                 "POST /learning/win-loss-pack",
                 "POST /rag/retrieval-experiments",
@@ -260,6 +262,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\answer_reuse_approvals "
+                    "-ErrorAction SilentlyContinue | Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "answer-reuse-coverage|Answer Reuse Coverage|answer_reuse_coverage|coverage map" '
+                    "app dashboard docs README.md tests sample_data Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\answer_reuse_coverage "
                     "-ErrorAction SilentlyContinue | Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -548,6 +558,7 @@ class LaunchChecklistService:
             "answer_reuse_library": "storage/answer_reuse_library",
             "answer_reuse_drift": "storage/answer_reuse_drift",
             "answer_reuse_approvals": "storage/answer_reuse_approvals",
+            "answer_reuse_coverage": "storage/answer_reuse_coverage",
             "bid_packs": "storage/bid_packs",
             "objection_packs": "storage/objection_packs",
             "win_loss_packs": "storage/win_loss_packs",
@@ -731,6 +742,25 @@ class LaunchChecklistService:
                 "Writes Answer Reuse Approval Markdown and JSON artifacts.",
                 ["storage/answer_reuse_approvals/*.md", "storage/answer_reuse_approvals/*.json"],
                 '{"write_artifact":true}',
+            ),
+            self._row(
+                "Answer reuse coverage",
+                "POST",
+                "/rfp/answer-reuse-coverage",
+                "enterprise",
+                200,
+                "Maps analyzed RFP requirements to governed reusable snippets, gaps, and owner routes.",
+                body='{"analyzed_payload":{},"customer_profile_id":"regulated_healthcare"}',
+            ),
+            self._row(
+                "Answer reuse coverage pack",
+                "POST",
+                "/rfp/answer-reuse-coverage-pack",
+                "artifact",
+                200,
+                "Writes Answer Reuse Coverage Markdown and JSON artifacts.",
+                ["storage/answer_reuse_coverage/*.md", "storage/answer_reuse_coverage/*.json"],
+                '{"analyzed_payload":{},"write_artifact":true}',
             ),
             self._row(
                 "Export package",

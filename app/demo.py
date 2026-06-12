@@ -85,6 +85,16 @@ async def main() -> None:
         answer_reuse_approval,
         write_artifact=True,
     )
+    answer_reuse_coverage = container.answer_reuse_coverage.coverage(
+        "demo-answer-reuse-coverage",
+        analysis,
+        customer_profile_id="regulated_healthcare",
+    )
+    answer_reuse_coverage_pack = container.answer_reuse_coverage.pack(
+        "demo-answer-reuse-coverage-pack",
+        answer_reuse_coverage,
+        write_artifact=True,
+    )
     export = container.workbench.export_package(
         analysis,
         draft,
@@ -837,6 +847,16 @@ async def main() -> None:
     print(f"Answer Reuse Approval Pack: {answer_reuse_approval_pack.artifact_path}")
     print(f"Answer Reuse Approval Pack JSON: {answer_reuse_approval_pack.json_artifact_path}")
     print("Answer reuse approval directory: storage/answer_reuse_approvals")
+    print(
+        "Answer reuse coverage: "
+        f"status={answer_reuse_coverage.status} "
+        f"requirements={answer_reuse_coverage.summary['requirement_count']} "
+        f"reuse_ready={answer_reuse_coverage.summary['reuse_ready_count']} "
+        f"gaps={answer_reuse_coverage.summary['gap_count']}"
+    )
+    print(f"Answer Reuse Coverage Pack: {answer_reuse_coverage_pack.artifact_path}")
+    print(f"Answer Reuse Coverage Pack JSON: {answer_reuse_coverage_pack.json_artifact_path}")
+    print("Answer reuse coverage directory: storage/answer_reuse_coverage")
     print(f"Answer confidence: {answer.confidence}")
     print(f"Citations: {', '.join(c.filename for c in answer.citations)}")
     print(f"Draft sections: {len(draft.sections)}")
@@ -1333,6 +1353,8 @@ async def main() -> None:
         f"answer_reuse_drift_pack={answer_reuse_drift_pack.artifact_path} "
         f"answer_reuse_approval={answer_reuse_approval.status}/{answer_reuse_approval.summary['record_count']} "
         f"answer_reuse_approval_pack={answer_reuse_approval_pack.artifact_path} "
+        f"answer_reuse_coverage={answer_reuse_coverage.status}/{answer_reuse_coverage.summary['reuse_ready_count']} "
+        f"answer_reuse_coverage_pack={answer_reuse_coverage_pack.artifact_path} "
         f"readiness={scorecard.readiness_score}/{scorecard.readiness_level} "
         f"readiness_pack={readiness_pack.artifact_path} "
         f"amendment_impact={amendment_impact.status}/{amendment_impact.summary['change_count']} "

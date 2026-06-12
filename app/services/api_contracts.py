@@ -197,6 +197,8 @@ class ApiContractService:
             "/rfp/answer-reuse-drift-pack",
             "/rfp/answer-reuse-approval-ledger",
             "/rfp/answer-reuse-approval-pack",
+            "/rfp/answer-reuse-coverage",
+            "/rfp/answer-reuse-coverage-pack",
             "/learning/win-loss",
             "/learning/win-loss-pack",
             "/evidence/freshness",

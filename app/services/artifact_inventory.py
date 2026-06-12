@@ -819,6 +819,12 @@ class ArtifactInventoryService:
                 "Durable reusable-answer approval ledger with HITL checkpoints, owner queue, and trace spans.",
             ),
             self._spec(
+                "answer_reuse_coverage",
+                "answer_reuse_coverage",
+                "POST /rfp/answer-reuse-coverage-pack",
+                "Requirement-level reuse coverage map with owner routes, gaps, checkpoints, and trace spans.",
+            ),
+            self._spec(
                 "bid_packs",
                 "bid_packs",
                 "POST /bid/roi-pack",

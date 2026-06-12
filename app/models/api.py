@@ -261,6 +261,58 @@ class AnswerReuseApprovalLedgerPackResponse(BaseModel):
     trace_id: str
 
 
+class AnswerReuseCoverageRequest(AnswerReuseLibraryRequest):
+    rfp_document_id: str | None = None
+    analyzed_payload: AnalyzeResponse | None = None
+    min_match_score: int = 2
+    top_snippets_per_requirement: int = 3
+
+
+class AnswerReuseCoverageRow(BaseModel):
+    requirement_id: str
+    requirement_text: str
+    category: str
+    priority: str
+    coverage_status: str
+    coverage_score: int
+    recommended_action: str
+    owner: str
+    matched_snippets: list[dict[str, Any]] = Field(default_factory=list)
+    missing_terms: list[str] = Field(default_factory=list)
+    citation_refs: list[str] = Field(default_factory=list)
+    transition_trace: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_impact: list[str] = Field(default_factory=list)
+
+
+class AnswerReuseCoverageResponse(BaseModel):
+    title: str
+    status: str
+    generated_at: str
+    requirements: list[AnswerReuseCoverageRow]
+    summary: dict[str, Any]
+    owner_queue: list[dict[str, Any]] = Field(default_factory=list)
+    workflow: dict[str, Any] = Field(default_factory=dict)
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class AnswerReuseCoveragePackRequest(AnswerReuseCoverageRequest):
+    coverage: AnswerReuseCoverageResponse | None = None
+    write_artifact: bool = True
+
+
+class AnswerReuseCoveragePackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    coverage: AnswerReuseCoverageResponse
+    trace_id: str
+
+
 class ExportPackageRequest(BaseModel):
     rfp_document_id: str | None = None
     analyzed_payload: AnalyzeResponse | None = None

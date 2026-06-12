@@ -18,6 +18,10 @@ from app.models.api import (
     AnswerReuseApprovalLedgerPackResponse,
     AnswerReuseApprovalLedgerRequest,
     AnswerReuseApprovalLedgerResponse,
+    AnswerReuseCoveragePackRequest,
+    AnswerReuseCoveragePackResponse,
+    AnswerReuseCoverageRequest,
+    AnswerReuseCoverageResponse,
     AnswerReuseDriftPackRequest,
     AnswerReuseDriftPackResponse,
     AnswerReuseDriftRequest,
@@ -688,6 +692,83 @@ async def answer_reuse_approval_pack(
             "records": pack.ledger.summary["record_count"],
             "pending": pack.ledger.summary["pending_count"],
             "blocked": pack.ledger.summary["blocked_count"],
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/rfp/answer-reuse-coverage",
+    response_model=AnswerReuseCoverageResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def answer_reuse_coverage(
+    payload: AnswerReuseCoverageRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> AnswerReuseCoverageResponse:
+    trace_id = get_trace_id(request)
+    analysis = _analysis_from_workbench_payload(payload, trace_id, container)
+    coverage = container.answer_reuse_coverage.coverage(
+        trace_id,
+        analysis,
+        category=payload.category,
+        customer_profile_id=payload.customer_profile_id,
+        include_expired=payload.include_expired,
+        min_match_score=payload.min_match_score,
+        top_snippets_per_requirement=payload.top_snippets_per_requirement,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.answer_reuse_coverage_viewed",
+        "answer_reuse_coverage",
+        resource_id=payload.customer_profile_id,
+        metadata={
+            "requirements": coverage.summary["requirement_count"],
+            "reuse_ready": coverage.summary["reuse_ready_count"],
+            "gaps": coverage.summary["gap_count"],
+        },
+    )
+    return coverage
+
+
+@router.post(
+    "/rfp/answer-reuse-coverage-pack",
+    response_model=AnswerReuseCoveragePackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def answer_reuse_coverage_pack(
+    payload: AnswerReuseCoveragePackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> AnswerReuseCoveragePackResponse:
+    trace_id = get_trace_id(request)
+    analysis = None
+    if payload.coverage is None:
+        analysis = _analysis_from_workbench_payload(payload, trace_id, container)
+    try:
+        pack = container.answer_reuse_coverage.pack(
+            trace_id,
+            coverage=payload.coverage,
+            analysis=analysis,
+            category=payload.category,
+            customer_profile_id=payload.customer_profile_id,
+            include_expired=payload.include_expired,
+            min_match_score=payload.min_match_score,
+            top_snippets_per_requirement=payload.top_snippets_per_requirement,
+            write_artifact=payload.write_artifact,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    container.audit.record(
+        trace_id,
+        "rfp.answer_reuse_coverage_pack_created",
+        "answer_reuse_coverage_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "requirements": pack.coverage.summary["requirement_count"],
+            "reuse_ready": pack.coverage.summary["reuse_ready_count"],
         },
     )
     return pack
@@ -6484,6 +6565,8 @@ def _analysis_from_workbench_payload(
         | CustomerFitRequest
         | ActionPlanRequest
         | LeadershipBriefRequest
+        | AnswerReuseCoverageRequest
+        | AnswerReuseCoveragePackRequest
     ),
     trace_id: str,
     container: ServiceContainer,
