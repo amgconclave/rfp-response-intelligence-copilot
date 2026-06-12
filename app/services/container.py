@@ -76,6 +76,7 @@ from app.services.timeline_orchestration import TimelineOrchestrationService
 from app.services.trace_export import TraceExportService
 from app.services.ui_verification import UIVerificationService
 from app.services.verification_evidence import VerificationEvidenceService
+from app.services.win_loss_eval_cases import WinLossEvalCaseService
 from app.services.win_loss_learning import WinLossLearningService
 from app.services.win_loss_policy import WinLossPolicyActivationService
 from app.services.win_loss_replay import WinLossReplayService
@@ -146,6 +147,7 @@ class ServiceContainer:
         self.runtime_demo = RuntimeDemoService(settings)
         self.timeline_orchestration = TimelineOrchestrationService(settings)
         self.win_loss_learning = WinLossLearningService(settings)
+        self.win_loss_eval_cases = WinLossEvalCaseService(settings)
         self.win_loss_policy = WinLossPolicyActivationService(settings)
         self.win_loss_replay = WinLossReplayService(settings)
         self.win_strategy = WinStrategyService(self.repo, settings)

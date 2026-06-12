@@ -60,6 +60,63 @@ def test_win_loss_strategy_pack_writes_artifacts_and_dashboard_smoke_tracks_it(c
     assert any(event["action"] == "learning.win_loss_pack_generated" for event in audit["events"])
 
 
+def test_win_loss_eval_case_compiler_returns_candidate_datasets(client, auth_headers):
+    response = client.post(
+        "/learning/win-loss-eval-cases",
+        headers=auth_headers,
+        json={"outcomes_fixture_path": "sample_data/rfp_outcomes.json", "max_cases_per_type": 4},
+    )
+
+    assert response.status_code == 200
+    plan = response.json()
+    assert plan["title"] == "Win/Loss Eval Case Compiler"
+    assert plan["status"] == "ready_for_review"
+    assert plan["positive_eval_cases"]
+    assert plan["red_team_cases"]
+    assert plan["dataset_patch"]["patch_mode"] == "candidate_artifacts_only"
+    assert plan["dataset_patch"]["candidate_eval_cases"] > 0
+    assert plan["dataset_patch"]["candidate_red_team_cases"] > 0
+    assert "typed_contracts" in plan["governance_summary"]["patterns_used"]
+    assert "state_machine_workflow" in plan["governance_summary"]["patterns_used"]
+    assert any(span["to_state"] == "route_owner_review" for span in plan["trace_spans"])
+    assert plan["owner_review_queue"]
+    assert any("/learning/win-loss-eval-case-pack" in command for command in plan["local_proof_commands"])
+
+    audit = client.get("/audit/events", headers=auth_headers).json()
+    assert any(event["action"] == "learning.win_loss_eval_cases_compiled" for event in audit["events"])
+
+
+def test_win_loss_eval_case_pack_writes_artifacts_and_dashboard_smoke_tracks_it(client, auth_headers):
+    response = client.post(
+        "/learning/win-loss-eval-case-pack",
+        headers=auth_headers,
+        json={"write_artifact": True, "max_cases_per_type": 4},
+    )
+
+    assert response.status_code == 200
+    pack = response.json()
+    assert pack["artifact_path"]
+    assert pack["json_artifact_path"]
+    assert pack["candidate_eval_dataset_path"]
+    assert pack["candidate_red_team_dataset_path"]
+    assert Path(pack["artifact_path"]).exists()
+    assert Path(pack["json_artifact_path"]).exists()
+    assert Path(pack["candidate_eval_dataset_path"]).exists()
+    assert Path(pack["candidate_red_team_dataset_path"]).exists()
+    assert "win_loss_eval_cases" in pack["artifact_path"]
+    assert "Win/Loss Eval Case Compiler Pack" in pack["markdown"]
+    assert pack["pack"]["positive_eval_cases"]
+    assert pack["pack"]["red_team_cases"]
+
+    smoke = client.get("/ui/dashboard-smoke", headers=auth_headers).json()
+    assert smoke["status"] == "pass"
+    assert any(endpoint["path"] == "/learning/win-loss-eval-cases" for endpoint in smoke["endpoint_references"])
+    assert any(endpoint["path"] == "/learning/win-loss-eval-case-pack" for endpoint in smoke["endpoint_references"])
+
+    audit = client.get("/audit/events", headers=auth_headers).json()
+    assert any(event["action"] == "learning.win_loss_eval_case_pack_generated" for event in audit["events"])
+
+
 def test_win_loss_policy_activation_returns_traceable_rules_and_checkpoints(client, auth_headers):
     ingest_corpus(client, auth_headers)
 

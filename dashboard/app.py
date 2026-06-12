@@ -2298,7 +2298,7 @@ with tabs[34]:
     if st.session_state.get("win_strategy"):
         payload["win_strategy"] = st.session_state.win_strategy
 
-    cols = st.columns(6)
+    cols = st.columns(4)
     if cols[0].button("Analyze win/loss outcomes"):
         st.session_state.win_loss_learning = post_json("/learning/win-loss", payload)
     if cols[1].button("Generate Strategy Pack"):
@@ -2309,14 +2309,31 @@ with tabs[34]:
         st.session_state.win_loss_pack = pack
         st.session_state.win_loss_learning = pack["learning_response"]
         st.success(f"Win/Loss Strategy Pack generated under win_loss_packs: {pack['artifact_path']}")
-    if cols[2].button("Plan Policy Activation"):
+    if cols[2].button("Compile Eval Cases"):
+        eval_payload = {**payload, "max_cases_per_type": 6}
+        if st.session_state.get("win_loss_learning"):
+            eval_payload["learning_response"] = st.session_state.win_loss_learning
+        st.session_state.win_loss_eval_cases = post_json("/learning/win-loss-eval-cases", eval_payload)
+    if cols[3].button("Generate Eval Pack"):
+        eval_pack_payload = {**payload, "max_cases_per_type": 6, "write_artifact": True}
+        if st.session_state.get("win_loss_eval_cases"):
+            eval_pack_payload["eval_case_plan"] = st.session_state.win_loss_eval_cases
+        elif st.session_state.get("win_loss_learning"):
+            eval_pack_payload["learning_response"] = st.session_state.win_loss_learning
+        eval_pack = post_json("/learning/win-loss-eval-case-pack", eval_pack_payload)
+        st.session_state.win_loss_eval_case_pack = eval_pack
+        st.session_state.win_loss_eval_cases = eval_pack["eval_case_plan"]
+        st.success(f"Win/Loss Eval Case Pack generated under win_loss_eval_cases: {eval_pack['artifact_path']}")
+
+    rollout_cols = st.columns(4)
+    if rollout_cols[0].button("Plan Policy Activation"):
         policy_payload = {**payload, "activation_mode": activation_mode}
         if st.session_state.get("win_loss_learning"):
             policy_payload["learning_response"] = st.session_state.win_loss_learning
         if st.session_state.get("retrieval_experiments"):
             policy_payload["retrieval_experiment"] = st.session_state.retrieval_experiments
         st.session_state.win_loss_policy = post_json("/learning/win-loss-policy", policy_payload)
-    if cols[3].button("Generate Policy Pack"):
+    if rollout_cols[1].button("Generate Policy Pack"):
         policy_pack_payload = {**payload, "activation_mode": activation_mode, "write_artifact": True}
         if st.session_state.get("win_loss_policy"):
             policy_pack_payload["activation_plan"] = st.session_state.win_loss_policy
@@ -2328,7 +2345,7 @@ with tabs[34]:
         st.session_state.win_loss_policy_pack = policy_pack
         st.session_state.win_loss_policy = policy_pack["activation_plan"]
         st.success(f"Win/Loss Policy Pack generated under win_loss_policy: {policy_pack['artifact_path']}")
-    if cols[4].button("Replay Backtest"):
+    if rollout_cols[2].button("Replay Backtest"):
         replay_payload = {**payload, "activation_mode": activation_mode}
         if st.session_state.get("win_loss_learning"):
             replay_payload["learning_response"] = st.session_state.win_loss_learning
@@ -2337,7 +2354,7 @@ with tabs[34]:
         if st.session_state.get("retrieval_experiments"):
             replay_payload["retrieval_experiment"] = st.session_state.retrieval_experiments
         st.session_state.win_loss_replay = post_json("/learning/win-loss-replay", replay_payload)
-    if cols[5].button("Generate Replay Pack"):
+    if rollout_cols[3].button("Generate Replay Pack"):
         replay_pack_payload = {**payload, "activation_mode": activation_mode, "write_artifact": True}
         if st.session_state.get("win_loss_replay"):
             replay_pack_payload["replay"] = st.session_state.win_loss_replay
@@ -2389,6 +2406,37 @@ with tabs[34]:
             "Download Win/Loss Strategy Markdown",
             pack["markdown"],
             file_name="win_loss_strategy_pack.md",
+        )
+
+    eval_cases = st.session_state.get("win_loss_eval_cases")
+    if eval_cases:
+        st.write("Eval case compiler")
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Status", eval_cases["status"])
+        metric_cols[1].metric("Candidates", eval_cases["summary"]["candidate_case_count"])
+        metric_cols[2].metric("Eval rows", eval_cases["dataset_patch"]["candidate_eval_cases"])
+        metric_cols[3].metric("Red-team rows", eval_cases["dataset_patch"]["candidate_red_team_cases"])
+        st.write("Dataset patch")
+        st.json(eval_cases["dataset_patch"])
+        st.write("Positive eval candidates")
+        st.dataframe(eval_cases["positive_eval_cases"], use_container_width=True)
+        st.write("Red-team candidates")
+        st.dataframe(eval_cases["red_team_cases"], use_container_width=True)
+        st.write("Trace spans")
+        st.dataframe(eval_cases["trace_spans"], use_container_width=True)
+        st.write("Owner review queue")
+        st.dataframe(eval_cases["owner_review_queue"], use_container_width=True)
+
+    eval_case_pack = st.session_state.get("win_loss_eval_case_pack")
+    if eval_case_pack:
+        st.write("Eval case pack artifact path", eval_case_pack["artifact_path"])
+        st.write("Eval case pack JSON path", eval_case_pack["json_artifact_path"])
+        st.write("Candidate eval dataset", eval_case_pack["candidate_eval_dataset_path"])
+        st.write("Candidate red-team dataset", eval_case_pack["candidate_red_team_dataset_path"])
+        st.download_button(
+            "Download Win/Loss Eval Case Markdown",
+            eval_case_pack["markdown"],
+            file_name="win_loss_eval_case_compiler_pack.md",
         )
 
     policy = st.session_state.get("win_loss_policy")

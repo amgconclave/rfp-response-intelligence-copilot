@@ -794,6 +794,31 @@ Writes Markdown and JSON Win/Loss Learning Strategy Pack artifacts under ignored
 
 The pack includes an executive summary, winning evidence pattern table, loss guardrails, retrieval updates, eval updates, response guidance updates, owner action plan, proof commands, limitations, embedded learning response JSON, Markdown, JSON, and trace ID.
 
+### `POST /learning/win-loss-eval-cases`
+
+Compiles candidate standard eval and red-team rows from the Win/Loss Learning response. The response includes typed case candidates, dataset patch metadata, governance summary, traceable compile-state transitions, owner review queue, proof commands, limitations, and trace ID. It does not modify checked-in eval fixtures.
+
+```bash
+curl -X POST "http://127.0.0.1:8000/learning/win-loss-eval-cases" \
+  -H "X-API-Key: local-demo-key" \
+  -H "Content-Type: application/json" \
+  -d "{}"
+```
+
+Optional body fields include `learning_response`, `eval_dataset_path`, `red_team_dataset_path`, `outcomes_fixture_path`, inline `outcomes`, and `max_cases_per_type`.
+
+### `POST /learning/win-loss-eval-case-pack`
+
+Writes a Win/Loss Eval Case Compiler Pack under ignored `storage/win_loss_eval_cases/` by default, including Markdown, JSON, candidate standard eval JSON, and candidate red-team JSON artifacts.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes candidate eval rows, candidate red-team rows, dataset patch metadata, owner review queue, trace spans, proof commands, limitations, embedded compiler response JSON, Markdown, JSON, and trace ID.
+
 ### `POST /learning/win-loss-policy`
 
 Builds a local Win/Loss Policy Activation Plan from the learning response and retrieval experiment comparison. The response uses typed contracts and a traceable state machine with policy rules, checkpoints, owner review queue, rollback plan, governance summary, proof commands, limitations, and trace ID. It does not mutate live retrieval defaults.

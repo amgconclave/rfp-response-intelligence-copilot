@@ -598,6 +598,8 @@ class UIVerificationService:
                 "endpoint_paths": [
                     "/learning/win-loss",
                     "/learning/win-loss-pack",
+                    "/learning/win-loss-eval-cases",
+                    "/learning/win-loss-eval-case-pack",
                     "/learning/win-loss-policy",
                     "/learning/win-loss-policy-pack",
                     "/learning/win-loss-replay",
@@ -1121,6 +1123,20 @@ class UIVerificationService:
                 "path": "/learning/win-loss-pack",
                 "purpose": "Win/Loss Learning generated strategy pack.",
                 "expected_artifacts": ["storage/win_loss_packs/*.md", "storage/win_loss_packs/*.json"],
+            },
+            {
+                "method": "POST",
+                "path": "/learning/win-loss-eval-cases",
+                "purpose": "Win/Loss Learning candidate eval and red-team case compiler.",
+            },
+            {
+                "method": "POST",
+                "path": "/learning/win-loss-eval-case-pack",
+                "purpose": "Win/Loss Learning generated eval-case compiler pack and candidate datasets.",
+                "expected_artifacts": [
+                    "storage/win_loss_eval_cases/*.md",
+                    "storage/win_loss_eval_cases/*.json",
+                ],
             },
             {
                 "method": "POST",

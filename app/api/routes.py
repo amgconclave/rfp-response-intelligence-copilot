@@ -258,6 +258,10 @@ from app.models.api import (
     VerificationEvidencePackResponse,
     VerificationEvidenceRequest,
     VerificationEvidenceResponse,
+    WinLossEvalCasePackRequest,
+    WinLossEvalCasePackResponse,
+    WinLossEvalCaseRequest,
+    WinLossEvalCaseResponse,
     WinLossLearningRequest,
     WinLossLearningResponse,
     WinLossPolicyActivationRequest,
@@ -5615,6 +5619,112 @@ async def win_loss_strategy_pack(
             "json_artifact_path": pack.json_artifact_path,
             "outcome_count": learning.outcome_count,
             "win_rate": learning.win_rate,
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/learning/win-loss-eval-cases",
+    response_model=WinLossEvalCaseResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def win_loss_eval_cases(
+    request: Request,
+    payload: WinLossEvalCaseRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> WinLossEvalCaseResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or WinLossEvalCaseRequest()
+    learning = request_payload.learning_response
+    if learning is None:
+        inputs = await _win_loss_inputs(request_payload, f"{trace_id}-learning", container)
+        try:
+            learning = container.win_loss_learning.learn(
+                trace_id=f"{trace_id}-learning",
+                outcomes=request_payload.outcomes,
+                outcomes_fixture_path=request_payload.outcomes_fixture_path,
+                top_k_patterns=request_payload.top_k_patterns,
+                **inputs,
+            )
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+    try:
+        plan = container.win_loss_eval_cases.compile_cases(
+            trace_id=trace_id,
+            learning=learning,
+            eval_dataset_path=request_payload.eval_dataset_path,
+            red_team_dataset_path=request_payload.red_team_dataset_path,
+            max_cases_per_type=request_payload.max_cases_per_type,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    container.audit.record(
+        trace_id,
+        "learning.win_loss_eval_cases_compiled",
+        "win_loss_eval_cases",
+        metadata={
+            "status": plan.status,
+            "candidate_cases": plan.summary["candidate_case_count"],
+            "eval_candidates": plan.dataset_patch["candidate_eval_cases"],
+            "red_team_candidates": plan.dataset_patch["candidate_red_team_cases"],
+        },
+    )
+    return plan
+
+
+@router.post(
+    "/learning/win-loss-eval-case-pack",
+    response_model=WinLossEvalCasePackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def win_loss_eval_case_pack(
+    request: Request,
+    payload: WinLossEvalCasePackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> WinLossEvalCasePackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or WinLossEvalCasePackRequest()
+    plan = request_payload.eval_case_plan
+    if plan is None:
+        learning = request_payload.learning_response
+        if learning is None:
+            inputs = await _win_loss_inputs(request_payload, f"{trace_id}-learning", container)
+            try:
+                learning = container.win_loss_learning.learn(
+                    trace_id=f"{trace_id}-learning",
+                    outcomes=request_payload.outcomes,
+                    outcomes_fixture_path=request_payload.outcomes_fixture_path,
+                    top_k_patterns=request_payload.top_k_patterns,
+                    **inputs,
+                )
+            except FileNotFoundError as exc:
+                raise HTTPException(status_code=404, detail=str(exc)) from exc
+        try:
+            plan = container.win_loss_eval_cases.compile_cases(
+                trace_id=f"{trace_id}-eval-cases",
+                learning=learning,
+                eval_dataset_path=request_payload.eval_dataset_path,
+                red_team_dataset_path=request_payload.red_team_dataset_path,
+                max_cases_per_type=request_payload.max_cases_per_type,
+            )
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+    pack = container.win_loss_eval_cases.eval_case_pack(
+        trace_id=trace_id,
+        eval_case_plan=plan,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "learning.win_loss_eval_case_pack_generated",
+        "win_loss_eval_case_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "candidate_eval_dataset_path": pack.candidate_eval_dataset_path,
+            "candidate_red_team_dataset_path": pack.candidate_red_team_dataset_path,
         },
     )
     return pack

@@ -762,6 +762,17 @@ async def main() -> None:
         win_loss_learning,
         write_artifact=True,
     )
+    win_loss_eval_cases = container.win_loss_eval_cases.compile_cases(
+        trace_id="demo-win-loss-eval-cases",
+        learning=win_loss_learning,
+        eval_dataset_path="sample_data/eval_dataset.json",
+        red_team_dataset_path="sample_data/red_team_questions.json",
+    )
+    win_loss_eval_case_pack = container.win_loss_eval_cases.eval_case_pack(
+        trace_id="demo-win-loss-eval-case-pack",
+        eval_case_plan=win_loss_eval_cases,
+        write_artifact=True,
+    )
     retrieval_experiments = await container.retrieval_experiments.compare(
         trace_id="demo-retrieval-experiments",
         dataset_path="sample_data/eval_dataset.json",
@@ -1426,6 +1437,18 @@ async def main() -> None:
     print(f"Win/Loss Strategy Pack JSON: {win_loss_pack.json_artifact_path}")
     print("Win/Loss packs directory: storage/win_loss_packs")
     print(
+        "Win/Loss eval case compiler: "
+        f"status={win_loss_eval_cases.status} "
+        f"candidates={win_loss_eval_cases.summary['candidate_case_count']} "
+        f"eval_rows={win_loss_eval_cases.dataset_patch['candidate_eval_cases']} "
+        f"red_team_rows={win_loss_eval_cases.dataset_patch['candidate_red_team_cases']}"
+    )
+    print(f"Win/Loss Eval Case Pack: {win_loss_eval_case_pack.artifact_path}")
+    print(f"Win/Loss Eval Case Pack JSON: {win_loss_eval_case_pack.json_artifact_path}")
+    print(f"Win/Loss candidate eval dataset: {win_loss_eval_case_pack.candidate_eval_dataset_path}")
+    print(f"Win/Loss candidate red-team dataset: {win_loss_eval_case_pack.candidate_red_team_dataset_path}")
+    print("Win/Loss eval case directory: storage/win_loss_eval_cases")
+    print(
         "Win/Loss policy activation: "
         f"status={win_loss_policy.status} "
         f"rules={len(win_loss_policy.policy_rules)} "
@@ -1635,6 +1658,9 @@ async def main() -> None:
         f"objection_audit_pack={objection_audit_pack.artifact_path} "
         f"win_loss={win_loss_learning.win_rate}/{win_loss_learning.outcome_count} "
         f"win_loss_packs={win_loss_pack.artifact_path} "
+        f"win_loss_eval_cases={win_loss_eval_cases.status}/"
+        f"{win_loss_eval_cases.summary['candidate_case_count']} "
+        f"win_loss_eval_case_pack={win_loss_eval_case_pack.artifact_path} "
         f"win_loss_policy={win_loss_policy.status}/{len(win_loss_policy.policy_rules)} "
         f"win_loss_policy_pack={win_loss_policy_pack.artifact_path} "
         f"win_loss_replay={win_loss_replay.status}/{len(win_loss_replay.human_review_queue)} "

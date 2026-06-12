@@ -772,6 +772,45 @@ class WinLossStrategyPackResponse(BaseModel):
     trace_id: str
 
 
+class WinLossEvalCaseRequest(WinLossLearningRequest):
+    learning_response: WinLossLearningResponse | None = None
+    eval_dataset_path: str = "sample_data/eval_dataset.json"
+    red_team_dataset_path: str = "sample_data/red_team_questions.json"
+    max_cases_per_type: int = 6
+
+
+class WinLossEvalCaseResponse(BaseModel):
+    title: str
+    status: str
+    summary: dict[str, Any]
+    positive_eval_cases: list[dict[str, Any]] = Field(default_factory=list)
+    red_team_cases: list[dict[str, Any]] = Field(default_factory=list)
+    dataset_patch: dict[str, Any]
+    governance_summary: dict[str, Any]
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    owner_review_queue: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class WinLossEvalCasePackRequest(WinLossEvalCaseRequest):
+    eval_case_plan: WinLossEvalCaseResponse | None = None
+    write_artifact: bool = True
+
+
+class WinLossEvalCasePackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    candidate_eval_dataset_path: str | None = None
+    candidate_red_team_dataset_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    eval_case_plan: WinLossEvalCaseResponse
+    trace_id: str
+
+
 class PricingRiskMemoRequest(WinStrategyRequest):
     win_strategy: WinStrategyResponse | None = None
     write_artifact: bool = True
