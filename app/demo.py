@@ -836,6 +836,22 @@ async def main() -> None:
         proposal_review_gate,
         write_artifact=True,
     )
+    proposal_release_room = container.proposal_release_room.room(
+        trace_id="demo-proposal-release-room",
+        workflow=buyer_intelligence,
+        replay=buyer_workflow_replay,
+        council=agent_council,
+        provenance=decision_provenance,
+        certification=submission_certification,
+        review_gate=proposal_review_gate,
+        observability=proposal_observability,
+        provider_resilience=provider_resilience,
+    )
+    proposal_release_room_pack = container.proposal_release_room.pack(
+        "demo-proposal-release-room-pack",
+        proposal_release_room,
+        write_artifact=True,
+    )
     access_policy = container.access_policy.policy(
         trace_id="demo-access-policy",
         workflow=buyer_intelligence,
@@ -1199,6 +1215,17 @@ async def main() -> None:
     print(f"Proposal Review Gate Pack JSON: {proposal_review_gate_pack.json_artifact_path}")
     print("Proposal review gate directory: storage/proposal_review_gates")
     print(
+        "Proposal release room: "
+        f"status={proposal_release_room.status} "
+        f"score={proposal_release_room.readiness_score} "
+        f"decisions={proposal_release_room.summary['decision_count']} "
+        f"hitl={proposal_release_room.summary['hitl_queue_count']} "
+        f"recommendation={proposal_release_room.release_recommendation}"
+    )
+    print(f"Proposal Release Room Pack: {proposal_release_room_pack.artifact_path}")
+    print(f"Proposal Release Room Pack JSON: {proposal_release_room_pack.json_artifact_path}")
+    print("Proposal release room directory: storage/proposal_release_room")
+    print(
         "Access policy: "
         f"status={access_policy.status} "
         f"roles={access_policy.summary['role_count']} "
@@ -1516,6 +1543,8 @@ async def main() -> None:
         f"proposal_assurance_pack={proposal_assurance_pack.artifact_path} "
         f"proposal_review_gate={proposal_review_gate.status}/{proposal_review_gate.score} "
         f"proposal_review_gate_pack={proposal_review_gate_pack.artifact_path} "
+        f"proposal_release_room={proposal_release_room.status}/{proposal_release_room.readiness_score} "
+        f"proposal_release_room_pack={proposal_release_room_pack.artifact_path} "
         f"access_policy={access_policy.status}/{access_policy.summary['role_count']} "
         f"access_policy_pack={access_policy_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "

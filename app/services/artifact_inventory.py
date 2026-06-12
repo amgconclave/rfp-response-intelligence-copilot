@@ -998,6 +998,15 @@ class ArtifactInventoryService:
                 ),
             ),
             self._spec(
+                "proposal_release_room",
+                "proposal_release_room",
+                "POST /proposal/release-room-pack",
+                (
+                    "Buyer proposal release room artifacts with decision board rows, HITL queue, durable "
+                    "checkpoints, provider route, trace coverage, and release recommendation."
+                ),
+            ),
+            self._spec(
                 "proposal_observability",
                 "proposal_observability",
                 "POST /ops/proposal-observability-pack",

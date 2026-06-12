@@ -51,6 +51,7 @@ from app.services.proposal_assurance import ProposalAssuranceBundleService
 from app.services.proposal_benchmark import ProposalQualityBenchmarkService
 from app.services.proposal_intake import ProposalIntakeTriageService
 from app.services.proposal_observability import ProposalObservabilityService
+from app.services.proposal_release_room import ProposalReleaseRoomService
 from app.services.proposal_review_gate import ProposalReviewGateService
 from app.services.provider_resilience import ProviderResilienceService
 from app.services.release import ReleaseService
@@ -102,6 +103,7 @@ class ServiceContainer:
         self.approval_simulation = ProposalApprovalSimulationService(settings)
         self.submission_certification = ProposalSubmissionCertificationService(settings)
         self.proposal_observability = ProposalObservabilityService(settings)
+        self.proposal_release_room = ProposalReleaseRoomService(settings)
         self.proposal_review_gate = ProposalReviewGateService(settings)
         self.trace_export = TraceExportService(settings)
         self.provider_resilience = ProviderResilienceService(settings)

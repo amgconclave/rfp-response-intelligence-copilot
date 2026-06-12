@@ -2615,6 +2615,57 @@ class ProposalReviewGatePackResponse(BaseModel):
     trace_id: str
 
 
+class ProposalReleaseRoomDecision(BaseModel):
+    decision_id: str
+    decision_area: str
+    status: str
+    owner_role: str
+    severity: str
+    source_endpoint: str
+    evidence: str
+    required_action: str
+    due_hint: str
+    checkpoint_key: str
+    trace_refs: list[str] = Field(default_factory=list)
+
+
+class ProposalReleaseRoomResponse(BaseModel):
+    title: str
+    room_id: str
+    status: str
+    release_recommendation: str
+    readiness_score: int
+    generated_at: str
+    summary: dict[str, Any]
+    decision_board: list[ProposalReleaseRoomDecision]
+    executive_controls: list[dict[str, Any]] = Field(default_factory=list)
+    hitl_queue: list[dict[str, Any]] = Field(default_factory=list)
+    provider_route: dict[str, Any] = Field(default_factory=dict)
+    durable_checkpoints: list[dict[str, Any]] = Field(default_factory=list)
+    trace_coverage: list[dict[str, Any]] = Field(default_factory=list)
+    eval_assertions: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ProposalReleaseRoomPackRequest(BaseModel):
+    dataset_path: str = "sample_data/eval_dataset.json"
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json"
+    top_k: int = 4
+    write_artifact: bool = True
+
+
+class ProposalReleaseRoomPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    release_room: ProposalReleaseRoomResponse
+    trace_id: str
+
+
 class TraceExportRequest(BaseModel):
     dataset_path: str = "sample_data/eval_dataset.json"
     outcomes_fixture_path: str = "sample_data/rfp_outcomes.json"

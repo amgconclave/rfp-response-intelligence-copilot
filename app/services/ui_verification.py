@@ -692,6 +692,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "proposal_review_gates",
             },
+            {
+                "label": "Release Room",
+                "endpoint_paths": ["/proposal/release-room", "/proposal/release-room-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "proposal_release_room",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -1334,6 +1340,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/proposal_review_gates/*.md",
                     "storage/proposal_review_gates/*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/proposal/release-room",
+                "purpose": "Release Room tab buyer-grade release decision board and HITL queue.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/release-room-pack",
+                "purpose": "Release Room generated Markdown and JSON artifacts.",
+                "expected_artifacts": [
+                    "storage/proposal_release_room/*.md",
+                    "storage/proposal_release_room/*.json",
                 ],
             },
         ]

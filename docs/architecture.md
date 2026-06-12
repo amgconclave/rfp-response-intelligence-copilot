@@ -129,6 +129,7 @@ Generated files are not committed. They are reproducible outputs from local API 
 - `storage/buyer_contracts/`
 - `storage/proposal_benchmarks/`
 - `storage/proposal_assurance/`
+- `storage/proposal_release_room/`
 - `storage/trace_exports/`
 - `storage/agent_council/`
 - `storage/decision_provenance/`

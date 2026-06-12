@@ -105,6 +105,8 @@ class LaunchChecklistService:
                 "POST /proposal/assurance-bundle-pack",
                 "GET /proposal/review-gate",
                 "POST /proposal/review-gate-pack",
+                "GET /proposal/release-room",
+                "POST /proposal/release-room-pack",
                 "GET /ops/ci-doctor",
                 "POST /ops/audit-pack",
                 "GET /api/contract-audit",
@@ -1855,6 +1857,27 @@ class LaunchChecklistService:
                 200,
                 "Writes proposal review gate Markdown and JSON artifacts.",
                 ["storage/proposal_review_gates/*.md", "storage/proposal_review_gates/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Buyer Proposal Release Room",
+                "GET",
+                "/proposal/release-room",
+                "proposal",
+                200,
+                (
+                    "Returns the buyer release room with decision board rows, HITL queue, durable checkpoints, "
+                    "provider route, trace coverage, and release recommendation."
+                ),
+            ),
+            self._row(
+                "Buyer Proposal Release Room Pack",
+                "POST",
+                "/proposal/release-room-pack",
+                "artifact",
+                200,
+                "Writes buyer proposal release room Markdown and JSON artifacts.",
+                ["storage/proposal_release_room/*.md", "storage/proposal_release_room/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

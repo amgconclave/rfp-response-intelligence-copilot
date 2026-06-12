@@ -120,6 +120,7 @@ tabs = st.tabs(
         "Proposal Intake Triage",
         "Risk Decision Ledger",
         "Review Gate",
+        "Release Room",
     ]
 )
 
@@ -4721,4 +4722,68 @@ with tabs[59]:
             "Download Proposal Review Gate Markdown",
             pack["markdown"],
             file_name="proposal_review_gate_pack.md",
+        )
+
+
+with tabs[60]:
+    st.subheader("Release Room")
+    st.caption(
+        "Compose buyer workflow, certification, review gate, observability, and provider resilience into a "
+        "release decision board with HITL routing and durable checkpoints."
+    )
+    release_dataset_path = st.text_input("Release room eval dataset", "sample_data/eval_dataset.json")
+    release_outcomes_path = st.text_input("Release room win/loss fixture", "sample_data/rfp_outcomes.json")
+    release_top_k = st.number_input("Release room Top K", min_value=1, max_value=10, value=4, step=1)
+    release_payload = {
+        "dataset_path": release_dataset_path,
+        "outcomes_fixture_path": release_outcomes_path,
+        "top_k": int(release_top_k),
+    }
+    action_cols = st.columns(2)
+    if action_cols[0].button("Load release room"):
+        st.session_state.proposal_release_room = get_json("/proposal/release-room")
+    if action_cols[1].button("Generate Release Room Pack"):
+        pack = post_json("/proposal/release-room-pack", {**release_payload, "write_artifact": True})
+        st.session_state.proposal_release_room_pack = pack
+        st.session_state.proposal_release_room = pack["release_room"]
+        st.success(f"Release Room Pack generated under proposal_release_room: {pack['artifact_path']}")
+
+    room = st.session_state.get("proposal_release_room")
+    if room:
+        summary = room["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", room["status"])
+        metric_cols[1].metric("Score", room["readiness_score"])
+        metric_cols[2].metric("Decisions", summary["decision_count"])
+        metric_cols[3].metric("HITL queue", summary["hitl_queue_count"])
+        metric_cols[4].metric("Checkpoints", summary["durable_checkpoint_count"])
+        st.write("Release recommendation")
+        st.info(room["release_recommendation"])
+        st.write("Summary")
+        st.json(summary)
+        st.write("Decision board")
+        st.dataframe(room["decision_board"], use_container_width=True)
+        st.write("Human-in-the-loop queue")
+        st.dataframe(room["hitl_queue"], use_container_width=True)
+        st.write("Provider route")
+        st.json(room["provider_route"])
+        st.write("Durable checkpoints")
+        st.dataframe(room["durable_checkpoints"], use_container_width=True)
+        st.write("Trace coverage")
+        st.dataframe(room["trace_coverage"], use_container_width=True)
+        st.write("Eval assertions")
+        st.dataframe(room["eval_assertions"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(room["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(room["limitations"])
+
+    pack = st.session_state.get("proposal_release_room_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Release Room Markdown",
+            pack["markdown"],
+            file_name="proposal_release_room_pack.md",
         )

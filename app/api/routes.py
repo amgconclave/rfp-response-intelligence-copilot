@@ -159,6 +159,9 @@ from app.models.api import (
     ProposalQualityBenchmarkResponse,
     ProposalReadinessScorePackRequest,
     ProposalReadinessScorePackResponse,
+    ProposalReleaseRoomPackRequest,
+    ProposalReleaseRoomPackResponse,
+    ProposalReleaseRoomResponse,
     ProposalReviewGatePackRequest,
     ProposalReviewGatePackResponse,
     ProposalReviewGateResponse,
@@ -4767,6 +4770,70 @@ async def proposal_review_gate_pack(
 
 
 @router.get(
+    "/proposal/release-room",
+    response_model=ProposalReleaseRoomResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_release_room(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalReleaseRoomResponse:
+    trace_id = get_trace_id(request)
+    release_room = await _proposal_release_room_report(trace_id, container)
+    container.audit.record(
+        trace_id,
+        "proposal.release_room_viewed",
+        "proposal_release_room",
+        metadata={
+            "status": release_room.status,
+            "score": release_room.readiness_score,
+            "decisions": release_room.summary["decision_count"],
+            "hitl_queue": release_room.summary["hitl_queue_count"],
+        },
+    )
+    return release_room
+
+
+@router.post(
+    "/proposal/release-room-pack",
+    response_model=ProposalReleaseRoomPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_release_room_pack(
+    request: Request,
+    payload: ProposalReleaseRoomPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalReleaseRoomPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProposalReleaseRoomPackRequest()
+    release_room = await _proposal_release_room_report(
+        trace_id,
+        container,
+        dataset_path=request_payload.dataset_path,
+        outcomes_fixture_path=request_payload.outcomes_fixture_path,
+        top_k=request_payload.top_k,
+    )
+    pack = container.proposal_release_room.pack(
+        trace_id,
+        release_room,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.release_room_pack_generated",
+        "proposal_release_room_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.release_room.status,
+            "score": pack.release_room.readiness_score,
+        },
+    )
+    return pack
+
+
+@router.get(
     "/compliance/evidence-matrix",
     response_model=ComplianceEvidenceMatrixResponse,
     dependencies=[Depends(require_api_key)],
@@ -5866,6 +5933,82 @@ async def _proposal_review_gate_report(
         trace_id=trace_id,
         assurance=assurance,
         observability=observability,
+    )
+
+
+async def _proposal_release_room_report(
+    trace_id: str,
+    container: ServiceContainer,
+    dataset_path: str = "sample_data/eval_dataset.json",
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json",
+    top_k: int = 4,
+) -> ProposalReleaseRoomResponse:
+    inputs = await _buyer_intelligence_inputs(f"{trace_id}-release-room-buyer", container)
+    workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+    replay = container.buyer_intelligence.replay(f"{trace_id}-replay", workflow)
+    council = container.proposal_agent_council.council(
+        trace_id=f"{trace_id}-council",
+        workflow=workflow,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    provenance = container.decision_provenance.provenance(
+        trace_id=f"{trace_id}-provenance",
+        workflow=workflow,
+        replay=replay,
+        council=council,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    contract_audit = container.buyer_contracts.audit(
+        trace_id=f"{trace_id}-contracts",
+        workflow=workflow,
+        replay=replay,
+        council=council,
+        provenance=provenance,
+    )
+    certification = container.submission_certification.certify(
+        trace_id=f"{trace_id}-certification",
+        workflow=workflow,
+        replay=replay,
+        council=council,
+        provenance=provenance,
+        contract_audit=contract_audit,
+    )
+    observability = await _proposal_observability_report(
+        f"{trace_id}-observability",
+        container,
+        dataset_path=dataset_path,
+        outcomes_fixture_path=outcomes_fixture_path,
+        top_k=top_k,
+    )
+    assurance = await _proposal_assurance_bundle_report(
+        f"{trace_id}-assurance",
+        container,
+        dataset_path=dataset_path,
+        outcomes_fixture_path=outcomes_fixture_path,
+        top_k=top_k,
+    )
+    review_gate = container.proposal_review_gate.gate(
+        trace_id=f"{trace_id}-review-gate",
+        assurance=assurance,
+        observability=observability,
+    )
+    provider_resilience = container.provider_resilience.resilience(f"{trace_id}-provider-resilience")
+    return container.proposal_release_room.room(
+        trace_id=trace_id,
+        workflow=workflow,
+        replay=replay,
+        council=council,
+        provenance=provenance,
+        certification=certification,
+        review_gate=review_gate,
+        observability=observability,
+        provider_resilience=provider_resilience,
     )
 
 
