@@ -3072,6 +3072,60 @@ class ProcurementRiskDecisionPackResponse(BaseModel):
     trace_id: str
 
 
+class ProcurementExceptionMonitorItem(BaseModel):
+    exception_id: str
+    risk_id: str
+    category: str
+    owner_role: str
+    reviewer_role: str
+    decision_status: str
+    monitor_state: str
+    expiry_status: str
+    release_effect: str
+    severity: str
+    days_to_expiry: int | None = None
+    evidence_reference: str | None = None
+    required_action: str
+    escalation_path: list[str] = Field(default_factory=list)
+    checkpoint_id: str
+    transition_log: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ProcurementExceptionMonitorRequest(ProcurementRiskDecisionLedgerRequest):
+    ledger: ProcurementRiskDecisionLedgerResponse | None = None
+    reference_date: str | None = None
+
+
+class ProcurementExceptionMonitorResponse(BaseModel):
+    title: str
+    monitor_status: str
+    exceptions: list[ProcurementExceptionMonitorItem]
+    summary: dict[str, Any]
+    owner_queues: list[dict[str, Any]] = Field(default_factory=list)
+    state_machine: dict[str, Any]
+    governance_gates: list[dict[str, Any]] = Field(default_factory=list)
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ProcurementExceptionMonitorPackRequest(ProcurementExceptionMonitorRequest):
+    monitor: ProcurementExceptionMonitorResponse | None = None
+    write_artifact: bool = True
+
+
+class ProcurementExceptionMonitorPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    monitor: ProcurementExceptionMonitorResponse
+    ledger: ProcurementRiskDecisionLedgerResponse
+    trace_id: str
+
+
 class BidScenario(BaseModel):
     scenario_id: str
     name: str

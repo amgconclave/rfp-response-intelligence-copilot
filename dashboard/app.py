@@ -122,6 +122,7 @@ tabs = st.tabs(
         "Review Gate",
         "Release Room",
         "Clarification Questions",
+        "Exception Monitor",
     ]
 )
 
@@ -5028,4 +5029,88 @@ with tabs[61]:
             "Download Clarification Question Markdown",
             pack["markdown"],
             file_name="clarification_question_pack.md",
+        )
+
+
+with tabs[62]:
+    st.subheader("Procurement Exception Monitor")
+    st.caption(
+        "Replay risk decision ledger exceptions and conditional approvals into expiry, evidence, owner queue, "
+        "and submission-release controls."
+    )
+    reference_date = st.text_input("Reference date", value="2026-06-13", key="exception_monitor_reference_date")
+    action_cols = st.columns(3)
+    if action_cols[0].button("Load exception monitor"):
+        st.session_state.procurement_exception_monitor = get_json("/procurement/exception-monitor")
+    if action_cols[1].button("Generate Monitor Pack"):
+        pack = post_json(
+            "/procurement/exception-monitor-pack",
+            {
+                "write_artifact": True,
+                "reference_date": reference_date,
+            },
+        )
+        st.session_state.procurement_exception_monitor_pack = pack
+        st.session_state.procurement_exception_monitor = pack["monitor"]
+        st.success(f"Exception Monitor Pack generated under procurement_exception_monitor: {pack['artifact_path']}")
+    if action_cols[2].button("Replay sample expiring exception"):
+        payload = {
+            "write_artifact": True,
+            "reference_date": reference_date,
+            "decision_overrides": [
+                {
+                    "risk_id": "prd_legal_terms",
+                    "decision_status": "exception_granted",
+                    "decided_by": "Local Legal Counsel",
+                    "evidence_reference": "customer_contract_terms.md",
+                    "decision_note": "Approved with legal fallback language and renewal monitoring.",
+                    "expires_at": "2026-06-30",
+                },
+                {
+                    "risk_id": "prd_pricing_commercial",
+                    "decision_status": "approved_with_conditions",
+                    "decided_by": "Sales Operations",
+                    "evidence_reference": "pricing_notes.md",
+                    "decision_note": "Approved only for the scoped package and implementation assumptions.",
+                    "expires_at": "2026-07-15",
+                },
+            ],
+        }
+        pack = post_json("/procurement/exception-monitor-pack", payload)
+        st.session_state.procurement_exception_monitor_pack = pack
+        st.session_state.procurement_exception_monitor = pack["monitor"]
+        st.success(f"Sample exception replay written: {pack['artifact_path']}")
+
+    monitor = st.session_state.get("procurement_exception_monitor")
+    if monitor:
+        summary = monitor["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", monitor["monitor_status"])
+        metric_cols[1].metric("Exceptions", summary["exception_count"])
+        metric_cols[2].metric("Critical", summary["critical_count"])
+        metric_cols[3].metric("Holds", summary["hold_count"])
+        metric_cols[4].metric("Expiring", summary["expiring_or_expired_count"])
+        st.write("Exception controls")
+        st.dataframe(monitor["exceptions"], use_container_width=True)
+        st.write("Owner queues")
+        st.dataframe(monitor["owner_queues"], use_container_width=True)
+        st.write("State machine")
+        st.json(monitor["state_machine"])
+        st.write("Governance gates")
+        st.dataframe(monitor["governance_gates"], use_container_width=True)
+        st.write("Trace spans")
+        st.dataframe(monitor["trace_spans"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(monitor["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(monitor["limitations"])
+
+    pack = st.session_state.get("procurement_exception_monitor_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Exception Monitor Markdown",
+            pack["markdown"],
+            file_name="procurement_exception_monitor.md",
         )

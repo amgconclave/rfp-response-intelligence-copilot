@@ -806,6 +806,15 @@ class ArtifactInventoryService:
                 "Owner decision, exception, release gate, and durable checkpoint artifacts for risk desk rows.",
             ),
             self._spec(
+                "procurement_exception_monitor",
+                "procurement_exception_monitor",
+                "POST /procurement/exception-monitor-pack",
+                (
+                    "Exception expiry, evidence hold, owner queue, state-machine transition, "
+                    "and release-control artifacts."
+                ),
+            ),
+            self._spec(
                 "review_boards",
                 "review_boards",
                 "POST /rfp/reviewer-collaboration-pack",

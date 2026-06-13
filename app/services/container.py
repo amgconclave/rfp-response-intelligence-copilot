@@ -46,6 +46,7 @@ from app.services.objection_handling import CompetitiveObjectionHandlingService
 from app.services.portfolio import PortfolioService
 from app.services.privacy_retention import PrivacyRetentionGuardrailService
 from app.services.procurement import ProcurementQuestionRiskService
+from app.services.procurement_exception_monitor import ProcurementExceptionMonitorService
 from app.services.procurement_risk_decisions import ProcurementRiskDecisionService
 from app.services.procurement_risk_desk import ProcurementRiskDeskService
 from app.services.proposal_agent_council import ProposalAgentCouncilService
@@ -193,6 +194,7 @@ class ServiceContainer:
         )
         self.procurement_risk_desk = ProcurementRiskDeskService(settings, self.retrieval)
         self.procurement_risk_decisions = ProcurementRiskDecisionService(settings)
+        self.procurement_exception_monitor = ProcurementExceptionMonitorService(settings)
         self.privacy_retention = PrivacyRetentionGuardrailService(self.repo, settings)
 
 

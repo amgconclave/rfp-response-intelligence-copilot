@@ -748,6 +748,34 @@ Writes Markdown and JSON Procurement Risk Decision Pack artifacts under ignored 
 
 The pack includes the ledger summary, release gate, decision records, durable state checkpoint, governance gates, trace spans, risk desk summary, proof commands, limitations, Markdown, JSON, and trace ID.
 
+### `GET /procurement/exception-monitor`
+
+Returns a deterministic Procurement Exception Monitor view. It replays Procurement Risk Decision Ledger rows into exception expiry status, missing-evidence holds, owner queues, checkpointed state-machine transitions, governance gates, trace spans, local proof commands, limitations, and a submission release status.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/procurement/exception-monitor" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /procurement/exception-monitor`
+
+Replays caller-supplied risk desk, decision ledger, decision overrides, and optional `reference_date` into the same monitor response. This is useful for local reviewer scenarios such as expired exceptions, expiring conditional releases, missing expiry dates, rejected commitments, and pending owner approvals.
+
+The default path is deterministic and local. It does not call external workflow, legal, finance, insurance, GRC, OpenAI, or Azure systems.
+
+### `POST /procurement/exception-monitor-pack`
+
+Writes Markdown and JSON Procurement Exception Monitor artifacts under ignored `storage/procurement_exception_monitor/` by default.
+
+```bash
+curl -X POST "http://127.0.0.1:8000/procurement/exception-monitor-pack" \
+  -H "X-API-Key: local-demo-key" \
+  -H "Content-Type: application/json" \
+  -d "{}"
+```
+
+The pack includes monitor summary, exception rows, owner queues, state-machine metadata, governance gates, trace spans, ledger trace linkage, proof commands, limitations, Markdown, JSON, and trace ID.
+
 ### `GET /bid/scenario-analysis`
 
 Returns the Bid/No-Bid Scenario Simulator with four deterministic executive scenarios: pursue, pursue with conditions, no-bid due to compliance/evidence risk, and no-bid due to commercial/timeline risk. Each scenario includes deal value, pursuit effort, pursuit cost, win probability, gross margin, risk-adjusted revenue, risk-adjusted gross profit, risk-adjusted ROI, blockers, required reviewers, evidence readiness, timeline pressure, decision recommendation, customer profile, assumptions, and coverage summary.

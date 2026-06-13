@@ -579,6 +579,12 @@ class UIVerificationService:
                 "artifact_root": "procurement_risk_decisions",
             },
             {
+                "label": "Exception Monitor",
+                "endpoint_paths": ["/procurement/exception-monitor", "/procurement/exception-monitor-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "procurement_exception_monitor",
+            },
+            {
                 "label": "Bid/No-Bid ROI",
                 "endpoint_paths": ["/bid/scenario-analysis", "/bid/roi-pack"],
                 "generated_artifact_tab": True,
@@ -1080,6 +1086,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/procurement_risk_decisions/*.md",
                     "storage/procurement_risk_decisions/*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/procurement/exception-monitor",
+                "purpose": "Procurement Exception Monitor expiry, evidence, owner queue, and release-control view.",
+            },
+            {
+                "method": "POST",
+                "path": "/procurement/exception-monitor-pack",
+                "purpose": "Procurement Exception Monitor generated Markdown and JSON pack.",
+                "expected_artifacts": [
+                    "storage/procurement_exception_monitor/*.md",
+                    "storage/procurement_exception_monitor/*.json",
                 ],
             },
             {

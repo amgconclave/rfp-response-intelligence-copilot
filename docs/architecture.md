@@ -74,6 +74,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `ComplianceService`: maps regulated-enterprise controls to evidence.
 - `ProcurementService`: simulates procurement question risk and approval workflow artifacts.
 - `ProcurementRiskDeskService`: detects legal, pricing, data residency, insurance, and implementation risks with durable workflow checkpoints, human-review queues, trace spans, and submission governance gates.
+- `ProcurementExceptionMonitorService`: replays procurement risk decisions into exception expiry checks, evidence holds, owner queues, checkpointed transitions, and submission release controls.
 - `BidSimulatorService`: runs bid/no-bid scenarios with risk-adjusted ROI math.
 - `PortfolioService`: builds the Portfolio Evidence index and interview pack.
 - `ReviewerService`: generates reviewer quickstart and walkthrough packs.

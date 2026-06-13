@@ -135,6 +135,10 @@ from app.models.api import (
     PrivacyRetentionPackResponse,
     ProcurementApprovalPackRequest,
     ProcurementApprovalPackResponse,
+    ProcurementExceptionMonitorPackRequest,
+    ProcurementExceptionMonitorPackResponse,
+    ProcurementExceptionMonitorRequest,
+    ProcurementExceptionMonitorResponse,
     ProcurementQuestionRiskResponse,
     ProcurementRiskDecisionLedgerResponse,
     ProcurementRiskDecisionPackRequest,
@@ -5560,6 +5564,137 @@ async def procurement_risk_decision_pack(
             "json_artifact_path": pack.json_artifact_path,
             "decisions": pack.ledger.summary["decision_count"],
             "status": pack.ledger.ledger_status,
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/procurement/exception-monitor",
+    response_model=ProcurementExceptionMonitorResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def procurement_exception_monitor(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProcurementExceptionMonitorResponse:
+    trace_id = get_trace_id(request)
+    inputs = await _procurement_risk_desk_inputs(trace_id, container)
+    risk_desk = await container.procurement_risk_desk.risk_desk(
+        trace_id=f"{trace_id}-risk-desk",
+        **inputs,
+    )
+    ledger = container.procurement_risk_decisions.decision_ledger(
+        trace_id=f"{trace_id}-decision-ledger",
+        risk_desk=risk_desk,
+    )
+    monitor = container.procurement_exception_monitor.monitor(trace_id, ledger)
+    container.audit.record(
+        trace_id,
+        "procurement.exception_monitor_viewed",
+        "procurement_exception_monitor",
+        metadata={
+            "status": monitor.monitor_status,
+            "exceptions": monitor.summary["exception_count"],
+            "holds": monitor.summary["hold_count"],
+            "critical": monitor.summary["critical_count"],
+        },
+    )
+    return monitor
+
+
+@router.post(
+    "/procurement/exception-monitor",
+    response_model=ProcurementExceptionMonitorResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def procurement_exception_monitor_from_payload(
+    request: Request,
+    payload: ProcurementExceptionMonitorRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProcurementExceptionMonitorResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProcurementExceptionMonitorRequest()
+    ledger = request_payload.ledger
+    if ledger is None:
+        risk_desk = request_payload.risk_desk
+        if risk_desk is None:
+            inputs = await _procurement_risk_desk_inputs(trace_id, container)
+            risk_desk = await container.procurement_risk_desk.risk_desk(
+                trace_id=f"{trace_id}-risk-desk",
+                **inputs,
+            )
+        ledger = container.procurement_risk_decisions.decision_ledger(
+            trace_id=f"{trace_id}-decision-ledger",
+            risk_desk=risk_desk,
+            decision_overrides=request_payload.decision_overrides,
+        )
+    monitor = container.procurement_exception_monitor.monitor(
+        trace_id,
+        ledger,
+        reference_date=request_payload.reference_date,
+    )
+    container.audit.record(
+        trace_id,
+        "procurement.exception_monitor_replayed",
+        "procurement_exception_monitor",
+        metadata={
+            "status": monitor.monitor_status,
+            "exceptions": monitor.summary["exception_count"],
+            "holds": monitor.summary["hold_count"],
+            "missing_expiry": monitor.summary["missing_expiry_count"],
+        },
+    )
+    return monitor
+
+
+@router.post(
+    "/procurement/exception-monitor-pack",
+    response_model=ProcurementExceptionMonitorPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def procurement_exception_monitor_pack(
+    request: Request,
+    payload: ProcurementExceptionMonitorPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProcurementExceptionMonitorPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProcurementExceptionMonitorPackRequest()
+    ledger = request_payload.ledger
+    if ledger is None:
+        risk_desk = request_payload.risk_desk
+        if risk_desk is None:
+            inputs = await _procurement_risk_desk_inputs(trace_id, container)
+            risk_desk = await container.procurement_risk_desk.risk_desk(
+                trace_id=f"{trace_id}-risk-desk",
+                **inputs,
+            )
+        ledger = container.procurement_risk_decisions.decision_ledger(
+            trace_id=f"{trace_id}-decision-ledger",
+            risk_desk=risk_desk,
+            decision_overrides=request_payload.decision_overrides,
+        )
+    monitor = request_payload.monitor or container.procurement_exception_monitor.monitor(
+        trace_id,
+        ledger,
+        reference_date=request_payload.reference_date,
+    )
+    pack = container.procurement_exception_monitor.monitor_pack(
+        trace_id,
+        monitor,
+        ledger,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "procurement.exception_monitor_pack_generated",
+        "procurement_exception_monitor_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.monitor.monitor_status,
+            "exceptions": pack.monitor.summary["exception_count"],
         },
     )
     return pack

@@ -1411,6 +1411,33 @@ class LaunchChecklistService:
                 '{"write_artifact":true}',
             ),
             self._row(
+                "Procurement exception monitor",
+                "GET",
+                "/procurement/exception-monitor",
+                "procurement",
+                200,
+                (
+                    "Replays risk decision ledger rows into exception expiry, evidence, owner queue, "
+                    "state-machine, and submission release controls."
+                ),
+            ),
+            self._row(
+                "Procurement Exception Monitor Pack",
+                "POST",
+                "/procurement/exception-monitor-pack",
+                "artifact",
+                200,
+                (
+                    "Writes expiry and evidence monitor artifacts with owner queues, checkpointed transitions, "
+                    "governance gates, trace spans, and proof commands."
+                ),
+                [
+                    "storage/procurement_exception_monitor/*.md",
+                    "storage/procurement_exception_monitor/*.json",
+                ],
+                '{"write_artifact":true}',
+            ),
+            self._row(
                 "Bid/No-Bid scenario analysis",
                 "GET",
                 "/bid/scenario-analysis",

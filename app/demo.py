@@ -642,6 +642,17 @@ async def main() -> None:
         procurement_risk_desk,
         write_artifact=True,
     )
+    procurement_exception_monitor = container.procurement_exception_monitor.monitor(
+        "demo-procurement-exception-monitor",
+        procurement_risk_decision_ledger,
+        reference_date="2026-06-13",
+    )
+    procurement_exception_monitor_pack = container.procurement_exception_monitor.monitor_pack(
+        "demo-procurement-exception-monitor-pack",
+        procurement_exception_monitor,
+        procurement_risk_decision_ledger,
+        write_artifact=True,
+    )
     reviewer_collaboration = container.reviewer_collaboration.create_board(
         trace_id="demo-reviewer-collaboration",
         requirement_matrix=matrix,
@@ -1366,6 +1377,16 @@ async def main() -> None:
     print(f"Procurement Risk Decision Pack JSON: {procurement_risk_decision_pack.json_artifact_path}")
     print("Procurement risk decisions directory: storage/procurement_risk_decisions")
     print(
+        "Procurement Exception Monitor: "
+        f"status={procurement_exception_monitor.monitor_status} "
+        f"exceptions={procurement_exception_monitor.summary['exception_count']} "
+        f"holds={procurement_exception_monitor.summary['hold_count']} "
+        f"expiring={procurement_exception_monitor.summary['expiring_or_expired_count']}"
+    )
+    print(f"Procurement Exception Monitor Pack: {procurement_exception_monitor_pack.artifact_path}")
+    print(f"Procurement Exception Monitor Pack JSON: {procurement_exception_monitor_pack.json_artifact_path}")
+    print("Procurement exception monitor directory: storage/procurement_exception_monitor")
+    print(
         "Reviewer collaboration: "
         f"status={reviewer_collaboration.board_status} "
         f"assignments={len(reviewer_collaboration.assignments)} "
@@ -1659,6 +1680,9 @@ async def main() -> None:
         f"procurement_risk_decisions={procurement_risk_decision_ledger.ledger_status}/"
         f"{procurement_risk_decision_ledger.summary['decision_count']} "
         f"procurement_risk_decision_pack={procurement_risk_decision_pack.artifact_path} "
+        f"procurement_exception_monitor={procurement_exception_monitor.monitor_status}/"
+        f"{procurement_exception_monitor.summary['exception_count']} "
+        f"procurement_exception_monitor_pack={procurement_exception_monitor_pack.artifact_path} "
         f"reviewer_collaboration={reviewer_collaboration.board_status}/"
         f"{len(reviewer_collaboration.assignments)} "
         f"reviewer_workflow={reviewer_workflow.workflow_status}/"

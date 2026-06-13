@@ -159,6 +159,13 @@ curl -X GET "http://127.0.0.1:8000/procurement/risk-decision-ledger" -H "X-API-K
 curl -X POST "http://127.0.0.1:8000/procurement/risk-decision-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
 ```
 
+The Exception Monitor tab replays risk decisions into expiry checks, evidence holds, owner queues, checkpointed transitions, and release controls under `storage/procurement_exception_monitor/`:
+
+```bash
+curl -X GET "http://127.0.0.1:8000/procurement/exception-monitor" -H "X-API-Key: local-demo-key"
+curl -X POST "http://127.0.0.1:8000/procurement/exception-monitor-pack" -H "X-API-Key: local-demo-key" -H "Content-Type: application/json" -d "{}"
+```
+
 The Bid/No-Bid ROI tab and ROI Impact Pack show four deterministic pursuit scenarios: pursue, pursue with conditions, no-bid for compliance/evidence risk, and no-bid for commercial/timeline risk. Each scenario includes deal value, effort, win probability, blockers, required reviewers, evidence readiness, timeline pressure, and risk-adjusted ROI:
 
 ```bash
