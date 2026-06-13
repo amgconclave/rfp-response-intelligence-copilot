@@ -237,6 +237,8 @@ class ApiContractService:
             "/proposal/review-gate-pack",
             "/proposal/release-room",
             "/proposal/release-room-pack",
+            "/proposal/evidence-room",
+            "/proposal/evidence-room-pack",
             "/ops/trace-export",
             "/ops/trace-export-pack",
             "/ops/verification-evidence",

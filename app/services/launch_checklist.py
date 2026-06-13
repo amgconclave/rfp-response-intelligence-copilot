@@ -115,6 +115,8 @@ class LaunchChecklistService:
                 "POST /proposal/review-gate-pack",
                 "GET /proposal/release-room",
                 "POST /proposal/release-room-pack",
+                "GET /proposal/evidence-room",
+                "POST /proposal/evidence-room-pack",
                 "GET /ops/ci-doctor",
                 "POST /ops/audit-pack",
                 "GET /api/contract-audit",
@@ -2022,6 +2024,27 @@ class LaunchChecklistService:
                 200,
                 "Writes buyer proposal release room Markdown and JSON artifacts.",
                 ["storage/proposal_release_room/*.md", "storage/proposal_release_room/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Buyer Proposal Evidence Room",
+                "GET",
+                "/proposal/evidence-room",
+                "proposal",
+                200,
+                (
+                    "Returns a buyer-facing evidence room manifest with artifact hashes, required owner "
+                    "approvals, release snapshot, integrity controls, and endpoint provenance."
+                ),
+            ),
+            self._row(
+                "Buyer Proposal Evidence Room Pack",
+                "POST",
+                "/proposal/evidence-room-pack",
+                "artifact",
+                200,
+                "Writes buyer proposal evidence room Markdown and JSON artifacts.",
+                ["storage/proposal_evidence_room/*.md", "storage/proposal_evidence_room/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

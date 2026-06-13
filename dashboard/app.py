@@ -123,6 +123,7 @@ tabs = st.tabs(
         "Release Room",
         "Clarification Questions",
         "Exception Monitor",
+        "Evidence Room",
     ]
 )
 
@@ -5233,4 +5234,60 @@ with tabs[62]:
             "Download Exception Monitor Markdown",
             pack["markdown"],
             file_name="procurement_exception_monitor.md",
+        )
+
+
+with tabs[63]:
+    st.subheader("Evidence Room")
+    st.caption(
+        "Build a buyer-facing proposal evidence manifest with local artifact hashes, required approvals, "
+        "release-room provenance, endpoint references, and integrity controls."
+    )
+    evidence_dataset_path = st.text_input("Evidence room eval dataset", "sample_data/eval_dataset.json")
+    evidence_outcomes_path = st.text_input("Evidence room win/loss fixture", "sample_data/rfp_outcomes.json")
+    evidence_top_k = st.number_input("Evidence room Top K", min_value=1, max_value=10, value=4, step=1)
+    evidence_payload = {
+        "dataset_path": evidence_dataset_path,
+        "outcomes_fixture_path": evidence_outcomes_path,
+        "top_k": int(evidence_top_k),
+    }
+    action_cols = st.columns(2)
+    if action_cols[0].button("Load evidence room"):
+        st.session_state.proposal_evidence_room = get_json("/proposal/evidence-room")
+    if action_cols[1].button("Generate Evidence Room Pack"):
+        pack = post_json("/proposal/evidence-room-pack", {**evidence_payload, "write_artifact": True})
+        st.session_state.proposal_evidence_room_pack = pack
+        st.session_state.proposal_evidence_room = pack["manifest"]
+        st.success(f"Evidence Room Pack generated under proposal_evidence_room: {pack['artifact_path']}")
+
+    manifest = st.session_state.get("proposal_evidence_room")
+    if manifest:
+        summary = manifest["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", manifest["status"])
+        metric_cols[1].metric("Present", summary["present_item_count"])
+        metric_cols[2].metric("Missing required", summary["missing_required_count"])
+        metric_cols[3].metric("Hash coverage", summary["hash_coverage_ratio"])
+        metric_cols[4].metric("Approvals", manifest["approval_manifest"]["owner_count"])
+        st.write("Release snapshot")
+        st.json(manifest["release_snapshot"])
+        st.write("Artifact manifest")
+        st.dataframe(manifest["manifest_items"], use_container_width=True)
+        st.write("Approval owners")
+        st.dataframe(manifest["approval_manifest"]["required_owners"], use_container_width=True)
+        st.write("Integrity controls")
+        st.dataframe(manifest["integrity_controls"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(manifest["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(manifest["limitations"])
+
+    pack = st.session_state.get("proposal_evidence_room_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Evidence Room Markdown",
+            pack["markdown"],
+            file_name="proposal_evidence_room_pack.md",
         )

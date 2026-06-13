@@ -583,6 +583,30 @@ Writes Markdown and JSON artifacts under ignored `storage/proposal_release_room/
 
 The pack includes release recommendation, decision board, human-in-the-loop queue, durable checkpoints, provider route, trace coverage, eval assertions, operator checklist, proof commands, limitations, embedded release room JSON, Markdown, JSON, and trace ID.
 
+### `GET /proposal/evidence-room`
+
+Returns the Buyer Proposal Evidence Room Manifest. It composes the release room and local artifact inventory into a buyer-facing manifest with artifact roots, latest file paths, SHA-256 hashes, required-for-submission flags, approval owners, release snapshot, integrity controls, endpoint provenance, local proof commands, limitations, and trace ID.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/proposal/evidence-room" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /proposal/evidence-room-pack`
+
+Writes Markdown and JSON artifacts under ignored `storage/proposal_evidence_room/` by default.
+
+```json
+{
+  "dataset_path": "sample_data/eval_dataset.json",
+  "outcomes_fixture_path": "sample_data/rfp_outcomes.json",
+  "top_k": 4,
+  "write_artifact": true
+}
+```
+
+The pack includes artifact integrity hashes, missing-artifact regeneration guidance, human approval ownership, release-room provenance, integrity controls, operator checklist, proof commands, limitations, embedded manifest JSON, Markdown, JSON, and trace ID.
+
 ### `GET /compliance/evidence-matrix`
 
 Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.

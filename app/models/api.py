@@ -2974,6 +2974,54 @@ class ProposalReleaseRoomPackResponse(BaseModel):
     trace_id: str
 
 
+class ProposalEvidenceRoomItem(BaseModel):
+    item_id: str
+    artifact_root: str
+    producer_endpoint: str
+    reviewer_purpose: str
+    status: str
+    latest_file_path: str | None = None
+    file_name: str | None = None
+    sha256: str | None = None
+    size_bytes: int | None = None
+    last_modified: str | None = None
+    required_for_submission: bool = True
+    source_endpoints: list[str] = Field(default_factory=list)
+    missing_reason: str | None = None
+
+
+class ProposalEvidenceRoomManifestResponse(BaseModel):
+    title: str
+    manifest_id: str
+    status: str
+    generated_at: str
+    summary: dict[str, Any]
+    release_snapshot: dict[str, Any]
+    manifest_items: list[ProposalEvidenceRoomItem]
+    approval_manifest: dict[str, Any] = Field(default_factory=dict)
+    integrity_controls: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ProposalEvidenceRoomManifestPackRequest(BaseModel):
+    dataset_path: str = "sample_data/eval_dataset.json"
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json"
+    top_k: int = 4
+    write_artifact: bool = True
+
+
+class ProposalEvidenceRoomManifestPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    manifest: ProposalEvidenceRoomManifestResponse
+    trace_id: str
+
+
 class TraceExportRequest(BaseModel):
     dataset_path: str = "sample_data/eval_dataset.json"
     outcomes_fixture_path: str = "sample_data/rfp_outcomes.json"

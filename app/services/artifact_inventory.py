@@ -1067,6 +1067,15 @@ class ArtifactInventoryService:
                 ),
             ),
             self._spec(
+                "proposal_evidence_room",
+                "proposal_evidence_room",
+                "POST /proposal/evidence-room-pack",
+                (
+                    "Buyer proposal evidence room artifacts with manifest hashes, required approvals, "
+                    "release snapshot, endpoint provenance, and integrity controls."
+                ),
+            ),
+            self._spec(
                 "proposal_observability",
                 "proposal_observability",
                 "POST /ops/proposal-observability-pack",

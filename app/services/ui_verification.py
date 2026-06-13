@@ -727,6 +727,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "proposal_release_room",
             },
+            {
+                "label": "Evidence Room",
+                "endpoint_paths": ["/proposal/evidence-room", "/proposal/evidence-room-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "proposal_evidence_room",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -1475,6 +1481,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/proposal_release_room/*.md",
                     "storage/proposal_release_room/*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/proposal/evidence-room",
+                "purpose": "Evidence Room tab artifact manifest with hashes, approvals, and release provenance.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/evidence-room-pack",
+                "purpose": "Evidence Room generated Markdown and JSON artifacts.",
+                "expected_artifacts": [
+                    "storage/proposal_evidence_room/*.md",
+                    "storage/proposal_evidence_room/*.json",
                 ],
             },
         ]

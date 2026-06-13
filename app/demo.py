@@ -945,6 +945,17 @@ async def main() -> None:
         proposal_release_room,
         write_artifact=True,
     )
+    proposal_evidence_room_inventory = container.artifact_inventory.inventory("demo-proposal-evidence-room-inventory")
+    proposal_evidence_room = container.proposal_evidence_room.manifest(
+        "demo-proposal-evidence-room",
+        release_room=proposal_release_room,
+        artifact_inventory=proposal_evidence_room_inventory,
+    )
+    proposal_evidence_room_pack = container.proposal_evidence_room.pack(
+        "demo-proposal-evidence-room-pack",
+        proposal_evidence_room,
+        write_artifact=True,
+    )
     access_policy = container.access_policy.policy(
         trace_id="demo-access-policy",
         workflow=buyer_intelligence,
@@ -1349,6 +1360,16 @@ async def main() -> None:
     print(f"Proposal Release Room Pack JSON: {proposal_release_room_pack.json_artifact_path}")
     print("Proposal release room directory: storage/proposal_release_room")
     print(
+        "Proposal evidence room: "
+        f"status={proposal_evidence_room.status} "
+        f"present={proposal_evidence_room.summary['present_item_count']} "
+        f"missing_required={proposal_evidence_room.summary['missing_required_count']} "
+        f"hash_coverage={proposal_evidence_room.summary['hash_coverage_ratio']}"
+    )
+    print(f"Proposal Evidence Room Pack: {proposal_evidence_room_pack.artifact_path}")
+    print(f"Proposal Evidence Room Pack JSON: {proposal_evidence_room_pack.json_artifact_path}")
+    print("Proposal evidence room directory: storage/proposal_evidence_room")
+    print(
         "Access policy: "
         f"status={access_policy.status} "
         f"roles={access_policy.summary['role_count']} "
@@ -1708,6 +1729,9 @@ async def main() -> None:
         f"proposal_review_gate_pack={proposal_review_gate_pack.artifact_path} "
         f"proposal_release_room={proposal_release_room.status}/{proposal_release_room.readiness_score} "
         f"proposal_release_room_pack={proposal_release_room_pack.artifact_path} "
+        f"proposal_evidence_room={proposal_evidence_room.status}/"
+        f"{proposal_evidence_room.summary['present_item_count']} "
+        f"proposal_evidence_room_pack={proposal_evidence_room_pack.artifact_path} "
         f"access_policy={access_policy.status}/{access_policy.summary['role_count']} "
         f"access_policy_pack={access_policy_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "

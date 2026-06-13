@@ -163,6 +163,9 @@ from app.models.api import (
     ProposalDecisionProvenancePackRequest,
     ProposalDecisionProvenancePackResponse,
     ProposalDecisionProvenanceResponse,
+    ProposalEvidenceRoomManifestPackRequest,
+    ProposalEvidenceRoomManifestPackResponse,
+    ProposalEvidenceRoomManifestResponse,
     ProposalIntakeTriagePackRequest,
     ProposalIntakeTriagePackResponse,
     ProposalIntakeTriageResponse,
@@ -5268,6 +5271,71 @@ async def proposal_release_room_pack(
 
 
 @router.get(
+    "/proposal/evidence-room",
+    response_model=ProposalEvidenceRoomManifestResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_evidence_room(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalEvidenceRoomManifestResponse:
+    trace_id = get_trace_id(request)
+    manifest = await _proposal_evidence_room_manifest(trace_id, container)
+    container.audit.record(
+        trace_id,
+        "proposal.evidence_room_viewed",
+        "proposal_evidence_room",
+        metadata={
+            "status": manifest.status,
+            "present_artifacts": manifest.summary["present_item_count"],
+            "missing_required": manifest.summary["missing_required_count"],
+            "hash_coverage_ratio": manifest.summary["hash_coverage_ratio"],
+        },
+    )
+    return manifest
+
+
+@router.post(
+    "/proposal/evidence-room-pack",
+    response_model=ProposalEvidenceRoomManifestPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_evidence_room_pack(
+    request: Request,
+    payload: ProposalEvidenceRoomManifestPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalEvidenceRoomManifestPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProposalEvidenceRoomManifestPackRequest()
+    manifest = await _proposal_evidence_room_manifest(
+        trace_id,
+        container,
+        dataset_path=request_payload.dataset_path,
+        outcomes_fixture_path=request_payload.outcomes_fixture_path,
+        top_k=request_payload.top_k,
+    )
+    pack = container.proposal_evidence_room.pack(
+        trace_id,
+        manifest,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.evidence_room_pack_generated",
+        "proposal_evidence_room_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.manifest.status,
+            "present_artifacts": pack.manifest.summary["present_item_count"],
+            "missing_required": pack.manifest.summary["missing_required_count"],
+        },
+    )
+    return pack
+
+
+@router.get(
     "/compliance/evidence-matrix",
     response_model=ComplianceEvidenceMatrixResponse,
     dependencies=[Depends(require_api_key)],
@@ -6680,6 +6748,28 @@ async def _proposal_release_room_report(
         review_gate=review_gate,
         observability=observability,
         provider_resilience=provider_resilience,
+    )
+
+
+async def _proposal_evidence_room_manifest(
+    trace_id: str,
+    container: ServiceContainer,
+    dataset_path: str = "sample_data/eval_dataset.json",
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json",
+    top_k: int = 4,
+) -> ProposalEvidenceRoomManifestResponse:
+    release_room = await _proposal_release_room_report(
+        f"{trace_id}-release-room",
+        container,
+        dataset_path=dataset_path,
+        outcomes_fixture_path=outcomes_fixture_path,
+        top_k=top_k,
+    )
+    artifact_inventory = container.artifact_inventory.inventory(f"{trace_id}-artifact-inventory")
+    return container.proposal_evidence_room.manifest(
+        trace_id=trace_id,
+        release_room=release_room,
+        artifact_inventory=artifact_inventory,
     )
 
 
