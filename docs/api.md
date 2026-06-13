@@ -1337,6 +1337,32 @@ Writes a Markdown and JSON Answer Reuse Coverage Pack under `storage/answer_reus
 }
 ```
 
+### `POST /rfp/answer-reuse-eval`
+
+Compiles deterministic reusable-answer eval cases from governed snippets and compares source-overlap policy thresholds. The response includes case-level governance checks, experiment comparison rows, trace-analysis spans, owner queue, proof commands, and limitations.
+
+```json
+{
+  "category": "security",
+  "customer_profile_id": "regulated_healthcare",
+  "include_expired": true,
+  "min_source_overlap": 4,
+  "policy_thresholds": [2, 4, 6]
+}
+```
+
+### `POST /rfp/answer-reuse-eval-pack`
+
+Writes a Markdown and JSON Answer Reuse Evaluation Pack under `storage/answer_reuse_evals/`. The pack documents the reusable-answer eval dataset, threshold experiment comparison, trace spans, owner queue, governance controls, proof commands, and limitations.
+
+```json
+{
+  "customer_profile_id": "regulated_healthcare",
+  "min_source_overlap": 4,
+  "write_artifact": true
+}
+```
+
 ### `POST /rfp/export-package`
 
 Creates an interview-ready response package from an analyzed RFP payload or ingested RFP document ID plus an optional draft response. By default, artifacts are written under `storage/exports/` and the response also includes Markdown and structured JSON.

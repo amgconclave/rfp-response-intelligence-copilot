@@ -349,6 +349,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "answer_reuse_coverage",
             },
+            {
+                "label": "Answer Reuse Evaluation",
+                "endpoint_paths": ["/rfp/answer-reuse-eval", "/rfp/answer-reuse-eval-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "answer_reuse_evals",
+            },
             {"label": "Action Plan / Handoff Board", "endpoint_paths": ["/rfp/action-plan", "/rfp/handoff-board"]},
             {"label": "Review Board / Red Team", "endpoint_paths": ["/rfp/review-answer", "/rfp/review-package"]},
             {
@@ -884,6 +890,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/answer_reuse_coverage/*.md",
                     "storage/answer_reuse_coverage/*.json",
+                ],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/answer-reuse-eval",
+                "purpose": "Answer Reuse Evaluation panel with eval cases and threshold experiment comparison.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/answer-reuse-eval-pack",
+                "purpose": "Answer Reuse Evaluation generated eval dataset and experiment pack.",
+                "expected_artifacts": [
+                    "storage/answer_reuse_evals/*.md",
+                    "storage/answer_reuse_evals/*.json",
                 ],
             },
             {"method": "GET", "path": "/api/contract-audit", "purpose": "API Contract tab audit snapshot."},

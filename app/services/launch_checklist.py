@@ -79,6 +79,8 @@ class LaunchChecklistService:
                 "POST /rfp/answer-reuse-approval-pack",
                 "POST /rfp/answer-reuse-coverage",
                 "POST /rfp/answer-reuse-coverage-pack",
+                "POST /rfp/answer-reuse-eval",
+                "POST /rfp/answer-reuse-eval-pack",
                 "POST /learning/win-loss",
                 "POST /learning/win-loss-pack",
                 "POST /rag/retrieval-experiments",
@@ -256,6 +258,14 @@ class LaunchChecklistService:
                 ),
                 (
                     "Get-ChildItem -Recurse -File storage\\answer_reuse_library -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
+                    'rg "answer-reuse-eval|Answer Reuse Evaluation|answer_reuse_evals|'
+                    'experiment comparison" app dashboard docs README.md tests Makefile'
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\answer_reuse_evals -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
@@ -577,6 +587,7 @@ class LaunchChecklistService:
             "answer_reuse_drift": "storage/answer_reuse_drift",
             "answer_reuse_approvals": "storage/answer_reuse_approvals",
             "answer_reuse_coverage": "storage/answer_reuse_coverage",
+            "answer_reuse_evals": "storage/answer_reuse_evals",
             "bid_packs": "storage/bid_packs",
             "objection_packs": "storage/objection_packs",
             "win_loss_packs": "storage/win_loss_packs",
@@ -780,6 +791,25 @@ class LaunchChecklistService:
                 "Writes Answer Reuse Coverage Markdown and JSON artifacts.",
                 ["storage/answer_reuse_coverage/*.md", "storage/answer_reuse_coverage/*.json"],
                 '{"analyzed_payload":{},"write_artifact":true}',
+            ),
+            self._row(
+                "Answer reuse evaluation",
+                "POST",
+                "/rfp/answer-reuse-eval",
+                "enterprise",
+                200,
+                "Scores governed snippets with eval cases and compares source-overlap policies.",
+                body='{"customer_profile_id":"regulated_healthcare","min_source_overlap":4}',
+            ),
+            self._row(
+                "Answer reuse evaluation pack",
+                "POST",
+                "/rfp/answer-reuse-eval-pack",
+                "artifact",
+                200,
+                "Writes Answer Reuse Evaluation Markdown and JSON artifacts.",
+                ["storage/answer_reuse_evals/*.md", "storage/answer_reuse_evals/*.json"],
+                '{"write_artifact":true}',
             ),
             self._row(
                 "Export package",

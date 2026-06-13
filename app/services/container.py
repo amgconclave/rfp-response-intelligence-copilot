@@ -9,6 +9,7 @@ from app.services.amendment_impact import RfpAmendmentImpactService
 from app.services.answer_reuse_approval import AnswerReuseApprovalService
 from app.services.answer_reuse_coverage import AnswerReuseCoverageService
 from app.services.answer_reuse_drift import AnswerReuseDriftService
+from app.services.answer_reuse_eval import AnswerReuseEvalService
 from app.services.answer_reuse_library import AnswerReuseLibraryService
 from app.services.api_contracts import ApiContractService
 from app.services.approval_simulation import ProposalApprovalSimulationService
@@ -118,6 +119,11 @@ class ServiceContainer:
         self.answer_reuse_drift = AnswerReuseDriftService(settings, self.answer_reuse_library)
         self.answer_reuse_approval = AnswerReuseApprovalService(settings, self.answer_reuse_drift)
         self.answer_reuse_coverage = AnswerReuseCoverageService(settings, self.answer_reuse_library)
+        self.answer_reuse_eval = AnswerReuseEvalService(
+            settings,
+            self.answer_reuse_library,
+            self.answer_reuse_drift,
+        )
         self.compliance = ComplianceControlMappingService(self.repo, settings)
         self.contract_risk = ContractRiskService(self.repo, settings)
         self.corpus_coverage = CorpusCoverageService(self.repo, settings)

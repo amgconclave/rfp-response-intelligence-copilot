@@ -875,6 +875,15 @@ class ArtifactInventoryService:
                 "Requirement-level reuse coverage map with owner routes, gaps, checkpoints, and trace spans.",
             ),
             self._spec(
+                "answer_reuse_evals",
+                "answer_reuse_evals",
+                "POST /rfp/answer-reuse-eval-pack",
+                (
+                    "Reusable-answer eval dataset, policy experiment comparison, owner queue, "
+                    "and trace-analysis artifacts."
+                ),
+            ),
+            self._spec(
                 "bid_packs",
                 "bid_packs",
                 "POST /bid/roi-pack",

@@ -26,6 +26,10 @@ from app.models.api import (
     AnswerReuseDriftPackResponse,
     AnswerReuseDriftRequest,
     AnswerReuseDriftResponse,
+    AnswerReuseEvalPackRequest,
+    AnswerReuseEvalPackResponse,
+    AnswerReuseEvalRequest,
+    AnswerReuseEvalResponse,
     AnswerReuseLibraryPackRequest,
     AnswerReuseLibraryPackResponse,
     AnswerReuseLibraryRequest,
@@ -803,6 +807,75 @@ async def answer_reuse_coverage_pack(
             "artifact_path": pack.artifact_path,
             "requirements": pack.coverage.summary["requirement_count"],
             "reuse_ready": pack.coverage.summary["reuse_ready_count"],
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/rfp/answer-reuse-eval",
+    response_model=AnswerReuseEvalResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def answer_reuse_eval(
+    payload: AnswerReuseEvalRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> AnswerReuseEvalResponse:
+    trace_id = get_trace_id(request)
+    evaluation = container.answer_reuse_eval.evaluate(
+        trace_id,
+        category=payload.category,
+        customer_profile_id=payload.customer_profile_id,
+        include_expired=payload.include_expired,
+        min_source_overlap=payload.min_source_overlap,
+        policy_thresholds=payload.policy_thresholds,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.answer_reuse_eval_viewed",
+        "answer_reuse_eval",
+        resource_id=payload.customer_profile_id,
+        metadata={
+            "cases": evaluation.summary["case_count"],
+            "failed": evaluation.summary["failed_case_count"],
+            "recommended_threshold": evaluation.summary["recommended_threshold"],
+        },
+    )
+    return evaluation
+
+
+@router.post(
+    "/rfp/answer-reuse-eval-pack",
+    response_model=AnswerReuseEvalPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def answer_reuse_eval_pack(
+    payload: AnswerReuseEvalPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> AnswerReuseEvalPackResponse:
+    trace_id = get_trace_id(request)
+    pack = container.answer_reuse_eval.pack(
+        trace_id,
+        evaluation=payload.evaluation,
+        category=payload.category,
+        customer_profile_id=payload.customer_profile_id,
+        include_expired=payload.include_expired,
+        min_source_overlap=payload.min_source_overlap,
+        policy_thresholds=payload.policy_thresholds,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.answer_reuse_eval_pack_created",
+        "answer_reuse_eval_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "cases": pack.evaluation.summary["case_count"],
+            "failed": pack.evaluation.summary["failed_case_count"],
+            "recommended_threshold": pack.evaluation.summary["recommended_threshold"],
         },
     )
     return pack

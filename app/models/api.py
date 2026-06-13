@@ -313,6 +313,40 @@ class AnswerReuseCoveragePackResponse(BaseModel):
     trace_id: str
 
 
+class AnswerReuseEvalRequest(AnswerReuseDriftRequest):
+    policy_thresholds: list[int] = Field(default_factory=lambda: [2, 4, 6])
+
+
+class AnswerReuseEvalResponse(BaseModel):
+    title: str
+    status: str
+    summary: dict[str, Any]
+    eval_cases: list[dict[str, Any]] = Field(default_factory=list)
+    experiment_comparison: list[dict[str, Any]] = Field(default_factory=list)
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    owner_queue: list[dict[str, Any]] = Field(default_factory=list)
+    workflow: dict[str, Any] = Field(default_factory=dict)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class AnswerReuseEvalPackRequest(AnswerReuseEvalRequest):
+    evaluation: AnswerReuseEvalResponse | None = None
+    write_artifact: bool = True
+
+
+class AnswerReuseEvalPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    evaluation: AnswerReuseEvalResponse
+    trace_id: str
+
+
 class ExportPackageRequest(BaseModel):
     rfp_document_id: str | None = None
     analyzed_payload: AnalyzeResponse | None = None

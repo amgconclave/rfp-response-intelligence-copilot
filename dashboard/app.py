@@ -3561,6 +3561,61 @@ with tabs[45]:
         st.session_state.answer_reuse_coverage = pack["coverage"]
         st.success(f"Answer Reuse Coverage Pack generated under answer_reuse_coverage: {pack['artifact_path']}")
 
+    st.subheader("Answer Reuse Evaluation")
+    st.caption(
+        "Compile deterministic eval cases for reusable snippets, compare source-overlap policies, and route failed "
+        "cases to owners before policy rollout."
+    )
+    eval_cols = st.columns(2)
+    eval_threshold = st.slider("Eval source-overlap threshold", 1, 10, 4, key="answer_reuse_eval_overlap")
+    eval_payload = {
+        **payload,
+        "min_source_overlap": eval_threshold,
+        "policy_thresholds": [2, eval_threshold, 6],
+    }
+    if eval_cols[0].button("Load reuse evaluation"):
+        st.session_state.answer_reuse_eval = post_json("/rfp/answer-reuse-eval", eval_payload)
+    if eval_cols[1].button("Generate Evaluation Pack"):
+        pack = post_json("/rfp/answer-reuse-eval-pack", {**eval_payload, "write_artifact": True})
+        st.session_state.answer_reuse_eval_pack = pack
+        st.session_state.answer_reuse_eval = pack["evaluation"]
+        st.success(f"Answer Reuse Evaluation Pack generated under answer_reuse_evals: {pack['artifact_path']}")
+
+    evaluation = st.session_state.get("answer_reuse_eval")
+    if evaluation:
+        summary = evaluation["summary"]
+        eval_metric_cols = st.columns(5)
+        eval_metric_cols[0].metric("Status", evaluation["status"])
+        eval_metric_cols[1].metric("Cases", summary["case_count"])
+        eval_metric_cols[2].metric("Pass rate", summary["pass_rate"])
+        eval_metric_cols[3].metric("Failed", summary["failed_case_count"])
+        eval_metric_cols[4].metric("Recommended threshold", summary["recommended_threshold"])
+        st.write("Eval cases")
+        st.dataframe(
+            [
+                {
+                    "case": item["case_id"],
+                    "snippet": item["title"],
+                    "owner": item["owner"],
+                    "status": item["status"],
+                    "score": item["score"],
+                    "expected": item["expected_decision"],
+                    "actual": item["actual_decision"],
+                    "action": item["recommended_action"],
+                }
+                for item in evaluation["eval_cases"]
+            ],
+            use_container_width=True,
+        )
+        st.write("Policy experiment comparison")
+        st.dataframe(evaluation["experiment_comparison"], use_container_width=True)
+        st.write("Evaluation trace spans")
+        st.dataframe(evaluation["trace_spans"], use_container_width=True)
+        st.write("Evaluation owner queue")
+        st.dataframe(evaluation["owner_queue"], use_container_width=True)
+        st.write("Evaluation workflow")
+        st.json(evaluation["workflow"])
+
     coverage = st.session_state.get("answer_reuse_coverage")
     if coverage:
         summary = coverage["summary"]
@@ -3716,6 +3771,16 @@ with tabs[45]:
             "Download Answer Reuse Library Markdown",
             pack["markdown"],
             file_name="answer_reuse_library_pack.md",
+        )
+
+    pack = st.session_state.get("answer_reuse_eval_pack")
+    if pack:
+        st.write("Generated eval artifact path", pack["artifact_path"])
+        st.write("Generated eval JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Answer Reuse Evaluation Markdown",
+            pack["markdown"],
+            file_name="answer_reuse_eval_pack.md",
         )
 
     drift_pack = st.session_state.get("answer_reuse_drift_pack")

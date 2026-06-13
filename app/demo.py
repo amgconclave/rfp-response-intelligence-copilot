@@ -95,6 +95,15 @@ async def main() -> None:
         answer_reuse_coverage,
         write_artifact=True,
     )
+    answer_reuse_eval = container.answer_reuse_eval.evaluate(
+        "demo-answer-reuse-eval",
+        customer_profile_id="regulated_healthcare",
+    )
+    answer_reuse_eval_pack = container.answer_reuse_eval.pack(
+        "demo-answer-reuse-eval-pack",
+        answer_reuse_eval,
+        write_artifact=True,
+    )
     export = container.workbench.export_package(
         analysis,
         draft,
@@ -980,6 +989,16 @@ async def main() -> None:
     print(f"Answer Reuse Coverage Pack: {answer_reuse_coverage_pack.artifact_path}")
     print(f"Answer Reuse Coverage Pack JSON: {answer_reuse_coverage_pack.json_artifact_path}")
     print("Answer reuse coverage directory: storage/answer_reuse_coverage")
+    print(
+        "Answer reuse evaluation: "
+        f"status={answer_reuse_eval.status} "
+        f"cases={answer_reuse_eval.summary['case_count']} "
+        f"pass_rate={answer_reuse_eval.summary['pass_rate']} "
+        f"recommended_threshold={answer_reuse_eval.summary['recommended_threshold']}"
+    )
+    print(f"Answer Reuse Evaluation Pack: {answer_reuse_eval_pack.artifact_path}")
+    print(f"Answer Reuse Evaluation Pack JSON: {answer_reuse_eval_pack.json_artifact_path}")
+    print("Answer reuse evaluation directory: storage/answer_reuse_evals")
     print(f"Answer confidence: {answer.confidence}")
     print(f"Citations: {', '.join(c.filename for c in answer.citations)}")
     print(f"Draft sections: {len(draft.sections)}")
@@ -1578,6 +1597,8 @@ async def main() -> None:
         f"answer_reuse_approval_pack={answer_reuse_approval_pack.artifact_path} "
         f"answer_reuse_coverage={answer_reuse_coverage.status}/{answer_reuse_coverage.summary['reuse_ready_count']} "
         f"answer_reuse_coverage_pack={answer_reuse_coverage_pack.artifact_path} "
+        f"answer_reuse_eval={answer_reuse_eval.status}/{answer_reuse_eval.summary['case_count']} "
+        f"answer_reuse_eval_pack={answer_reuse_eval_pack.artifact_path} "
         f"readiness={scorecard.readiness_score}/{scorecard.readiness_level} "
         f"readiness_pack={readiness_pack.artifact_path} "
         f"readiness_score_eval={readiness_score_eval.status}/{readiness_score_eval.score} "
