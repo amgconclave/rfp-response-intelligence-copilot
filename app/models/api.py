@@ -3022,6 +3022,57 @@ class ProposalEvidenceRoomManifestPackResponse(BaseModel):
     trace_id: str
 
 
+class ProposalSubmissionEscrowRecord(BaseModel):
+    record_id: str
+    artifact_root: str
+    custody_state: str
+    status: str
+    required_for_submission: bool = True
+    owner_role: str
+    approval_status: str
+    sha256: str | None = None
+    file_name: str | None = None
+    latest_file_path: str | None = None
+    source_endpoint: str
+    checkpoint_key: str
+    trace_refs: list[str] = Field(default_factory=list)
+    blocking_reasons: list[str] = Field(default_factory=list)
+
+
+class ProposalSubmissionEscrowResponse(BaseModel):
+    title: str
+    escrow_id: str
+    status: str
+    custody_score: int
+    generated_at: str
+    summary: dict[str, Any]
+    release_snapshot: dict[str, Any]
+    escrow_records: list[ProposalSubmissionEscrowRecord]
+    owner_signoff_queue: list[dict[str, Any]] = Field(default_factory=list)
+    custody_checkpoints: list[dict[str, Any]] = Field(default_factory=list)
+    eval_assertions: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ProposalSubmissionEscrowPackRequest(BaseModel):
+    dataset_path: str = "sample_data/eval_dataset.json"
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json"
+    top_k: int = 4
+    write_artifact: bool = True
+
+
+class ProposalSubmissionEscrowPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    escrow: ProposalSubmissionEscrowResponse
+    trace_id: str
+
+
 class TraceExportRequest(BaseModel):
     dataset_path: str = "sample_data/eval_dataset.json"
     outcomes_fixture_path: str = "sample_data/rfp_outcomes.json"

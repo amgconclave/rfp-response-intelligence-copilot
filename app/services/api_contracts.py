@@ -239,6 +239,8 @@ class ApiContractService:
             "/proposal/release-room-pack",
             "/proposal/evidence-room",
             "/proposal/evidence-room-pack",
+            "/proposal/submission-escrow",
+            "/proposal/submission-escrow-pack",
             "/ops/trace-export",
             "/ops/trace-export-pack",
             "/ops/verification-evidence",

@@ -956,6 +956,16 @@ async def main() -> None:
         proposal_evidence_room,
         write_artifact=True,
     )
+    proposal_submission_escrow = container.submission_escrow.escrow(
+        "demo-proposal-submission-escrow",
+        release_room=proposal_release_room,
+        evidence_room=proposal_evidence_room,
+    )
+    proposal_submission_escrow_pack = container.submission_escrow.pack(
+        "demo-proposal-submission-escrow-pack",
+        proposal_submission_escrow,
+        write_artifact=True,
+    )
     access_policy = container.access_policy.policy(
         trace_id="demo-access-policy",
         workflow=buyer_intelligence,
@@ -1370,6 +1380,16 @@ async def main() -> None:
     print(f"Proposal Evidence Room Pack JSON: {proposal_evidence_room_pack.json_artifact_path}")
     print("Proposal evidence room directory: storage/proposal_evidence_room")
     print(
+        "Proposal submission escrow: "
+        f"status={proposal_submission_escrow.status} "
+        f"score={proposal_submission_escrow.custody_score} "
+        f"records={proposal_submission_escrow.summary['record_count']} "
+        f"signoff={proposal_submission_escrow.summary['owner_signoff_count']}"
+    )
+    print(f"Proposal Submission Escrow Pack: {proposal_submission_escrow_pack.artifact_path}")
+    print(f"Proposal Submission Escrow Pack JSON: {proposal_submission_escrow_pack.json_artifact_path}")
+    print("Proposal submission escrow directory: storage/proposal_submission_escrow")
+    print(
         "Access policy: "
         f"status={access_policy.status} "
         f"roles={access_policy.summary['role_count']} "
@@ -1732,6 +1752,8 @@ async def main() -> None:
         f"proposal_evidence_room={proposal_evidence_room.status}/"
         f"{proposal_evidence_room.summary['present_item_count']} "
         f"proposal_evidence_room_pack={proposal_evidence_room_pack.artifact_path} "
+        f"proposal_submission_escrow={proposal_submission_escrow.status}/{proposal_submission_escrow.custody_score} "
+        f"proposal_submission_escrow_pack={proposal_submission_escrow_pack.artifact_path} "
         f"access_policy={access_policy.status}/{access_policy.summary['role_count']} "
         f"access_policy_pack={access_policy_pack.artifact_path} "
         f"control coverage={compliance_matrix.coverage_summary['coverage_ratio']} "

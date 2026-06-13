@@ -124,6 +124,7 @@ tabs = st.tabs(
         "Clarification Questions",
         "Exception Monitor",
         "Evidence Room",
+        "Submission Escrow",
     ]
 )
 
@@ -5290,4 +5291,62 @@ with tabs[63]:
             "Download Evidence Room Markdown",
             pack["markdown"],
             file_name="proposal_evidence_room_pack.md",
+        )
+
+
+with tabs[64]:
+    st.subheader("Submission Escrow")
+    st.caption(
+        "Lock the buyer submission package with local artifact custody records, SHA-256 hash status, "
+        "owner signoff routing, checkpoint replay, and eval-friendly release controls."
+    )
+    escrow_dataset_path = st.text_input("Escrow eval dataset", "sample_data/eval_dataset.json")
+    escrow_outcomes_path = st.text_input("Escrow win/loss fixture", "sample_data/rfp_outcomes.json")
+    escrow_top_k = st.number_input("Escrow Top K", min_value=1, max_value=10, value=4, step=1)
+    escrow_payload = {
+        "dataset_path": escrow_dataset_path,
+        "outcomes_fixture_path": escrow_outcomes_path,
+        "top_k": int(escrow_top_k),
+    }
+    action_cols = st.columns(2)
+    if action_cols[0].button("Load submission escrow"):
+        st.session_state.proposal_submission_escrow = get_json("/proposal/submission-escrow")
+    if action_cols[1].button("Generate Submission Escrow Pack"):
+        pack = post_json("/proposal/submission-escrow-pack", {**escrow_payload, "write_artifact": True})
+        st.session_state.proposal_submission_escrow_pack = pack
+        st.session_state.proposal_submission_escrow = pack["escrow"]
+        st.success(f"Submission Escrow Pack generated under proposal_submission_escrow: {pack['artifact_path']}")
+
+    escrow = st.session_state.get("proposal_submission_escrow")
+    if escrow:
+        summary = escrow["summary"]
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", escrow["status"])
+        metric_cols[1].metric("Custody score", escrow["custody_score"])
+        metric_cols[2].metric("Records", summary["record_count"])
+        metric_cols[3].metric("Hash locked", summary["hash_locked_count"])
+        metric_cols[4].metric("Signoff", summary["owner_signoff_count"])
+        st.write("Release snapshot")
+        st.json(escrow["release_snapshot"])
+        st.write("Escrow records")
+        st.dataframe(escrow["escrow_records"], use_container_width=True)
+        st.write("Owner signoff queue")
+        st.dataframe(escrow["owner_signoff_queue"], use_container_width=True)
+        st.write("Custody checkpoints")
+        st.dataframe(escrow["custody_checkpoints"], use_container_width=True)
+        st.write("Eval assertions")
+        st.dataframe(escrow["eval_assertions"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(escrow["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(escrow["limitations"])
+
+    pack = st.session_state.get("proposal_submission_escrow_pack")
+    if pack:
+        st.write("Generated artifact path", pack["artifact_path"])
+        st.write("Generated JSON path", pack["json_artifact_path"])
+        st.download_button(
+            "Download Submission Escrow Markdown",
+            pack["markdown"],
+            file_name="proposal_submission_escrow_pack.md",
         )

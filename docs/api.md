@@ -607,6 +607,30 @@ Writes Markdown and JSON artifacts under ignored `storage/proposal_evidence_room
 
 The pack includes artifact integrity hashes, missing-artifact regeneration guidance, human approval ownership, release-room provenance, integrity controls, operator checklist, proof commands, limitations, embedded manifest JSON, Markdown, JSON, and trace ID.
 
+### `GET /proposal/submission-escrow`
+
+Returns the Proposal Submission Escrow Ledger. It composes the release room and evidence room into local hash-lock custody records, owner signoff routing, checkpointed release states, eval assertions, endpoint provenance, proof commands, limitations, and trace ID. It does not call external providers or upload files.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/proposal/submission-escrow" \
+  -H "X-API-Key: local-demo-key"
+```
+
+### `POST /proposal/submission-escrow-pack`
+
+Writes Markdown and JSON artifacts under ignored `storage/proposal_submission_escrow/` by default.
+
+```json
+{
+  "dataset_path": "sample_data/eval_dataset.json",
+  "outcomes_fixture_path": "sample_data/rfp_outcomes.json",
+  "top_k": 4,
+  "write_artifact": true
+}
+```
+
+The pack includes custody score, hash-lock rows, owner signoff queue, release snapshot, custody checkpoints, eval assertions, proof commands, limitations, embedded escrow JSON, Markdown, JSON, and trace ID.
+
 ### `GET /compliance/evidence-matrix`
 
 Returns the Compliance Evidence Matrix and Control Mapping view. It maps regulated-enterprise asks to control families, linked RFP requirements, policy snippets, confidence, owners, status, missing-evidence warnings, unsupported-claim flags, reviewer notes, local proof commands, coverage summary, limitations, and trace ID.

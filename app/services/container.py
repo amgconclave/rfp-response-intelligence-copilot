@@ -75,6 +75,7 @@ from app.services.runtime_demo import RuntimeDemoService
 from app.services.source_trust import SourceTrustGateService
 from app.services.submission_certification import ProposalSubmissionCertificationService
 from app.services.submission_decision import SubmissionDecisionService
+from app.services.submission_escrow import ProposalSubmissionEscrowService
 from app.services.submission_exceptions import SubmissionExceptionService
 from app.services.submission_regression import SubmissionRegressionService
 from app.services.timeline_orchestration import TimelineOrchestrationService
@@ -111,6 +112,7 @@ class ServiceContainer:
         self.decision_provenance = ProposalDecisionProvenanceService(settings)
         self.approval_simulation = ProposalApprovalSimulationService(settings)
         self.submission_certification = ProposalSubmissionCertificationService(settings)
+        self.submission_escrow = ProposalSubmissionEscrowService(settings)
         self.proposal_observability = ProposalObservabilityService(settings)
         self.proposal_release_room = ProposalReleaseRoomService(settings)
         self.proposal_review_gate = ProposalReviewGateService(settings)

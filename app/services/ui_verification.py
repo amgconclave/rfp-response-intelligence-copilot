@@ -733,6 +733,12 @@ class UIVerificationService:
                 "generated_artifact_tab": True,
                 "artifact_root": "proposal_evidence_room",
             },
+            {
+                "label": "Submission Escrow",
+                "endpoint_paths": ["/proposal/submission-escrow", "/proposal/submission-escrow-pack"],
+                "generated_artifact_tab": True,
+                "artifact_root": "proposal_submission_escrow",
+            },
         ]
 
     def _endpoint_specs(self) -> list[dict[str, Any]]:
@@ -1495,6 +1501,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/proposal_evidence_room/*.md",
                     "storage/proposal_evidence_room/*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/proposal/submission-escrow",
+                "purpose": "Submission Escrow tab release custody ledger with hash-lock and signoff queue.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/submission-escrow-pack",
+                "purpose": "Submission Escrow generated Markdown and JSON artifacts.",
+                "expected_artifacts": [
+                    "storage/proposal_submission_escrow/*.md",
+                    "storage/proposal_submission_escrow/*.json",
                 ],
             },
         ]

@@ -190,6 +190,9 @@ from app.models.api import (
     ProposalSubmissionCertificationPackRequest,
     ProposalSubmissionCertificationPackResponse,
     ProposalSubmissionCertificationResponse,
+    ProposalSubmissionEscrowPackRequest,
+    ProposalSubmissionEscrowPackResponse,
+    ProposalSubmissionEscrowResponse,
     ProviderResiliencePackRequest,
     ProviderResiliencePackResponse,
     ProviderResilienceResponse,
@@ -5336,6 +5339,70 @@ async def proposal_evidence_room_pack(
 
 
 @router.get(
+    "/proposal/submission-escrow",
+    response_model=ProposalSubmissionEscrowResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_submission_escrow(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalSubmissionEscrowResponse:
+    trace_id = get_trace_id(request)
+    escrow = await _proposal_submission_escrow_report(trace_id, container)
+    container.audit.record(
+        trace_id,
+        "proposal.submission_escrow_viewed",
+        "proposal_submission_escrow",
+        metadata={
+            "status": escrow.status,
+            "custody_score": escrow.custody_score,
+            "records": escrow.summary["record_count"],
+            "owner_signoff": escrow.summary["owner_signoff_count"],
+        },
+    )
+    return escrow
+
+
+@router.post(
+    "/proposal/submission-escrow-pack",
+    response_model=ProposalSubmissionEscrowPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_submission_escrow_pack(
+    request: Request,
+    payload: ProposalSubmissionEscrowPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalSubmissionEscrowPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProposalSubmissionEscrowPackRequest()
+    escrow = await _proposal_submission_escrow_report(
+        trace_id,
+        container,
+        dataset_path=request_payload.dataset_path,
+        outcomes_fixture_path=request_payload.outcomes_fixture_path,
+        top_k=request_payload.top_k,
+    )
+    pack = container.submission_escrow.pack(
+        trace_id,
+        escrow,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.submission_escrow_pack_generated",
+        "proposal_submission_escrow_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.escrow.status,
+            "custody_score": pack.escrow.custody_score,
+        },
+    )
+    return pack
+
+
+@router.get(
     "/compliance/evidence-matrix",
     response_model=ComplianceEvidenceMatrixResponse,
     dependencies=[Depends(require_api_key)],
@@ -6770,6 +6837,33 @@ async def _proposal_evidence_room_manifest(
         trace_id=trace_id,
         release_room=release_room,
         artifact_inventory=artifact_inventory,
+    )
+
+
+async def _proposal_submission_escrow_report(
+    trace_id: str,
+    container: ServiceContainer,
+    dataset_path: str = "sample_data/eval_dataset.json",
+    outcomes_fixture_path: str = "sample_data/rfp_outcomes.json",
+    top_k: int = 4,
+) -> ProposalSubmissionEscrowResponse:
+    release_room = await _proposal_release_room_report(
+        f"{trace_id}-release-room",
+        container,
+        dataset_path=dataset_path,
+        outcomes_fixture_path=outcomes_fixture_path,
+        top_k=top_k,
+    )
+    artifact_inventory = container.artifact_inventory.inventory(f"{trace_id}-artifact-inventory")
+    evidence_room = container.proposal_evidence_room.manifest(
+        trace_id=f"{trace_id}-evidence-room",
+        release_room=release_room,
+        artifact_inventory=artifact_inventory,
+    )
+    return container.submission_escrow.escrow(
+        trace_id=trace_id,
+        release_room=release_room,
+        evidence_room=evidence_room,
     )
 
 

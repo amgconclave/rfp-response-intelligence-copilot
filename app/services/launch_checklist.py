@@ -117,6 +117,8 @@ class LaunchChecklistService:
                 "POST /proposal/release-room-pack",
                 "GET /proposal/evidence-room",
                 "POST /proposal/evidence-room-pack",
+                "GET /proposal/submission-escrow",
+                "POST /proposal/submission-escrow-pack",
                 "GET /ops/ci-doctor",
                 "POST /ops/audit-pack",
                 "GET /api/contract-audit",
@@ -2045,6 +2047,27 @@ class LaunchChecklistService:
                 200,
                 "Writes buyer proposal evidence room Markdown and JSON artifacts.",
                 ["storage/proposal_evidence_room/*.md", "storage/proposal_evidence_room/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Proposal Submission Escrow",
+                "GET",
+                "/proposal/submission-escrow",
+                "proposal",
+                200,
+                (
+                    "Returns a local release custody ledger with artifact hash-lock records, owner signoff "
+                    "queue, checkpointed escrow states, eval assertions, and provider-optional controls."
+                ),
+            ),
+            self._row(
+                "Proposal Submission Escrow Pack",
+                "POST",
+                "/proposal/submission-escrow-pack",
+                "artifact",
+                200,
+                "Writes proposal submission escrow Markdown and JSON artifacts.",
+                ["storage/proposal_submission_escrow/*.md", "storage/proposal_submission_escrow/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

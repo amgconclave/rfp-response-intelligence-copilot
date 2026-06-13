@@ -1076,6 +1076,15 @@ class ArtifactInventoryService:
                 ),
             ),
             self._spec(
+                "proposal_submission_escrow",
+                "proposal_submission_escrow",
+                "POST /proposal/submission-escrow-pack",
+                (
+                    "Proposal submission escrow artifacts with hash-lock custody records, owner signoff queue, "
+                    "checkpointed release states, eval assertions, and local provider boundaries."
+                ),
+            ),
+            self._spec(
                 "proposal_observability",
                 "proposal_observability",
                 "POST /ops/proposal-observability-pack",
