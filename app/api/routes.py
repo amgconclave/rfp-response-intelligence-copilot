@@ -193,6 +193,9 @@ from app.models.api import (
     ProposalSubmissionEscrowPackRequest,
     ProposalSubmissionEscrowPackResponse,
     ProposalSubmissionEscrowResponse,
+    ProposalToolTrustPackRequest,
+    ProposalToolTrustPackResponse,
+    ProposalToolTrustResponse,
     ProviderResiliencePackRequest,
     ProviderResiliencePackResponse,
     ProviderResilienceResponse,
@@ -4792,6 +4795,95 @@ async def proposal_agent_council_pack(
             "status": pack.council.status,
             "agents": len(pack.council.agents),
             "turns": len(pack.council.conversation),
+        },
+    )
+    return pack
+
+
+@router.get(
+    "/proposal/tool-trust-registry",
+    response_model=ProposalToolTrustResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_tool_trust_registry(
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalToolTrustResponse:
+    trace_id = get_trace_id(request)
+    inputs = await _buyer_intelligence_inputs(trace_id, container)
+    workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+    council = container.proposal_agent_council.council(
+        trace_id=f"{trace_id}-council",
+        workflow=workflow,
+        cost_governance=inputs["cost_governance"],
+        source_trust=inputs["source_trust"],
+        model_risk=inputs["model_risk"],
+        procurement_risk=inputs["procurement_risk"],
+    )
+    registry = container.proposal_tool_trust.registry(
+        trace_id=trace_id,
+        council=council,
+        cost_governance=inputs["cost_governance"],
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.tool_trust_registry_viewed",
+        "proposal_tool_trust_registry",
+        metadata={
+            "status": registry.status,
+            "tools": len(registry.trust_registry),
+            "approvals": len(registry.human_approval_queue),
+            "provider_mode": registry.provider_constraints["active_provider_mode"],
+        },
+    )
+    return registry
+
+
+@router.post(
+    "/proposal/tool-trust-pack",
+    response_model=ProposalToolTrustPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_tool_trust_pack(
+    request: Request,
+    payload: ProposalToolTrustPackRequest | None = None,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalToolTrustPackResponse:
+    trace_id = get_trace_id(request)
+    request_payload = payload or ProposalToolTrustPackRequest()
+    registry = request_payload.registry
+    if registry is None:
+        inputs = await _buyer_intelligence_inputs(trace_id, container)
+        workflow = container.buyer_intelligence.workflow(trace_id=f"{trace_id}-workflow", **inputs)
+        council = container.proposal_agent_council.council(
+            trace_id=f"{trace_id}-council",
+            workflow=workflow,
+            cost_governance=inputs["cost_governance"],
+            source_trust=inputs["source_trust"],
+            model_risk=inputs["model_risk"],
+            procurement_risk=inputs["procurement_risk"],
+        )
+        registry = container.proposal_tool_trust.registry(
+            trace_id=f"{trace_id}-registry",
+            council=council,
+            cost_governance=inputs["cost_governance"],
+        )
+    pack = container.proposal_tool_trust.pack(
+        trace_id,
+        registry,
+        write_artifact=request_payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "proposal.tool_trust_pack_generated",
+        "proposal_tool_trust_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.registry.status,
+            "tools": len(pack.registry.trust_registry),
+            "approvals": len(pack.registry.human_approval_queue),
         },
     )
     return pack

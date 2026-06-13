@@ -2794,6 +2794,39 @@ class ProposalAgentCouncilPackResponse(BaseModel):
     trace_id: str
 
 
+class ProposalToolTrustResponse(BaseModel):
+    title: str
+    status: str
+    generated_at: str
+    registry_id: str
+    trust_registry: list[dict[str, Any]] = Field(default_factory=list)
+    tool_risk_matrix: list[dict[str, Any]] = Field(default_factory=list)
+    agent_policy_rollups: list[dict[str, Any]] = Field(default_factory=list)
+    provider_constraints: dict[str, Any] = Field(default_factory=dict)
+    budget_guardrails: dict[str, Any] = Field(default_factory=dict)
+    shared_state_policy: dict[str, Any] = Field(default_factory=dict)
+    human_approval_queue: list[dict[str, Any]] = Field(default_factory=list)
+    eval_assertions: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    trace_id: str
+
+
+class ProposalToolTrustPackRequest(BaseModel):
+    registry: ProposalToolTrustResponse | None = None
+    write_artifact: bool = True
+
+
+class ProposalToolTrustPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    registry: ProposalToolTrustResponse
+    trace_id: str
+
+
 class ProposalProvenanceNode(BaseModel):
     node_id: str
     node_type: str

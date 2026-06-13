@@ -105,6 +105,8 @@ class LaunchChecklistService:
                 "POST /proposal/buyer-contracts-pack",
                 "GET /proposal/agent-council",
                 "POST /proposal/agent-council-pack",
+                "GET /proposal/tool-trust-registry",
+                "POST /proposal/tool-trust-pack",
                 "GET /proposal/decision-provenance",
                 "POST /proposal/decision-provenance-pack",
                 "GET /proposal/submission-certification",
@@ -403,6 +405,14 @@ class LaunchChecklistService:
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
                 (
+                    'rg "proposal/tool-trust|Tool Trust|tool_trust|storage/tool_trust" '
+                    "app dashboard docs README.md tests Makefile"
+                ),
+                (
+                    "Get-ChildItem -Recurse -File storage\\tool_trust -ErrorAction SilentlyContinue | "
+                    "Select-Object FullName,Length,LastWriteTime"
+                ),
+                (
                     "Get-ChildItem -Recurse -File storage\\runtime_packs -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
@@ -610,6 +620,7 @@ class LaunchChecklistService:
             "buyer_intelligence": "storage/buyer_intelligence",
             "buyer_contracts": "storage/buyer_contracts",
             "agent_council": "storage/agent_council",
+            "tool_trust": "storage/tool_trust",
             "api_contracts": "storage/api_contracts",
             "portfolio_packs": "storage/portfolio_packs",
             "release_packs": "storage/release_packs",
@@ -1900,6 +1911,27 @@ class LaunchChecklistService:
                 200,
                 "Writes proposal agent council Markdown, JSON, and transcript JSON artifacts.",
                 ["storage/agent_council/*.md", "storage/agent_council/*.json"],
+                '{"write_artifact":true}',
+            ),
+            self._row(
+                "Proposal Tool Trust Registry",
+                "GET",
+                "/proposal/tool-trust-registry",
+                "proposal",
+                200,
+                (
+                    "Returns tool trust tiers, risk matrix rows, agent policy rollups, provider constraints, "
+                    "budget guardrails, shared-state policy, HITL queue, and eval assertions."
+                ),
+            ),
+            self._row(
+                "Proposal Tool Trust Pack",
+                "POST",
+                "/proposal/tool-trust-pack",
+                "artifact",
+                200,
+                "Writes proposal tool trust Markdown and JSON artifacts.",
+                ["storage/tool_trust/*.md", "storage/tool_trust/*.json"],
                 '{"write_artifact":true}',
             ),
             self._row(

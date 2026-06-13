@@ -42,6 +42,8 @@ The v0.2 API also exposes proof-oriented coverage endpoints:
 - `POST /rfp/readiness-score-eval`: runs deterministic readiness scorer regression scenarios from `sample_data/readiness_score_eval_dataset.json` and writes traceable eval artifacts under `storage/readiness_score_evals/`.
 - `GET /proposal/agent-council`: returns local multi-role council eval scenarios for role coverage, turn order, tool governance, and handoff routing.
 - `POST /proposal/agent-council-pack`: writes the Proposal Agent Council Pack under `storage/agent_council/`.
+- `GET /proposal/tool-trust-registry`: returns local tool trust eval assertions for scored tools, external provider blocks, agent rollup coverage, and budget guardrails.
+- `POST /proposal/tool-trust-pack`: writes the Proposal Tool Trust Registry Pack under `storage/tool_trust/`.
 - `POST /proposal/approval-simulation`: returns local HITL approval simulation assertions for queue coverage, checkpoint keys, human-gate impact, and reject/block behavior.
 - `POST /proposal/approval-simulation-pack`: writes the Proposal Approval Simulation Pack under `storage/approval_simulations/`.
 - `GET /proposal/decision-provenance`: returns graph-level eval assertions for node/edge integrity, checkpoint pass-through, and council eval pass-through.
@@ -83,6 +85,7 @@ Expected final proof points include:
 - Red-team eval prints `Pass/fail summary: PASS`.
 - Dashboard Smoke reports `pass`.
 - Proposal Agent Council eval scenarios all pass and the pack is written under `storage/agent_council/`.
+- Proposal Tool Trust Registry eval assertions pass and the pack is written under `storage/tool_trust/`.
 - Proposal Decision Provenance eval assertions all pass and the graph pack is written under `storage/decision_provenance/`.
 - Proposal Observability report includes local trace spans, retrieval diagnostics, governance findings, and the pack is written under `storage/proposal_observability/`.
 - Proposal Quality Benchmark scenarios pass or route named warnings and the pack is written under `storage/proposal_benchmarks/`.

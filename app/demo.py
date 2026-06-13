@@ -608,6 +608,16 @@ async def main() -> None:
         agent_council,
         write_artifact=True,
     )
+    tool_trust = container.proposal_tool_trust.registry(
+        trace_id="demo-tool-trust",
+        council=agent_council,
+        cost_governance=cost_governance,
+    )
+    tool_trust_pack = container.proposal_tool_trust.pack(
+        "demo-tool-trust-pack",
+        tool_trust,
+        write_artifact=True,
+    )
     decision_provenance = container.decision_provenance.provenance(
         trace_id="demo-decision-provenance",
         workflow=buyer_intelligence,
@@ -1300,6 +1310,15 @@ async def main() -> None:
     print(f"Proposal Agent Council Transcript: {agent_council_pack.transcript_artifact_path}")
     print("Agent council directory: storage/agent_council")
     print(
+        "Proposal tool trust: "
+        f"status={tool_trust.status} "
+        f"tools={len(tool_trust.trust_registry)} "
+        f"approvals={len(tool_trust.human_approval_queue)}"
+    )
+    print(f"Proposal Tool Trust Pack: {tool_trust_pack.artifact_path}")
+    print(f"Proposal Tool Trust Pack JSON: {tool_trust_pack.json_artifact_path}")
+    print("Tool trust directory: storage/tool_trust")
+    print(
         "Decision provenance: "
         f"status={decision_provenance.status} "
         f"nodes={decision_provenance.summary['node_count']} "
@@ -1735,6 +1754,8 @@ async def main() -> None:
         f"approval_simulation_pack={approval_simulation_pack.artifact_path} "
         f"agent_council={agent_council.status}/{len(agent_council.agents)} "
         f"agent_council_pack={agent_council_pack.artifact_path} "
+        f"tool_trust={tool_trust.status}/{len(tool_trust.trust_registry)} "
+        f"tool_trust_pack={tool_trust_pack.artifact_path} "
         f"decision_provenance={decision_provenance.status}/{decision_provenance.summary['node_count']} "
         f"decision_provenance_pack={decision_provenance_pack.artifact_path} "
         f"buyer_contracts={buyer_structured_contracts.status}/{buyer_structured_contracts.score} "

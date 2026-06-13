@@ -4178,9 +4178,9 @@ with tabs[47]:
     st.subheader("Agent Council")
     st.caption(
         "Review a deterministic multi-agent proposal council with shared state, governed tool access, "
-        "cross-functional handoffs, and local budget tracking."
+        "cross-functional handoffs, local budget tracking, and the Tool Trust Registry."
     )
-    action_cols = st.columns(2)
+    action_cols = st.columns(4)
     if action_cols[0].button("Load agent council"):
         st.session_state.proposal_agent_council = get_json("/proposal/agent-council")
     if action_cols[1].button("Generate Agent Council Pack"):
@@ -4188,6 +4188,13 @@ with tabs[47]:
         st.session_state.proposal_agent_council_pack = pack
         st.session_state.proposal_agent_council = pack["council"]
         st.success(f"Agent Council Pack generated under agent_council: {pack['artifact_path']}")
+    if action_cols[2].button("Load tool trust"):
+        st.session_state.proposal_tool_trust = get_json("/proposal/tool-trust-registry")
+    if action_cols[3].button("Generate Tool Trust Pack"):
+        pack = post_json("/proposal/tool-trust-pack", {"write_artifact": True})
+        st.session_state.proposal_tool_trust_pack = pack
+        st.session_state.proposal_tool_trust = pack["registry"]
+        st.success(f"Tool Trust Pack generated under tool_trust: {pack['artifact_path']}")
 
     council = st.session_state.get("proposal_agent_council")
     if council:
@@ -4250,6 +4257,39 @@ with tabs[47]:
             "Download Agent Council Markdown",
             pack["markdown"],
             file_name="proposal_agent_council_pack.md",
+        )
+
+    tool_trust = st.session_state.get("proposal_tool_trust")
+    if tool_trust:
+        st.write("Tool Trust Registry")
+        metric_cols = st.columns(5)
+        metric_cols[0].metric("Status", tool_trust["status"])
+        metric_cols[1].metric("Tools", len(tool_trust["trust_registry"]))
+        metric_cols[2].metric("Approvals", len(tool_trust["human_approval_queue"]))
+        metric_cols[3].metric("Provider", tool_trust["provider_constraints"]["active_provider_mode"])
+        metric_cols[4].metric("Budget", tool_trust["budget_guardrails"]["decision"])
+        st.dataframe(tool_trust["trust_registry"], use_container_width=True)
+        st.write("Tool risk matrix")
+        st.dataframe(tool_trust["tool_risk_matrix"], use_container_width=True)
+        st.write("Agent policy rollups")
+        st.dataframe(tool_trust["agent_policy_rollups"], use_container_width=True)
+        st.write("Human approval queue")
+        st.dataframe(tool_trust["human_approval_queue"], use_container_width=True)
+        st.write("Provider constraints")
+        st.json(tool_trust["provider_constraints"])
+        st.write("Eval assertions")
+        st.dataframe(tool_trust["eval_assertions"], use_container_width=True)
+        st.write("Proof commands")
+        st.code("\n".join(tool_trust["local_proof_commands"]), language="powershell")
+
+    tool_trust_pack = st.session_state.get("proposal_tool_trust_pack")
+    if tool_trust_pack:
+        st.write("Tool Trust artifact path", tool_trust_pack["artifact_path"])
+        st.write("Tool Trust JSON path", tool_trust_pack["json_artifact_path"])
+        st.download_button(
+            "Download Tool Trust Markdown",
+            tool_trust_pack["markdown"],
+            file_name="proposal_tool_trust_pack.md",
         )
 
 

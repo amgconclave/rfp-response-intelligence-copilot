@@ -449,18 +449,26 @@ class ArtifactInventoryService:
                     "Get-ChildItem -Recurse -File storage\\buyer_contracts -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
                 ),
-                (
-                    'rg "proposal/agent-council|Proposal Agent Council|agent_council|storage/agent_council" '
-                    "app dashboard docs README.md tests Makefile"
-                ),
-                (
-                    "Get-ChildItem -Recurse -File storage\\agent_council -ErrorAction SilentlyContinue | "
-                    "Select-Object FullName,Length,LastWriteTime"
-                ),
-                (
-                    'rg "proposal/decision-provenance|Decision Provenance|decision_provenance|'
-                    'storage/decision_provenance" app dashboard docs README.md tests Makefile'
-                ),
+            (
+                'rg "proposal/agent-council|Proposal Agent Council|agent_council|storage/agent_council" '
+                "app dashboard docs README.md tests Makefile"
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\agent_council -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
+                'rg "proposal/tool-trust|Tool Trust|tool_trust|storage/tool_trust" '
+                "app dashboard docs README.md tests Makefile"
+            ),
+            (
+                "Get-ChildItem -Recurse -File storage\\tool_trust -ErrorAction SilentlyContinue | "
+                "Select-Object FullName,Length,LastWriteTime"
+            ),
+            (
+                'rg "proposal/decision-provenance|Decision Provenance|decision_provenance|'
+                'storage/decision_provenance" app dashboard docs README.md tests Makefile'
+            ),
                 (
                     "Get-ChildItem -Recurse -File storage\\decision_provenance -ErrorAction SilentlyContinue | "
                     "Select-Object FullName,Length,LastWriteTime"
@@ -1010,6 +1018,15 @@ class ArtifactInventoryService:
                 (
                     "Proposal agent council artifacts with role-based transcript, shared state, tool governance, "
                     "handoffs, and token budget ledger."
+                ),
+            ),
+            self._spec(
+                "tool_trust",
+                "tool_trust",
+                "POST /proposal/tool-trust-pack",
+                (
+                    "Proposal tool trust registry artifacts with trust tiers, risk matrix, HITL queue, "
+                    "provider constraints, and budget guardrails."
                 ),
             ),
             self._spec(

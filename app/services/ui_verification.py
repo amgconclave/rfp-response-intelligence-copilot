@@ -690,7 +690,12 @@ class UIVerificationService:
             },
             {
                 "label": "Agent Council",
-                "endpoint_paths": ["/proposal/agent-council", "/proposal/agent-council-pack"],
+                "endpoint_paths": [
+                    "/proposal/agent-council",
+                    "/proposal/agent-council-pack",
+                    "/proposal/tool-trust-registry",
+                    "/proposal/tool-trust-pack",
+                ],
                 "generated_artifact_tab": True,
                 "artifact_root": "agent_council",
             },
@@ -1403,6 +1408,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/agent_council/*.md",
                     "storage/agent_council/*.json",
+                ],
+            },
+            {
+                "method": "GET",
+                "path": "/proposal/tool-trust-registry",
+                "purpose": "Agent Council tab tool trust registry, risk matrix, provider, and budget controls.",
+            },
+            {
+                "method": "POST",
+                "path": "/proposal/tool-trust-pack",
+                "purpose": "Agent Council generated tool trust Markdown and JSON artifacts.",
+                "expected_artifacts": [
+                    "storage/tool_trust/*.md",
+                    "storage/tool_trust/*.json",
                 ],
             },
             {

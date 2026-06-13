@@ -527,6 +527,8 @@ curl -X POST "http://127.0.0.1:8000/handoff/final-pack" -H "X-API-Key: local-dem
 - `POST /proposal/buyer-contracts-pack`: writes a Markdown/JSON Buyer Structured Output Contract Pack under `storage/buyer_contracts/`.
 - `GET /proposal/agent-council`: returns a deterministic sales, presales, compliance, procurement, and proposal-manager council with shared state, governed tool access, handoffs, budget ledger, and eval scenarios.
 - `POST /proposal/agent-council-pack`: writes a Markdown/JSON/Transcript Proposal Agent Council Pack under `storage/agent_council/`.
+- `GET /proposal/tool-trust-registry`: returns a local tool trust registry with trust tiers, risk matrix, agent rollups, provider constraints, budget guardrails, HITL queue, and eval assertions.
+- `POST /proposal/tool-trust-pack`: writes a Markdown/JSON Proposal Tool Trust Registry Pack under `storage/tool_trust/`.
 - `GET /proposal/decision-provenance`: returns a typed decision provenance graph linking workflow checkpoints, council turns, handoffs, governance gates, provider/source/model/procurement policy, and eval assertions.
 - `POST /proposal/decision-provenance-pack`: writes a Markdown/JSON Proposal Decision Provenance Pack under `storage/decision_provenance/`.
 - `GET /proposal/submission-certification`: returns typed final proposal certification gates, checkpointed route transitions, reviewer queue, source artifact links, dependency metadata, and eval assertions.

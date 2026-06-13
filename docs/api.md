@@ -447,6 +447,29 @@ Writes Markdown, JSON, and transcript JSON artifacts under ignored `storage/agen
 
 The pack includes the role-based transcript, shared state, cross-functional handoffs, tool governance policy, budget ledger, eval scenarios, reviewer controls, proof commands, limitations, embedded council JSON, Markdown, JSON, transcript JSON, and trace ID.
 
+### `GET /proposal/tool-trust-registry`
+
+Returns the Proposal Tool Trust Registry. It derives trust tiers, a tool risk matrix, agent policy rollups, provider constraints, budget guardrails, shared-state policy, HITL approval queue, eval assertions, proof commands, limitations, and trace ID from the local agent council and cost-governance controls.
+
+```bash
+curl -X GET "http://127.0.0.1:8000/proposal/tool-trust-registry" \
+  -H "X-API-Key: local-demo-key"
+```
+
+The registry is a local read-only governance artifact. It does not execute tools, call providers, submit proposals, or mutate workflow state.
+
+### `POST /proposal/tool-trust-pack`
+
+Writes Markdown and JSON artifacts under ignored `storage/tool_trust/` by default.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack includes the trust registry, tool risk matrix, agent policy rollups, provider constraints, budget guardrails, HITL queue, eval assertions, reviewer controls, proof commands, limitations, embedded registry JSON, Markdown, JSON, and trace ID.
+
 ### `GET /proposal/decision-provenance`
 
 Returns the Proposal Decision Provenance Graph. It composes buyer workflow replay, agent council turns, human handoffs, governance gates, provider/cost policy, source trust, model-risk policy, procurement approvals, typed graph nodes, traceable graph edges, decision controls, eval assertions, proof commands, limitations, and trace ID.
