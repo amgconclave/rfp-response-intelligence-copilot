@@ -694,6 +694,22 @@ async def main() -> None:
         reviewer_signoff,
         write_artifact=True,
     )
+    reviewer_reconciliation = container.reviewer_trace_reconciliation.reconcile(
+        "demo-reviewer-trace-reconciliation",
+        reviewer_collaboration,
+        reviewer_workflow,
+        reviewer_signoff,
+        reviewer_escalations,
+    )
+    reviewer_reconciliation_pack = container.reviewer_trace_reconciliation.pack(
+        "demo-reviewer-trace-reconciliation-pack",
+        reviewer_reconciliation,
+        reviewer_collaboration,
+        reviewer_workflow,
+        reviewer_signoff,
+        reviewer_escalations,
+        write_artifact=True,
+    )
     exception_register = container.submission_exceptions.create_register(
         trace_id="demo-exception-register",
         submission_decision=submission_decision,
@@ -1389,6 +1405,15 @@ async def main() -> None:
     print(f"Reviewer SLA Escalation Pack JSON: {reviewer_escalation_pack.json_artifact_path}")
     print("Reviewer escalation directory: storage/reviewer_escalations")
     print(
+        "Reviewer trace reconciliation: "
+        f"status={reviewer_reconciliation.status} "
+        f"score={reviewer_reconciliation.reconciliation_score} "
+        f"findings={reviewer_reconciliation.summary['finding_count']}"
+    )
+    print(f"Reviewer Trace Reconciliation Pack: {reviewer_reconciliation_pack.artifact_path}")
+    print(f"Reviewer Trace Reconciliation Pack JSON: {reviewer_reconciliation_pack.json_artifact_path}")
+    print("Reviewer reconciliation directory: storage/reviewer_reconciliation")
+    print(
         "Submission exceptions: "
         f"status={exception_register.register_status} "
         f"exceptions={exception_register.summary['exception_count']} "
@@ -1646,6 +1671,9 @@ async def main() -> None:
         f"reviewer_escalations={reviewer_escalations.status}/"
         f"{reviewer_escalations.summary['escalation_count']} "
         f"reviewer_escalation_pack={reviewer_escalation_pack.artifact_path} "
+        f"reviewer_reconciliation={reviewer_reconciliation.status}/"
+        f"{reviewer_reconciliation.reconciliation_score} "
+        f"reviewer_reconciliation_pack={reviewer_reconciliation_pack.artifact_path} "
         f"exceptions={exception_register.register_status}/"
         f"{exception_register.summary['exception_count']} "
         f"exception_pack={exception_pack.artifact_path} "

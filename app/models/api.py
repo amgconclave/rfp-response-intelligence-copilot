@@ -619,6 +619,44 @@ class ReviewerEscalationPackResponse(BaseModel):
     trace_id: str
 
 
+class ReviewerTraceReconciliationRequest(ReviewerEscalationRequest):
+    escalation: ReviewerEscalationResponse | None = None
+
+
+class ReviewerTraceReconciliationResponse(BaseModel):
+    title: str
+    status: str
+    reconciliation_score: int
+    summary: dict[str, Any]
+    findings: list[dict[str, Any]] = Field(default_factory=list)
+    source_state: dict[str, Any] = Field(default_factory=dict)
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    governance_gates: list[dict[str, Any]] = Field(default_factory=list)
+    reviewer_followups: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ReviewerTraceReconciliationPackRequest(ReviewerTraceReconciliationRequest):
+    reconciliation: ReviewerTraceReconciliationResponse | None = None
+    write_artifact: bool = True
+
+
+class ReviewerTraceReconciliationPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    reconciliation: ReviewerTraceReconciliationResponse
+    collaboration: ReviewerCollaborationResponse
+    workflow: ReviewerCollaborationWorkflowResponse
+    ledger: ReviewerSignoffLedgerResponse
+    escalation: ReviewerEscalationResponse
+    trace_id: str
+
+
 class ActionPlanRequest(BaseModel):
     rfp_document_id: str | None = None
     analyzed_payload: AnalyzeResponse | None = None

@@ -362,9 +362,11 @@ class UIVerificationService:
                     "/rfp/reviewer-signoff-pack",
                     "/rfp/reviewer-escalations",
                     "/rfp/reviewer-escalation-pack",
+                    "/rfp/reviewer-trace-reconciliation",
+                    "/rfp/reviewer-trace-reconciliation-pack",
                 ],
                 "generated_artifact_tab": True,
-                "artifact_root": "review_boards",
+                "artifact_root": "reviewer_reconciliation",
             },
             {
                 "label": "Submission Exceptions",
@@ -775,6 +777,20 @@ class UIVerificationService:
                 "expected_artifacts": [
                     "storage/reviewer_escalations/*.md",
                     "storage/reviewer_escalations/*.json",
+                ],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/reviewer-trace-reconciliation",
+                "purpose": "Reviewer Collaboration trace consistency and governance view.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/reviewer-trace-reconciliation-pack",
+                "purpose": "Reviewer Collaboration generated trace reconciliation pack.",
+                "expected_artifacts": [
+                    "storage/reviewer_reconciliation/*.md",
+                    "storage/reviewer_reconciliation/*.json",
                 ],
             },
             {

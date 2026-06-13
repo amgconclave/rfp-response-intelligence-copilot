@@ -2298,7 +2298,7 @@ with tabs[34]:
     if st.session_state.get("win_strategy"):
         payload["win_strategy"] = st.session_state.win_strategy
 
-    cols = st.columns(4)
+    cols = st.columns(10)
     if cols[0].button("Analyze win/loss outcomes"):
         st.session_state.win_loss_learning = post_json("/learning/win-loss", payload)
     if cols[1].button("Generate Strategy Pack"):
@@ -2602,6 +2602,41 @@ with tabs[35]:
         st.session_state.reviewer_workflow = pack["workflow"]
         st.session_state.reviewer_collaboration = pack["collaboration"]
         st.success(f"Reviewer SLA Escalation Pack generated under reviewer_escalations: {pack['artifact_path']}")
+    if cols[8].button("Reconcile trace"):
+        reconciliation_payload = {**collaboration_payload}
+        if st.session_state.get("reviewer_collaboration"):
+            reconciliation_payload["collaboration"] = st.session_state.reviewer_collaboration
+        if st.session_state.get("reviewer_workflow"):
+            reconciliation_payload["workflow"] = st.session_state.reviewer_workflow
+        if st.session_state.get("reviewer_signoff_ledger"):
+            reconciliation_payload["ledger"] = st.session_state.reviewer_signoff_ledger
+        if st.session_state.get("reviewer_escalations"):
+            reconciliation_payload["escalation"] = st.session_state.reviewer_escalations
+        reconciliation = post_json("/rfp/reviewer-trace-reconciliation", reconciliation_payload)
+        st.session_state.reviewer_trace_reconciliation = reconciliation
+    if cols[9].button("Export Reconciliation Pack"):
+        reconciliation_pack_payload = {**collaboration_payload, "write_artifact": True}
+        if st.session_state.get("reviewer_collaboration"):
+            reconciliation_pack_payload["collaboration"] = st.session_state.reviewer_collaboration
+        if st.session_state.get("reviewer_workflow"):
+            reconciliation_pack_payload["workflow"] = st.session_state.reviewer_workflow
+        if st.session_state.get("reviewer_signoff_ledger"):
+            reconciliation_pack_payload["ledger"] = st.session_state.reviewer_signoff_ledger
+        if st.session_state.get("reviewer_escalations"):
+            reconciliation_pack_payload["escalation"] = st.session_state.reviewer_escalations
+        if st.session_state.get("reviewer_trace_reconciliation"):
+            reconciliation_pack_payload["reconciliation"] = st.session_state.reviewer_trace_reconciliation
+        pack = post_json("/rfp/reviewer-trace-reconciliation-pack", reconciliation_pack_payload)
+        st.session_state.reviewer_trace_reconciliation_pack = pack
+        st.session_state.reviewer_trace_reconciliation = pack["reconciliation"]
+        st.session_state.reviewer_escalations = pack["escalation"]
+        st.session_state.reviewer_signoff_ledger = pack["ledger"]
+        st.session_state.reviewer_workflow = pack["workflow"]
+        st.session_state.reviewer_collaboration = pack["collaboration"]
+        st.success(
+            "Reviewer Trace Reconciliation Pack generated under reviewer_reconciliation: "
+            f"{pack['artifact_path']}"
+        )
 
     board = st.session_state.get("reviewer_collaboration")
     if board:
@@ -2735,6 +2770,40 @@ with tabs[35]:
             "Download Reviewer SLA Escalation Markdown",
             escalation_pack["markdown"],
             file_name="reviewer_sla_escalation_pack.md",
+        )
+
+    reconciliation = st.session_state.get("reviewer_trace_reconciliation")
+    if reconciliation:
+        st.write("Reviewer trace reconciliation")
+        reconciliation_cols = st.columns(4)
+        reconciliation_cols[0].metric("Status", reconciliation["status"])
+        reconciliation_cols[1].metric("Score", reconciliation["reconciliation_score"])
+        reconciliation_cols[2].metric("Findings", reconciliation["summary"]["finding_count"])
+        high_plus_count = reconciliation["summary"]["critical_count"] + reconciliation["summary"]["high_count"]
+        reconciliation_cols[3].metric("High+", high_plus_count)
+        st.write("Findings")
+        st.dataframe(reconciliation["findings"], use_container_width=True)
+        st.write("Source state")
+        st.json(reconciliation["source_state"])
+        st.write("Trace spans")
+        st.dataframe(reconciliation["trace_spans"], use_container_width=True)
+        st.write("Governance gates")
+        st.dataframe(reconciliation["governance_gates"], use_container_width=True)
+        st.write("Reviewer followups")
+        st.dataframe(reconciliation["reviewer_followups"], use_container_width=True)
+        st.write("Local proof commands")
+        st.code("\n".join(reconciliation["local_proof_commands"]), language="powershell")
+        st.write("Limitations")
+        st.write(reconciliation["limitations"])
+
+    reconciliation_pack = st.session_state.get("reviewer_trace_reconciliation_pack")
+    if reconciliation_pack:
+        st.write("Generated reconciliation artifact path", reconciliation_pack["artifact_path"])
+        st.write("Generated reconciliation JSON path", reconciliation_pack["json_artifact_path"])
+        st.download_button(
+            "Download Reviewer Trace Reconciliation Markdown",
+            reconciliation_pack["markdown"],
+            file_name="reviewer_trace_reconciliation_pack.md",
         )
 
 

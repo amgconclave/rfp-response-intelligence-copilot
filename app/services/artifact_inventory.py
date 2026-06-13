@@ -827,6 +827,15 @@ class ArtifactInventoryService:
                 ),
             ),
             self._spec(
+                "reviewer_reconciliation",
+                "reviewer_reconciliation",
+                "POST /rfp/reviewer-trace-reconciliation-pack",
+                (
+                    "Reviewer trace reconciliation artifacts with cross-artifact consistency findings, "
+                    "trace spans, governance gates, and owner follow-ups."
+                ),
+            ),
+            self._spec(
                 "exception_registers",
                 "exception_registers",
                 "POST /rfp/exception-pack",

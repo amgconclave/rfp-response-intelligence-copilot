@@ -1479,6 +1479,33 @@ Writes the reviewer SLA escalation plan as Markdown and JSON under `storage/revi
 
 The pack is intended for local review-board operations: owner escalations, SLA hints, role crew delegation, blocked checkpoint evidence, conditional routing, replay guidance, proof commands, and limitations.
 
+### `POST /rfp/reviewer-trace-reconciliation`
+
+Reconciles the reviewer collaboration board, workflow replay, signoff ledger, and SLA escalation plan. If called with `{}`, it derives the local sample RFP reviewer state first. The endpoint checks shared reviewer roles, release-status consistency, signoff coverage, escalation coverage, redline governance, and decision-comment lineage.
+
+```json
+{
+  "collaboration": {},
+  "workflow": {},
+  "ledger": {},
+  "escalation": {}
+}
+```
+
+The response includes `status`, `reconciliation_score`, `summary`, `findings`, `source_state`, local trace spans, governance gates, reviewer follow-ups, proof commands, limitations, and `trace_id`.
+
+### `POST /rfp/reviewer-trace-reconciliation-pack`
+
+Writes the reviewer trace reconciliation as Markdown and JSON under `storage/reviewer_reconciliation/`.
+
+```json
+{
+  "write_artifact": true
+}
+```
+
+The pack is intended for review-board release evidence: cross-artifact consistency findings, trace analysis, shared-state checks, governance gates, owner follow-ups, proof commands, and limitations.
+
 ### `POST /rfp/exception-register`
 
 Creates a local submission exception register from a submission decision plus optional reviewer collaboration board. If called with `{}`, the endpoint derives sample RFP signals locally. Each exception has a waiver type, severity, owner, approver, expiry date, required evidence, linked requirements/artifacts, risk acceptance text, and escalation path.

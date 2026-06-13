@@ -218,6 +218,10 @@ from app.models.api import (
     ReviewerSignoffLedgerPackResponse,
     ReviewerSignoffLedgerRequest,
     ReviewerSignoffLedgerResponse,
+    ReviewerTraceReconciliationPackRequest,
+    ReviewerTraceReconciliationPackResponse,
+    ReviewerTraceReconciliationRequest,
+    ReviewerTraceReconciliationResponse,
     ReviewerWalkthroughPackRequest,
     ReviewerWalkthroughPackResponse,
     ReviewPackageRequest,
@@ -1299,6 +1303,81 @@ async def reviewer_escalation_pack(
             "json_artifact_path": pack.json_artifact_path,
             "status": pack.escalation.status,
             "escalations": pack.escalation.summary["escalation_count"],
+        },
+    )
+    return pack
+
+
+@router.post(
+    "/rfp/reviewer-trace-reconciliation",
+    response_model=ReviewerTraceReconciliationResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def reviewer_trace_reconciliation(
+    payload: ReviewerTraceReconciliationRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewerTraceReconciliationResponse:
+    trace_id = get_trace_id(request)
+    collaboration, workflow, ledger, escalation = _reviewer_trace_inputs(payload, trace_id, container)
+    reconciliation = container.reviewer_trace_reconciliation.reconcile(
+        trace_id=trace_id,
+        collaboration=collaboration,
+        workflow=workflow,
+        ledger=ledger,
+        escalation=escalation,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.reviewer_trace_reconciliation_created",
+        "reviewer_trace_reconciliation",
+        metadata={
+            "status": reconciliation.status,
+            "score": reconciliation.reconciliation_score,
+            "findings": reconciliation.summary["finding_count"],
+        },
+    )
+    return reconciliation
+
+
+@router.post(
+    "/rfp/reviewer-trace-reconciliation-pack",
+    response_model=ReviewerTraceReconciliationPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def reviewer_trace_reconciliation_pack(
+    payload: ReviewerTraceReconciliationPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ReviewerTraceReconciliationPackResponse:
+    trace_id = get_trace_id(request)
+    collaboration, workflow, ledger, escalation = _reviewer_trace_inputs(payload, trace_id, container)
+    reconciliation = payload.reconciliation or container.reviewer_trace_reconciliation.reconcile(
+        trace_id=f"{trace_id}-reconciliation",
+        collaboration=collaboration,
+        workflow=workflow,
+        ledger=ledger,
+        escalation=escalation,
+    )
+    pack = container.reviewer_trace_reconciliation.pack(
+        trace_id=trace_id,
+        reconciliation=reconciliation,
+        collaboration=collaboration,
+        workflow=workflow,
+        ledger=ledger,
+        escalation=escalation,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.reviewer_trace_reconciliation_pack_created",
+        "reviewer_trace_reconciliation_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "json_artifact_path": pack.json_artifact_path,
+            "status": pack.reconciliation.status,
+            "findings": pack.reconciliation.summary["finding_count"],
         },
     )
     return pack
@@ -7088,6 +7167,10 @@ def _reviewer_collaboration_inputs(
         | ReviewerCollaborationWorkflowPackRequest
         | ReviewerSignoffLedgerRequest
         | ReviewerSignoffLedgerPackRequest
+        | ReviewerEscalationRequest
+        | ReviewerEscalationPackRequest
+        | ReviewerTraceReconciliationRequest
+        | ReviewerTraceReconciliationPackRequest
     ),
     trace_id: str,
     container: ServiceContainer,
@@ -7192,6 +7275,38 @@ def _reviewer_collaboration_inputs(
         "contract_risk": contract,
         "submission_decision": payload.submission_decision,
     }
+
+
+def _reviewer_trace_inputs(
+    payload: ReviewerTraceReconciliationRequest | ReviewerTraceReconciliationPackRequest,
+    trace_id: str,
+    container: ServiceContainer,
+):
+    collaboration = payload.collaboration
+    if collaboration is None:
+        inputs = _reviewer_collaboration_inputs(payload, trace_id, container)
+        collaboration = container.reviewer_collaboration.create_board(
+            trace_id=f"{trace_id}-collaboration",
+            **inputs,
+        )
+    workflow = payload.workflow or container.reviewer_workflow.build_workflow(
+        trace_id=f"{trace_id}-workflow",
+        collaboration=collaboration,
+    )
+    ledger = payload.ledger or container.reviewer_signoff.ledger(
+        trace_id=f"{trace_id}-ledger",
+        collaboration=collaboration,
+        workflow=workflow,
+        signoff_overrides=payload.signoff_overrides,
+    )
+    escalation = payload.escalation or container.reviewer_escalation.escalation_plan(
+        trace_id=f"{trace_id}-escalation",
+        collaboration=collaboration,
+        workflow=workflow,
+        ledger=ledger,
+        sla_hours=payload.sla_hours,
+    )
+    return collaboration, workflow, ledger, escalation
 
 
 def _timeline_inputs(

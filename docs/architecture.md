@@ -42,6 +42,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `ReviewerCollaborationService`: converts matrix rows, review findings, source gaps, and contract redlines into local reviewer assignments, decision comments, approval status, and review-board artifacts.
 - `ReviewerEscalationService`: converts reviewer board, workflow, and signoff ledger signals into SLA escalation items, role-crew queues, checkpointed routing, conditional transitions, and local escalation artifacts.
 - `ReviewerSignoffLedgerService`: converts reviewer boards and workflow replays into durable local signoff readiness ledgers with policy gates, outstanding owner actions, transition logs, and human-review queues.
+- `ReviewerTraceReconciliationService`: reconciles reviewer boards, workflow replays, signoff ledgers, and escalation plans with trace analysis, shared-state checks, governance gates, and HITL follow-ups.
 - `ActionPlanService`: turns requirements, gaps, and review findings into stakeholder tasks.
 - `DealReadinessService`: scores launch readiness, executive risk, blockers, Proposal Readiness Score Packs, and local readiness scorer eval packs with scenario assertions, trace analysis, and experiment comparison.
 - `WinStrategyService`: simulates competitor posture, pricing risk, and pursuit strategy.
@@ -114,6 +115,7 @@ Generated files are not committed. They are reproducible outputs from local API 
 - `storage/procurement_packs/`
 - `storage/review_boards/`
 - `storage/reviewer_signoffs/`
+- `storage/reviewer_reconciliation/`
 - `storage/exception_registers/`
 - `storage/answer_reuse_library/`
 - `storage/answer_reuse_drift/`
