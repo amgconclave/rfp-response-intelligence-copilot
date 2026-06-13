@@ -566,6 +566,61 @@ with tabs[10]:
             file_name="readiness_score_eval_pack.md",
         )
 
+    drift_cols = st.columns(2)
+    baseline_score = drift_cols[0].number_input(
+        "Baseline readiness score",
+        min_value=0,
+        max_value=100,
+        value=90,
+        key="readiness_drift_baseline_score",
+    )
+    score_drop_block = drift_cols[1].number_input(
+        "Block on score drop",
+        min_value=1,
+        max_value=50,
+        value=12,
+        key="readiness_drift_score_drop_block",
+    )
+    drift_payload = {
+        **payload,
+        "baseline_snapshot": {
+            "snapshot_id": "dashboard-approved-baseline",
+            "snapshot_source": "dashboard_local_input",
+            "readiness_score": baseline_score,
+            "readiness_level": "ready",
+            "section_completeness_score": 90,
+            "evidence_coverage": 0.9,
+            "compliance_risk_level": "low",
+            "human_review_queue_count": 0,
+            "blocker_count": 0,
+        },
+        "score_drop_block": score_drop_block,
+    }
+    if st.session_state.get("proposal_readiness_score_pack"):
+        drift_payload["current_pack"] = st.session_state.proposal_readiness_score_pack
+    drift_action_cols = st.columns(2)
+    if drift_action_cols[0].button("Compare readiness drift"):
+        drift = post_json("/rfp/proposal-readiness-drift", drift_payload)
+        st.session_state.proposal_readiness_drift = drift
+        st.metric("Drift status", drift["status"])
+        st.metric("Current state", drift["current_state"])
+        st.json(drift["summary"])
+        st.dataframe(drift["drift_findings"], use_container_width=True)
+        st.dataframe(drift["reviewer_routes"], use_container_width=True)
+
+    if drift_action_cols[1].button("Export readiness drift pack"):
+        drift_pack = post_json("/rfp/proposal-readiness-drift-pack", {**drift_payload, "write_artifact": True})
+        st.session_state.proposal_readiness_drift_pack = drift_pack
+        st.session_state.proposal_readiness_drift = drift_pack["drift"]
+        st.success(f"Exported readiness drift pack: {drift_pack['artifact_path']}")
+        st.metric("Drift pack status", drift_pack["drift"]["status"])
+        st.json(drift_pack["drift"]["workflow"])
+        st.download_button(
+            "Download Readiness Drift Pack Markdown",
+            drift_pack["markdown"],
+            file_name="proposal_readiness_drift_pack.md",
+        )
+
     if not payload:
         st.info("Run analysis, review, customer fit, or action planning first, or load sample readiness inputs.")
 

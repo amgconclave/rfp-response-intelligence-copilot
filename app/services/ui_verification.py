@@ -389,9 +389,11 @@ class UIVerificationService:
                     "/rfp/executive-risk-report",
                     "/rfp/proposal-readiness-score-pack",
                     "/rfp/readiness-score-eval",
+                    "/rfp/proposal-readiness-drift",
+                    "/rfp/proposal-readiness-drift-pack",
                 ],
                 "generated_artifact_tab": True,
-                "artifact_root": "readiness_packs",
+                "artifact_root": "readiness_drift",
             },
             {
                 "label": "Win Strategy / Pricing Memo",
@@ -819,6 +821,17 @@ class UIVerificationService:
                     "storage/readiness_score_evals/*.md",
                     "storage/readiness_score_evals/*.json",
                 ],
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/proposal-readiness-drift",
+                "purpose": "Deal Readiness tab compares current readiness against baseline snapshot.",
+            },
+            {
+                "method": "POST",
+                "path": "/rfp/proposal-readiness-drift-pack",
+                "purpose": "Deal Readiness tab generated drift monitor pack.",
+                "expected_artifacts": ["storage/readiness_drift/*.md", "storage/readiness_drift/*.json"],
             },
             {
                 "method": "POST",

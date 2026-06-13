@@ -1412,6 +1412,74 @@ class ReadinessScoreEvalResponse(BaseModel):
     trace_id: str
 
 
+class ProposalReadinessDriftTransition(BaseModel):
+    transition_id: str
+    sequence: int
+    from_state: str | None = None
+    to_state: str
+    status: str
+    decision: str
+    checkpoint_key: str
+    trace_note: str
+
+
+class ProposalReadinessDriftFinding(BaseModel):
+    finding_id: str
+    signal: str
+    baseline_value: float | int | str | None = None
+    current_value: float | int | str | None = None
+    delta: float | int | None = None
+    severity: str
+    owner_role: str
+    route_decision: str
+    recommended_action: str
+    transition_trace: list[ProposalReadinessDriftTransition] = Field(default_factory=list)
+    evidence: dict[str, Any] = Field(default_factory=dict)
+
+
+class ProposalReadinessDriftRequest(ProposalReadinessScorePackRequest):
+    current_pack: ProposalReadinessScorePackResponse | None = None
+    baseline_snapshot: dict[str, Any] | None = None
+    score_drop_warn: int = 5
+    score_drop_block: int = 12
+    completeness_drop_warn: int = 5
+    evidence_drop_warn: float = 0.08
+    reviewer_queue_growth_warn: int = 2
+
+
+class ProposalReadinessDriftResponse(BaseModel):
+    title: str
+    status: str
+    current_state: str
+    summary: dict[str, Any]
+    baseline_snapshot: dict[str, Any]
+    current_snapshot: dict[str, Any]
+    drift_findings: list[ProposalReadinessDriftFinding] = Field(default_factory=list)
+    reviewer_routes: list[dict[str, Any]] = Field(default_factory=list)
+    workflow: dict[str, Any] = Field(default_factory=dict)
+    trace_spans: list[dict[str, Any]] = Field(default_factory=list)
+    endpoint_references: list[dict[str, Any]] = Field(default_factory=list)
+    local_proof_commands: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    generated_at: str
+    trace_id: str
+
+
+class ProposalReadinessDriftPackRequest(ProposalReadinessDriftRequest):
+    drift: ProposalReadinessDriftResponse | None = None
+    write_artifact: bool = True
+
+
+class ProposalReadinessDriftPackResponse(BaseModel):
+    artifact_path: str | None = None
+    json_artifact_path: str | None = None
+    markdown: str
+    pack: dict[str, Any]
+    drift: ProposalReadinessDriftResponse
+    current_pack: ProposalReadinessScorePackResponse
+    trace_id: str
+
+
 class RfpAmendmentImpactRequest(BaseModel):
     baseline_analysis: AnalyzeResponse | None = None
     analysis: AnalyzeResponse | None = None

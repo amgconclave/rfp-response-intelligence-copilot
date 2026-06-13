@@ -680,6 +680,15 @@ class ArtifactInventoryService:
                 "Readiness scorer regression eval pack with scenarios, trace analysis, and governance assertions.",
             ),
             self._spec(
+                "readiness_drift",
+                "readiness_drift",
+                "POST /rfp/proposal-readiness-drift-pack",
+                (
+                    "Readiness drift pack with baseline/current snapshots, conditional routing, "
+                    "trace spans, and reviewer routes."
+                ),
+            ),
+            self._spec(
                 "pricing_memos",
                 "pricing_memos",
                 "POST /rfp/pricing-risk-memo",

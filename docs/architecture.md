@@ -45,6 +45,7 @@ The RFP Response Intelligence Copilot helps sales and presales teams turn approv
 - `ReviewerTraceReconciliationService`: reconciles reviewer boards, workflow replays, signoff ledgers, and escalation plans with trace analysis, shared-state checks, governance gates, and HITL follow-ups.
 - `ActionPlanService`: turns requirements, gaps, and review findings into stakeholder tasks.
 - `DealReadinessService`: scores launch readiness, executive risk, blockers, Proposal Readiness Score Packs, and local readiness scorer eval packs with scenario assertions, trace analysis, and experiment comparison.
+- `ProposalReadinessDriftService`: compares current readiness packs against approved baseline snapshots with typed snapshot contracts, conditional owner routing, checkpointed workflow states, trace spans, and local Markdown/JSON drift artifacts.
 - `WinStrategyService`: simulates competitor posture, pricing risk, and pursuit strategy.
 - `CompetitiveObjectionHandlingService`: generates cited competitor, pricing, security, compliance, and implementation objection responses with confidence and reviewer workflow artifacts.
 - `WinLossLearningService`: ingests fake post-RFP outcomes and turns winning evidence/loss patterns into retrieval, eval, and response guidance recommendations.

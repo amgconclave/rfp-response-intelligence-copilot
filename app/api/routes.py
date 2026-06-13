@@ -172,6 +172,10 @@ from app.models.api import (
     ProposalQualityBenchmarkPackRequest,
     ProposalQualityBenchmarkPackResponse,
     ProposalQualityBenchmarkResponse,
+    ProposalReadinessDriftPackRequest,
+    ProposalReadinessDriftPackResponse,
+    ProposalReadinessDriftRequest,
+    ProposalReadinessDriftResponse,
     ProposalReadinessScorePackRequest,
     ProposalReadinessScorePackResponse,
     ProposalReleaseRoomPackRequest,
@@ -1687,6 +1691,81 @@ async def readiness_score_eval(
         },
     )
     return eval_pack
+
+
+@router.post(
+    "/rfp/proposal-readiness-drift",
+    response_model=ProposalReadinessDriftResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_readiness_drift(
+    payload: ProposalReadinessDriftRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalReadinessDriftResponse:
+    trace_id = get_trace_id(request)
+    current_pack = _current_readiness_pack(payload, trace_id, container)
+    drift = container.readiness_drift.compare(
+        trace_id=trace_id,
+        current_pack=current_pack,
+        baseline_snapshot=payload.baseline_snapshot,
+        score_drop_warn=payload.score_drop_warn,
+        score_drop_block=payload.score_drop_block,
+        completeness_drop_warn=payload.completeness_drop_warn,
+        evidence_drop_warn=payload.evidence_drop_warn,
+        reviewer_queue_growth_warn=payload.reviewer_queue_growth_warn,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.proposal_readiness_drift_compared",
+        "proposal_readiness_drift",
+        metadata={
+            "status": drift.status,
+            "current_state": drift.current_state,
+            "finding_count": drift.summary["finding_count"],
+            "score_delta": drift.summary["score_delta"],
+        },
+    )
+    return drift
+
+
+@router.post(
+    "/rfp/proposal-readiness-drift-pack",
+    response_model=ProposalReadinessDriftPackResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def proposal_readiness_drift_pack(
+    payload: ProposalReadinessDriftPackRequest,
+    request: Request,
+    container: ServiceContainer = Depends(get_container),
+) -> ProposalReadinessDriftPackResponse:
+    trace_id = get_trace_id(request)
+    current_pack = _current_readiness_pack(payload, trace_id, container)
+    pack = container.readiness_drift.pack(
+        trace_id=trace_id,
+        current_pack=current_pack,
+        drift=payload.drift,
+        baseline_snapshot=payload.baseline_snapshot,
+        score_drop_warn=payload.score_drop_warn,
+        score_drop_block=payload.score_drop_block,
+        completeness_drop_warn=payload.completeness_drop_warn,
+        evidence_drop_warn=payload.evidence_drop_warn,
+        reviewer_queue_growth_warn=payload.reviewer_queue_growth_warn,
+        write_artifact=payload.write_artifact,
+    )
+    container.audit.record(
+        trace_id,
+        "rfp.proposal_readiness_drift_pack_exported",
+        "proposal_readiness_drift_pack",
+        resource_id=pack.artifact_path,
+        metadata={
+            "artifact_path": pack.artifact_path,
+            "status": pack.drift.status,
+            "current_state": pack.drift.current_state,
+            "finding_count": pack.drift.summary["finding_count"],
+        },
+    )
+    return pack
 
 
 @router.post(
@@ -7785,6 +7864,47 @@ def _readiness_inputs(
             detail="Provide analysis, matrix, review findings, customer fit, action plan, or eval metrics.",
         )
     return analysis, matrix or []
+
+
+def _current_readiness_pack(
+    payload: ProposalReadinessDriftRequest,
+    trace_id: str,
+    container: ServiceContainer,
+) -> ProposalReadinessScorePackResponse:
+    if payload.current_pack is not None:
+        return payload.current_pack
+    analysis = payload.analysis or payload.analyzed_payload
+    matrix = payload.matrix or payload.requirement_matrix
+    if analysis is None and matrix is None:
+        sample_path = container.settings.sample_data_dir / "acme_enterprise_rfp.md"
+        analysis = container.analysis.analyze(sample_path.read_text(encoding="utf-8"), f"{trace_id}-sample")
+    if matrix is None and analysis is not None:
+        matrix = container.workbench.create_requirement_matrix(analysis)
+    scorecard = payload.readiness_scorecard
+    if scorecard is None:
+        scorecard = container.deal_readiness.create_scorecard(
+            trace_id=f"{trace_id}-scorecard",
+            analysis=analysis,
+            requirement_matrix=matrix or [],
+            review_findings=payload.review_findings,
+            customer_fit=payload.customer_fit,
+            action_plan=payload.action_plan,
+            eval_metrics=payload.eval_metrics,
+        )
+    return container.deal_readiness.create_score_pack(
+        trace_id=f"{trace_id}-current-readiness-pack",
+        analysis=analysis,
+        requirement_matrix=matrix or [],
+        review_findings=payload.review_findings,
+        customer_fit=payload.customer_fit,
+        action_plan=payload.action_plan,
+        eval_metrics=payload.eval_metrics,
+        draft_response=payload.draft_response,
+        red_team_summary=payload.red_team_summary,
+        readiness_scorecard=scorecard,
+        executive_report=payload.executive_report,
+        write_artifact=False,
+    )
 
 
 def _amendment_impact_inputs(

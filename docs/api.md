@@ -1695,6 +1695,20 @@ Runs the deterministic local Readiness Score Eval Pack against `sample_data/read
 
 The response includes scenario pass/fail results, expected-vs-actual score bands, readiness levels, pack statuses, required trace components, workflow checkpoint assertions, HITL queue assertions, experiment comparison, trace analysis, governance summary, proof commands, limitations, artifact paths, Markdown, and trace ID. It is local-only and does not call an LLM or vector store.
 
+### `POST /rfp/proposal-readiness-drift`
+
+Compares a current Proposal Readiness Score Pack against an approved baseline snapshot. If called with `{}`, it builds the current pack from the local sample RFP and compares it with deterministic local defaults. The monitor is local-only and does not mutate readiness scoring rules.
+
+The request accepts `current_pack`, `baseline_snapshot`, and the same readiness inputs accepted by `/rfp/proposal-readiness-score-pack`, plus drift thresholds such as `score_drop_warn`, `score_drop_block`, `completeness_drop_warn`, `evidence_drop_warn`, and `reviewer_queue_growth_warn`.
+
+The response includes normalized baseline/current snapshots, drift findings, severity counts, score/completeness/evidence/reviewer deltas, reviewer routes, a checkpointed state-machine workflow, trace spans, endpoint references, proof commands, limitations, and trace ID.
+
+### `POST /rfp/proposal-readiness-drift-pack`
+
+Writes Markdown/JSON Proposal Readiness Drift Pack artifacts under `storage/readiness_drift/` by default.
+
+The pack includes the drift response, current readiness pack summary, governance controls, reviewer checklist, artifact paths, Markdown, JSON, and trace ID.
+
 ### `POST /rfp/amendment-impact`
 
 Compares a baseline RFP analysis against a revised RFP/addendum and returns deterministic requirement impact, owner routing, readiness impact, and a checkpointed workflow. If called with `{}`, it compares `sample_data/acme_enterprise_rfp.md` to `sample_data/acme_enterprise_rfp_addendum.md`.

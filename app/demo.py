@@ -185,6 +185,27 @@ async def main() -> None:
         dataset_path="sample_data/readiness_score_eval_dataset.json",
         write_artifact=True,
     )
+    readiness_drift = container.readiness_drift.compare(
+        trace_id="demo-readiness-drift",
+        current_pack=readiness_pack,
+        baseline_snapshot={
+            "snapshot_id": "demo-approved-baseline",
+            "snapshot_source": "demo_local_baseline",
+            "readiness_score": 92,
+            "readiness_level": "ready",
+            "section_completeness_score": 92,
+            "evidence_coverage": 0.92,
+            "compliance_risk_level": "low",
+            "human_review_queue_count": 0,
+            "blocker_count": 0,
+        },
+    )
+    readiness_drift_pack = container.readiness_drift.pack(
+        trace_id="demo-readiness-drift-pack",
+        current_pack=readiness_pack,
+        drift=readiness_drift,
+        write_artifact=True,
+    )
     revised_analysis = container.analysis.analyze(
         (container.settings.sample_data_dir / "acme_enterprise_rfp_addendum.md").read_text(encoding="utf-8"),
         "demo-amendment-revised",
@@ -1603,6 +1624,8 @@ async def main() -> None:
         f"readiness_pack={readiness_pack.artifact_path} "
         f"readiness_score_eval={readiness_score_eval.status}/{readiness_score_eval.score} "
         f"readiness_score_eval_pack={readiness_score_eval.artifact_path} "
+        f"readiness_drift={readiness_drift.status}/{readiness_drift.summary['finding_count']} "
+        f"readiness_drift_pack={readiness_drift_pack.artifact_path} "
         f"amendment_impact={amendment_impact.status}/{amendment_impact.summary['change_count']} "
         f"amendment_impact_pack={amendment_impact_pack.artifact_path} "
         f"win score={win_strategy.win_score}/{win_strategy.win_level} "

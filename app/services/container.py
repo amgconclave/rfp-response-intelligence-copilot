@@ -58,6 +58,7 @@ from app.services.proposal_observability import ProposalObservabilityService
 from app.services.proposal_release_room import ProposalReleaseRoomService
 from app.services.proposal_review_gate import ProposalReviewGateService
 from app.services.provider_resilience import ProviderResilienceService
+from app.services.readiness_drift import ProposalReadinessDriftService
 from app.services.release import ReleaseService
 from app.services.retrieval import RetrievalService
 from app.services.retrieval_experiments import RetrievalExperimentComparisonService
@@ -130,6 +131,7 @@ class ServiceContainer:
         self.action_plan = StakeholderActionPlanService(settings)
         self.amendment_impact = RfpAmendmentImpactService(settings)
         self.deal_readiness = DealReadinessService(settings)
+        self.readiness_drift = ProposalReadinessDriftService(settings)
         self.evidence_gap = EvidenceGapService(settings)
         self.leadership_brief = LeadershipBriefService(settings)
         self.submission_decision = SubmissionDecisionService(settings)
